@@ -1,0 +1,72 @@
+:root{
+  --brand:#0ea5e9; --brand-weak:#bfe8fb;
+  --text:#0f172a; --bg:#f8fafc; --card:#ffffffcc; --border:#e2e8f0;
+}
+
+/* Haz que el contenedor ocupe toda la pantalla */
+.login-page {
+  position: fixed; /* para superponer y ocupar todo */
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  min-height: 100vh;
+  min-width: 100vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8fafc;
+  z-index: 1000; /* encima de todo */
+}
+
+/* La marca de agua también ocupa todo */
+.login-bg {
+  position: absolute;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center;
+  opacity: 0.10;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* La tarjeta se mantiene centrada */
+.login-card {
+  position: relative;
+  z-index: 1;
+  background: white;
+  width: min(420px, 90vw);
+  margin: auto;
+  padding: 2rem 1.5rem 1.2rem;
+  border-radius: 18px;
+  box-shadow: 0 8px 32px #19366a2a;
+}
+
+
+/* Layout general */
+.jc-header{ height:56px; padding:0 14px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); background:#f0f9ff; }
+.jc-header__left{ display:flex; align-items:center; gap:10px; }
+.jc-logo{ width:26px; height:26px; }
+.jc-brand{ font-size:20px; font-weight:800; color:#0b2a3b; }
+.jc-btn{ background:var(--brand); color:#fff; border:none; border-radius:10px; padding:10px 16px; font-weight:600; cursor:pointer; min-width:140px; }
+.jc-btn--ghost{ background:#e6f6ff; color:#0b2a3b; border:1px solid #ccecff; }
+.jc-btn[disabled]{ opacity:.6; cursor:not-allowed; }
+
+.login-page{ min-height:calc(100vh - 56px); background:var(--bg); position:relative; display:flex; align-items:center; justify-content:center; padding:24px; }
+.login-bg{ position:absolute; inset:0; background:url('/test.png') center/contain no-repeat; opacity:.15; pointer-events:none; }
+.login-card{ position:relative; width:min(520px,92vw); background:var(--card); backdrop-filter:blur(6px); border:1px solid var(--border); border-radius:12px; padding:28px 24px 18px; box-shadow:0 10px 30px rgba(0,0,0,.08); }
+.login-avatar{ position:absolute; left:50%; transform:translate(-50%, -50%); top:0; width:84px; height:84px; border-radius:50%; background:#fff; border:4px solid var(--brand-weak); display:grid; place-items:center; }
+.login-avatar img{ width:48px; height:48px; }
+.login-form{ margin-top:40px; }
+
+.field{ display:flex; align-items:center; background:#fff; border:1px solid var(--border); border-radius:10px; padding:10px 12px; margin-bottom:14px; box-shadow:inset 0 1px 0 rgba(255,255,255,.6); }
+.field-icon{ margin-right:8px; font-size:18px; opacity:.8; }
+.field input{ border:none; outline:none; width:100%; font-size:16px; color:var(--text); background:transparent; }
+
+.actions{ display:flex; align-items:center; justify-content:space-between; margin-top:10px; }
+.link{ background:none; border:none; color:var(--brand); text-decoration:underline; cursor:pointer; padding:6px 8px; }
+
+.error{ margin-top:12px; color:#b91c1c; background:#fee2e2; border:1px solid #fecaca; padding:8px 10px; border-radius:8px; }

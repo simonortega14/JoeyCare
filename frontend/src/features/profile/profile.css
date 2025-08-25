@@ -1,0 +1,219 @@
+/* Estilos generales de la página de perfil */
+.profile-container {
+  display: flex;
+  min-height: 100vh;
+  background-color: #F5FFFF;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  position: relative;
+}
+
+/* Fondo con marca de agua */
+.profile-container::before {
+  content: "";
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 1000px;
+  height: 1000px;
+  background-image: url('../../assets/Marca De Agua.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  opacity: 0.9;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.profile-content {
+  flex: 1;
+  padding: 30px;
+  margin-left: 340px; 
+  margin-top: 70px; 
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Contenedor de información del perfil */
+.profile-info-card {
+  width: 951px;
+  height: 150px;
+  background-color: rgba(77, 194, 255, 0.46); 
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  padding: 0 25px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.profile-info-content {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.profile-logo {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+}
+
+.profile-info-text h1 {
+  color: #000000;
+  font-size: 32px;
+  font-weight: 700;
+  margin: 0 0 5px 0;
+}
+
+.profile-info-text p {
+  color: #000000;
+  font-size: 15px;
+  font-weight: 400;
+  margin: 0;
+}
+
+/* Contenedor de pacientes asignados */
+.patients-assigned-card {
+  width: 951px;
+  height: 150px;
+  background-color: #e8f5fb; 
+  border-radius: 10px;
+  padding: 25px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.patients-assigned-card h3 {
+  color: #000000;
+  font-size: 15px;
+  font-weight: 400;
+  margin: 0 0 10px 0;
+}
+
+.patients-number {
+  color: #000000;
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+.patients-trend {
+  color: #27ae60;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+/* Contenedor de pacientes revisados recientemente */
+.recent-patients-card {
+  width: 952px;
+  height: 350px;
+  background-color: rgba(77, 194, 255, 0.46); 
+  border-radius: 10px;
+  padding: 25px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.recent-patients-card h2 {
+  color: #000000;
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 20px 0;
+  padding-bottom: 15px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.patients-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 15px;
+  height: calc(100% - 60px);
+}
+
+.patient-item-card {
+  background-color: rgba(177, 228, 222, 0.8); 
+  border-radius: 8px;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.patient-logo {
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+  margin-bottom: 10px;
+}
+
+.patient-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.patient-name-id {
+  font-weight: 600;
+  color: #000000;
+  font-size: 12px;
+  margin-bottom: 3px;
+}
+
+.patient-details {
+  color: #000000;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .profile-info-card,
+  .patients-assigned-card,
+  .recent-patients-card {
+    width: 100%;
+  }
+  
+  .patients-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .profile-content {
+    margin-left: 0;
+    padding: 20px 15px;
+  }
+  
+  .patients-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .profile-info-content {
+    flex-direction: column;
+    text-align: center;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .patients-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .profile-info-card,
+  .patients-assigned-card {
+    height: auto;
+    padding: 20px;
+  }
+  
+  .recent-patients-card {
+    height: auto;
+  }
+}

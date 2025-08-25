@@ -1,13 +1,14 @@
 import React from 'react';
+import { NavLink } from 'react-router-dom';
 import './sidebar.css';
 
-const AppSidebar = ({ activeItem }) => {
+const AppSidebar = () => {
   const menuItems = [
-    { id: 0, name: "Dashboards", icon: "📊" },
-    { id: 1, name: "Mi perfil", icon: "👤" },
-    { id: 2, name: "Visualizar Ecografías", icon: "🖼️" },
-    { id: 3, name: "Cargar Ecografías", icon: "📁" },
-    { id: 4, name: "Buscar Pacientes", icon: "🔍" }
+    { id: 0, name: "Dashboards", icon: "📊", path: "/dashboard"},
+    { id: 1, name: "Mi perfil", icon: "👤", path: "/perfil" },
+    { id: 2, name: "Visualizar Ecografías", icon: "🖼️", path: "/visualizar-ecografias" },
+    { id: 3, name: "Cargar Ecografías", icon: "📁", path: "/cargar-ecografias"},
+    { id: 4, name: "Buscar Pacientes", icon: "🔍", path: "/buscar-pacientes" }
   ];
 
   return (
@@ -17,12 +18,16 @@ const AppSidebar = ({ activeItem }) => {
           <ul>
             {menuItems.map(item => (
               <li key={item.id}>
-                <button 
-                  className={`nav-item ${activeItem === item.name ? 'active' : ''}`}
+                <NavLink 
+                  to={item.path || "#"} 
+                  className={({ isActive }) => 
+                    `nav-item ${isActive ? 'active' : ''}`
+                  }
+                  end={item.path === "/dashboard"} 
                 >
                   <span className="nav-icon">{item.icon}</span>
                   <span className="nav-text">{item.name}</span>
-                </button>
+                </NavLink>
               </li>
             ))}
           </ul>

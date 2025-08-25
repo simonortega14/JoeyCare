@@ -1,6 +1,5 @@
 /* Estilos generales de la página de perfil */
 .profile-container {
-  display: flex;
   min-height: 100vh;
   background-color: #F5FFFF;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;

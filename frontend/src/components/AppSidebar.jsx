@@ -23,7 +23,7 @@ const AppSidebar = () => {
                   className={({ isActive }) => 
                     `nav-item ${isActive ? 'active' : ''}`
                   }
-                  end={item.path === "/dashboard"} 
+                  end={item.path === "/perfil"} 
                 >
                   <span className="nav-icon">{item.icon}</span>
                   <span className="nav-text">{item.name}</span>

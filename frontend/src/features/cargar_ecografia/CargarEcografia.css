@@ -1,71 +1,148 @@
-.cargar-page {
-  min-height: 100vh;
-  padding: 24px;
+/* ====== Paleta unificada Joey Care ====== */
+:root{
+  --header-bg: #e8f5fb;       /* barra superior */
+  --sidebar-accent: #4DC2FF;  /* acento (iconos/hover) */
+  --sidebar-dark: #2F5F75;    /* tono del panel lateral */
+  --page-bg: #F5FFFF;         /* fondo hueso/celeste muy claro */
+  --card-bg: #1f2d38;         /* tarjeta (azul grisáceo) */
+  --card-border: rgba(255,255,255,0.08);
+  --text: #0f172a;
+  --text-on-dark: #e6f6ff;
+  --muted: #7ea0b2;           /* textos secundarios sobre card */
+  --input-bg: #0f1b24;        /* inputs oscuros */
+  --input-border: #2b3a45;
+  --btn: #2f6fe0;             /* botón */
+  --btn-hover: #275dcc;
+  --btn-shadow: 0 6px 18px rgba(47, 111, 224, 0.35);
+  --header-h: 70px;
+  --sidebar-w: 249px;
+}
+
+/* Área de la página (a la derecha del sidebar y bajo el header) */
+.cargar-page{
+  min-height: calc(100vh - var(--header-h));
+  margin-top: var(--header-h);
+  margin-left: var(--sidebar-w);
+  padding: 32px;
+  background: var(--page-bg);         /* ← fondo que combina con header */
+  color: var(--text);
   display: flex;
+  align-items: center;
   justify-content: center;
-  align-items: flex-start;
-  background: #0f1115; /* fondo oscuro */
-  color: #e5e7eb;
+  box-sizing: border-box;
 }
 
-.cargar-card {
+/* Tarjeta */
+.cargar-card{
   width: 100%;
-  max-width: 520px;
-  background: #1f2937;
-  border: 1px solid #334155;
-  border-radius: 16px;
-  padding: 20px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  max-width: 680px;
+  background: var(--card-bg);         /* ← card azul grisáceo */
+  color: var(--text-on-dark);
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  padding: 22px 24px;
+  box-shadow: 0 10px 24px rgba(6, 24, 38, .25);
 }
 
-.cargar-title {
-  margin: 0;
+/* Título de la tarjeta con acento del sidebar */
+.cargar-title{
+  margin: 0 0 10px;
   font-size: 22px;
-  font-weight: 700;
+  font-weight: 800;
+  color: var(--text-on-dark);
+  letter-spacing: .2px;
 }
-
-.cargar-label {
+.cargar-title::after{
+  content: "";
   display: block;
-  margin-top: 16px;
-  margin-bottom: 8px;
+  width: 64px;
+  height: 3px;
+  margin-top: 8px;
+  border-radius: 999px;
+  background: var(--sidebar-accent);  /* subrayado celeste */
+}
+
+/* Labels e hints */
+.cargar-label{
+  display:block;
+  width: 100%;
+  max-width: 560px;
+  margin: 16px 0 8px;
+  color: var(--text-on-dark);
   font-size: 14px;
+  opacity: .95;
+}
+.cargar-hint{
+  width: 100%;
+  max-width: 560px;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--muted);
 }
 
-.cargar-input {
+/* Inputs armonizados */
+.cargar-input{
+  display:block;
   width: 100%;
-  padding: 10px;
+  max-width: 560px;
+  margin: 0;
+  padding: 10px 12px;
   border-radius: 10px;
-  border: 1px solid #3b4252;
-  background: #0b1220;
-  color: #fff;
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
+  color: var(--text-on-dark);
   outline: none;
+  box-sizing: border-box;
+}
+.cargar-input:focus{
+  border-color: var(--sidebar-accent);
+  box-shadow: 0 0 0 3px rgba(77,194,255,.25);
 }
 
-.cargar-btn {
-  margin-top: 16px;
+/* Botón con la paleta */
+.cargar-btn{
+  display:block;
   width: 100%;
-  padding: 10px 14px;
+  max-width: 560px;
+  margin: 16px 0 0;
+  padding: 12px 14px;
   border-radius: 12px;
   border: none;
-  background: #2563eb;
+  background: var(--btn);
   color: #fff;
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: .2px;
   cursor: pointer;
-  transition: background 0.2s ease;
+  box-shadow: var(--btn-shadow);
+  transition: transform .05s ease, background .15s ease, box-shadow .15s ease;
+}
+.cargar-btn:hover{
+  background: var(--btn-hover);
+  transform: translateY(-1px);
+}
+.cargar-btn:disabled{
+  opacity: .6;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
-.cargar-btn:hover {
-  background: #1d4ed8;
-}
-
-.cargar-hint {
-  margin-top: 8px;
-  font-size: 12px;
-  color: #9ca3af;
-}
-
-.cargar-filename {
+/* Nombre del archivo */
+.cargar-filename{
+  width: 100%;
+  max-width: 560px;
   margin-top: 10px;
   font-size: 13px;
-  color: #cbd5e1;
+  color: var(--muted);
+}
+
+/* Responsivo con el ancho de tu sidebar */
+@media (max-width: 1024px){
+  :root{ --sidebar-w: 220px; }
+}
+@media (max-width: 768px){
+  :root{ --sidebar-w: 70px; }
+  .cargar-card{ padding: 18px; }
+}
+@media (max-width: 480px){
+  :root{ --sidebar-w: 60px; }
 }

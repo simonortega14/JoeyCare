@@ -1,0 +1,71 @@
+.cargar-page {
+  min-height: 100vh;
+  padding: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  background: #0f1115; /* fondo oscuro */
+  color: #e5e7eb;
+}
+
+.cargar-card {
+  width: 100%;
+  max-width: 520px;
+  background: #1f2937;
+  border: 1px solid #334155;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+.cargar-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.cargar-label {
+  display: block;
+  margin-top: 16px;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.cargar-input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #3b4252;
+  background: #0b1220;
+  color: #fff;
+  outline: none;
+}
+
+.cargar-btn {
+  margin-top: 16px;
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: none;
+  background: #2563eb;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.cargar-btn:hover {
+  background: #1d4ed8;
+}
+
+.cargar-hint {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.cargar-filename {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #cbd5e1;
+}

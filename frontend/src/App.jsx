@@ -3,9 +3,11 @@ import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import LoginPage from "./features/auth/LoginPage";
 import ImageViewer from "./features/viewer/ImageViewer";
+import AppHeader from "./components/AppHeader";
 import Sidebar from "./components/AppSidebar"; 
 import MiPerfil from "./features/profile/ProfilePage"; 
 import BuscarPacientes from "./features/paciente/PacientePage"; 
+import CargarEcografia from "./features/cargar_ecografia/CargarEcografiaPage";
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -21,13 +23,15 @@ export default function App() {
 
   return (
     <Router>
-      <div className="flex">
+      <AppHeader />
+      <div style={{ display: "flex" }}>
         <Sidebar />
-        <div className="flex-1 p-4">
+        <div style={{ flex: 1 }}>
           <Routes>
             <Route path="/perfil" element={<MiPerfil />} />
             <Route path="/buscar-pacientes" element={<BuscarPacientes />} />
             <Route path="/visualizar-ecografias" element={<ImageViewer />} />
+            <Route path="/cargar-ecografias" element={<CargarEcografia />} />
           </Routes>
         </div>
       </div>

@@ -1,6 +1,5 @@
-// src/App.jsx
 import React, { useState } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "./features/auth/LoginPage";
 import ImageViewer from "./features/viewer/ImageViewer";
 import AppHeader from "./components/AppHeader";
@@ -8,6 +7,7 @@ import Sidebar from "./components/AppSidebar";
 import MiPerfil from "./features/profile/ProfilePage"; 
 import BuscarPacientes from "./features/paciente/PacientePage"; 
 import CargarEcografia from "./features/cargar_ecografia/CargarEcografiaPage";
+import VtkViewer from "./features/viewer/VtkViewer";
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -32,6 +32,9 @@ export default function App() {
             <Route path="/buscar-pacientes" element={<BuscarPacientes />} />
             <Route path="/visualizar-ecografias" element={<ImageViewer />} />
             <Route path="/cargar-ecografias" element={<CargarEcografia />} />
+            <Route path="/vtk-viewer" element={<VtkViewer />} />
+            {/* Redirección por defecto */}
+            <Route path="*" element={<Navigate to="/vtk-viewer" replace />} />
           </Routes>
         </div>
       </div>

@@ -7,7 +7,7 @@ import Sidebar from "./components/AppSidebar";
 import MiPerfil from "./features/profile/ProfilePage"; 
 import BuscarPacientes from "./features/paciente/PacientePage"; 
 import CargarEcografia from "./features/cargar_ecografia/CargarEcografiaPage";
-import VtkViewer from "./features/viewer/VtkViewer";
+import DashboardPage from "./features/dashboard/dashBoardPage";
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -32,9 +32,8 @@ export default function App() {
             <Route path="/buscar-pacientes" element={<BuscarPacientes />} />
             <Route path="/visualizar-ecografias" element={<ImageViewer />} />
             <Route path="/cargar-ecografias" element={<CargarEcografia />} />
-            <Route path="/vtk-viewer" element={<VtkViewer />} />
-            {/* Redirección por defecto */}
-            <Route path="*" element={<Navigate to="/vtk-viewer" replace />} />
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="*" element={<Navigate to="/visualizar-ecografias" replace />} />
           </Routes>
         </div>
       </div>

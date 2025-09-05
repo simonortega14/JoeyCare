@@ -10,7 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@kitware/vtk.js": "^34.10.0",
+    "@itk-wasm/image-io": "^1.6.0",
+    "@kitware/vtk.js": "^34.11.1",
     "cornerstone-core": "^2.6.1",
     "cornerstone-tools": "^6.0.10",
     "cornerstone-web-image-loader": "^2.1.1",

@@ -3,11 +3,12 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import LoginPage from "./features/auth/LoginPage";
 import ImageViewer from "./features/viewer/ImageViewer";
 import AppHeader from "./components/AppHeader";
-import Sidebar from "./components/AppSidebar"; 
-import MiPerfil from "./features/profile/ProfilePage"; 
-import BuscarPacientes from "./features/paciente/PacientePage"; 
+import Sidebar from "./components/AppSidebar";
+import MiPerfil from "./features/profile/ProfilePage";
+import BuscarPacientes from "./features/paciente/PacientePage";
 import CargarEcografia from "./features/cargar_ecografia/CargarEcografiaPage";
 import DashboardPage from "./features/dashboard/dashBoardPage";
+import "./App.css";
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -24,9 +25,9 @@ export default function App() {
   return (
     <Router>
       <AppHeader />
-      <div style={{ display: "flex" }}>
+      <div className="app-container">
         <Sidebar />
-        <div style={{ flex: 1 }}>
+        <div className="main-content">
           <Routes>
             <Route path="/perfil" element={<MiPerfil />} />
             <Route path="/buscar-pacientes" element={<BuscarPacientes />} />

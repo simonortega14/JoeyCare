@@ -1,301 +1,147 @@
 import React, { useState, useCallback } from 'react';
-import VtkDicomViewer from './VtkDicomViewer';
-import logoJoey from '../../assets/Logo Joey care.png';
+import PngVtkViewer from './PngVtkViewer';
 import './viewer.css';
 
-export default function ImageViewer() {
-  // Estados principales
-  const [zoom, setZoom] = useState(1);
-  const [brightness, setBrightness] = useState(100);
-  const [contrast, setContrast] = useState(100);
-  const [imagenIdx, setImagenIdx] = useState(1);
-  const [activeTool, setActiveTool] = useState('none');
-  const [dicomMetadata, setDicomMetadata] = useState(null);
-  const [measurements, setMeasurements] = useState([]);
-  const [showComparison, setShowComparison] = useState(false);
-  
-// Lista de archivos DICOM descargados
-const dicomFiles = [
-  { path: "/dicom/0001.dcm", name: "Imagen DICOM 001", type: "Estudio Médico" },
-  { path: "/dicom/0002.dcm", name: "Imagen DICOM 002", type: "Estudio Médico" },
-  { path: "/dicom/0003.dcm", name: "Imagen DICOM 003", type: "Estudio Médico" }
-];
+const ImageViewer = () => {
+  const [imageSettings, setImageSettings] = useState({
+    zoom: 1,
+    brightness: 100,
+    contrast: 100
+  });
+  const [activeTool, setActiveTool] = useState(null);
+  const [measurement, setMeasurement] = useState(null);
+  const [showSettings, setShowSettings] = useState(false);
 
-
-
-  const totalImgs = dicomFiles.length;
-  const currentFile = dicomFiles[imagenIdx - 1];
-
-  // Callback para recibir metadatos DICOM
-  const handleDicomMetadata = useCallback((metadata) => {
-    console.log("📊 Metadatos DICOM recibidos:", metadata);
-    setDicomMetadata(metadata);
+  const handleSettingsChange = useCallback((setting, value) => {
+    setImageSettings(prev => ({ ...prev, [setting]: value }));
   }, []);
 
-  // Callback para recibir mediciones
-  const handleMeasurement = useCallback((measurement) => {
-    console.log("📏 Nueva medición:", measurement);
-    setMeasurements(prev => [...prev, { 
-      ...measurement, 
-      imageIndex: imagenIdx,
-      imageName: currentFile.name,
-      id: Date.now()
-    }]);
-  }, [imagenIdx, currentFile]);
+  const handleToolSelect = useCallback((tool) => {
+    setActiveTool(prev => prev === tool ? null : tool);
+  }, []);
 
-  // Navegación entre imágenes
-  const goToPrevious = () => {
-    setImagenIdx(i => Math.max(1, i - 1));
-    setMeasurements([]); // Limpiar mediciones al cambiar imagen
-  };
+  const handleMeasurementUpdate = useCallback((newM) => {
+    setMeasurement(newM);
+  }, []);
 
-  const goToNext = () => {
-    setImagenIdx(i => Math.min(totalImgs, i + 1));
-    setMeasurements([]); // Limpiar mediciones al cambiar imagen
-  };
-
-  // Toggle comparación longitudinal
-  const toggleComparison = () => {
-    setShowComparison(!showComparison);
-    console.log("🔄 Modo comparación:", !showComparison ? 'ACTIVADO' : 'DESACTIVADO');
-  };
+  const handleImageError = useCallback((err) => {
+    console.error('Image loading error:', err);
+  }, []);
 
   return (
-    <div className="pacs-root-fullscreen">
-      {/* Header PACS médico */}
-      <header className="pacs-header-compact">
-        <div className="pacs-logorow">
-          <img src={logoJoey} alt="Logo Joey" className="pacs-logo" />
-          <span className="pacs-title">
-            🏥 PACS DICOM - Fundación Canguro
+    <div className="image-viewer-page">
+      <div className="viewer-header">
+        <h2 className="viewer-title">
+          🏥 Ecografías Transfontanelares - Fundación Canguro
+        </h2>
+        <div className="viewer-controls">
+          <div className="control-group">
+            <label htmlFor="zoom">🔍 Zoom:</label>
+            <input
+              id="zoom"
+              type="range"
+              min="0.5" max="5" step="0.1"
+              value={imageSettings.zoom}
+              onChange={e => handleSettingsChange('zoom', parseFloat(e.target.value))}
+            />
+            <span className="control-value">{Math.round(imageSettings.zoom*100)}%</span>
+          </div>
+          <div className="control-group">
+            <label htmlFor="brightness">☀️ Brillo:</label>
+            <input
+              id="brightness"
+              type="range"
+              min="50" max="200" step="5"
+              value={imageSettings.brightness}
+              onChange={e => handleSettingsChange('brightness', parseInt(e.target.value))}
+            />
+            <span className="control-value">{imageSettings.brightness}%</span>
+          </div>
+          <div className="control-group">
+            <label htmlFor="contrast">🌗 Contraste:</label>
+            <input
+              id="contrast"
+              type="range"
+              min="50" max="200" step="5"
+              value={imageSettings.contrast}
+              onChange={e => handleSettingsChange('contrast', parseInt(e.target.value))}
+            />
+            <span className="control-value">{imageSettings.contrast}%</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="medical-tools">
+        <div className="tools-group">
+          <span className="tools-title">🔧 Herramientas:</span>
+          <button
+            className={`tool-btn ${activeTool==='distance'? 'active':''}`}
+            onClick={()=>handleToolSelect('distance')}
+          >📏 Distancia</button>
+          <button
+            className={`tool-btn ${activeTool==='area'? 'active':''}`}
+            onClick={()=>handleToolSelect('area')}
+          >⬛ Área</button>
+          <button
+            className="tool-btn danger"
+            onClick={()=>handleToolSelect('clear')}
+          >🗑️ Limpiar</button>
+          <button
+            className="tool-btn settings"
+            onClick={()=>setShowSettings(!showSettings)}
+          >⚙️ Config</button>
+        </div>
+      </div>
+
+      <div className="viewer-container">
+        <PngVtkViewer
+          zoom={imageSettings.zoom}
+          brightness={imageSettings.brightness}
+          contrast={imageSettings.contrast}
+          activeTool={activeTool}
+          setMeasurement={handleMeasurementUpdate}
+          onError={handleImageError}
+        />
+      </div>
+
+      {measurement && (
+        <div className="measurement-panel">
+          <div className="measurement-card">
+            <h4>📊 Medición Activa</h4>
+            <div className="measurement-info">
+              <span className="measurement-type">
+                {measurement.type==='distance'?'📏 Distancia':'⬛ Área'}
+              </span>
+              <span className="measurement-value">
+                {measurement.value} {measurement.unit}
+              </span>
+              {measurement.width && measurement.height && (
+                <small className="measurement-dims">
+                  {measurement.width}mm × {measurement.height}mm
+                </small>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="viewer-status">
+        <div className="status-info">
+          <span className="status-label">🎯 Herramienta:</span>
+          <span className="status-value">
+            {activeTool ? (activeTool==='distance'?'📏 Medición':'⬛ Área') : '👆 Navegación'}
           </span>
         </div>
-        <div className="pacs-header-info">
-          <span className="pacs-study-info">
-            {dicomMetadata?.studyDescription || 'Ecografías Transfontanelares'}
-          </span>
-          <button className="pacs-btn pacs-comparison-btn" onClick={toggleComparison}>
-            📊 {showComparison ? 'Vista Simple' : 'Comparación Longitudinal'}
-          </button>
-          <button className="pacs-btn pacs-export">⭳ Exportar DICOM</button>
+        <div className="status-info">
+          <span className="status-label">📁 Imagen:</span>
+          <span className="status-value">🖼️ test.png</span>
         </div>
-      </header>
+      </div>
 
-      {/* Main layout */}
-      <main className="pacs-main-fullscreen">
-        <section className="pacs-viewport-fullscreen">
-          {/* Barra de información del estudio actual */}
-          <div className="pacs-study-bar">
-            <div className="pacs-study-left">
-              <span className="pacs-study-title">
-                📁 {currentFile.name} ({currentFile.type})
-              </span>
-              <span className="pacs-study-meta">
-                {dicomMetadata?.modality || 'DICOM'} • 
-                {dicomMetadata?.studyDate || new Date().toLocaleDateString()} • 
-                Imagen {imagenIdx}/{totalImgs}
-              </span>
-            </div>
-            <div className="pacs-study-right">
-              <span className="pacs-measurements-count">
-                📏 {measurements.length} mediciones
-              </span>
-            </div>
-          </div>
-
-          {/* Controles médicos y herramientas */}
-          <div className="pacs-tools-enhanced">
-            <div className="pacs-tools-left">
-              <span className="pacs-tools-title">
-                🔬 VTK.js Medical • {dicomMetadata?.manufacturerModelName || 'Equipo Médico'}
-              </span>
-            </div>
-            
-            {/* Herramientas de medición médica */}
-            <div className="pacs-tools-center">
-              <div className="pacs-drawing-tools">
-                <button 
-                  className={`pacs-tool-btn ${activeTool === 'line' ? 'active' : ''}`}
-                  onClick={() => setActiveTool(activeTool === 'line' ? 'none' : 'line')}
-                  title="Medir Distancia (mm)"
-                >
-                  📏 Distancia
-                </button>
-                <button 
-                  className={`pacs-tool-btn ${activeTool === 'rectangle' ? 'active' : ''}`}
-                  onClick={() => setActiveTool(activeTool === 'rectangle' ? 'none' : 'rectangle')}
-                  title="Medir Área (mm²)"
-                >
-                  ▭ Área
-                </button>
-                <button 
-                  className="pacs-tool-btn pacs-clear-btn"
-                  onClick={() => setActiveTool('clear')}
-                  title="Limpiar Todas las Mediciones"
-                >
-                  🗑️ Limpiar
-                </button>
-              </div>
-            </div>
-
-            {/* Controles médicos DICOM */}
-            <div className="pacs-tools-right">
-              <label className="pacs-control">
-                <span>Zoom:</span>
-                <input
-                  type="range"
-                  min="0.5"
-                  max="5"
-                  step="0.1"
-                  value={zoom}
-                  onChange={e => setZoom(parseFloat(e.target.value))}
-                />
-                <span className="pacs-value">{zoom.toFixed(1)}x</span>
-              </label>
-              
-              <label className="pacs-control">
-                <span>Window:</span>
-                <input
-                  type="range"
-                  min="50"
-                  max="400"
-                  value={brightness}
-                  onChange={e => setBrightness(parseInt(e.target.value))}
-                />
-                <span className="pacs-value">{brightness}</span>
-              </label>
-              
-              <label className="pacs-control">
-                <span>Level:</span>
-                <input
-                  type="range"
-                  min="0"
-                  max="200"
-                  value={contrast}
-                  onChange={e => setContrast(parseInt(e.target.value))}
-                />
-                <span className="pacs-value">{contrast}</span>
-              </label>
-            </div>
-          </div>
-
-          {/* Viewport DICOM */}
-          <div className={`pacs-viewport-container ${showComparison ? 'comparison-mode' : ''}`}>
-            <div className="pacs-vtk-container-main">
-              <VtkDicomViewer 
-                key={`dicom-${imagenIdx}`} // Force re-render on image change
-                dicomSource={currentFile.path}
-                controls={{ zoom, brightness, contrast }}
-                activeTool={activeTool}
-                onToolChange={setActiveTool}
-                onDicomMetadata={handleDicomMetadata}
-                onMeasurement={handleMeasurement}
-              />
-            </div>
-            
-            {/* Vista comparativa (para futura implementación) */}
-            {showComparison && (
-              <div className="pacs-comparison-panel">
-                <div className="pacs-comparison-placeholder">
-                  <h3>🔄 Comparación Longitudinal</h3>
-                  <p>📊 Vista comparativa de estudios previos</p>
-                  <p>🚧 En desarrollo para próxima versión</p>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Navegación y controles principales */}
-          <div className="pacs-nav-enhanced">
-            <div className="pacs-nav-controls">
-              <button
-                className="pacs-btn pacs-nav-btn"
-                onClick={goToPrevious}
-                disabled={imagenIdx <= 1}
-              >
-                ⬅ DICOM Anterior
-              </button>
-              
-              <div className="pacs-nav-info">
-                <span className="pacs-nav-current">
-                  DICOM {imagenIdx} de {totalImgs}
-                </span>
-                <span className="pacs-nav-details">
-                  {dicomMetadata?.studyDate && `📅 ${dicomMetadata.studyDate}`}
-                  {dicomMetadata?.seriesDescription && ` • ${dicomMetadata.seriesDescription}`}
-                </span>
-              </div>
-              
-              <button
-                className="pacs-btn pacs-nav-btn"
-                onClick={goToNext}
-                disabled={imagenIdx >= totalImgs}
-              >
-                Siguiente DICOM ➡
-              </button>
-            </div>
-            
-            <div className="pacs-nav-actions">
-              <button className="pacs-btn pacs-save-btn">
-                💾 Guardar Mediciones
-              </button>
-              <button className="pacs-btn pacs-print-btn">
-                🖨️ Imprimir Informe
-              </button>
-            </div>
-          </div>
-        </section>
-      </main>
-
-      {/* Panel inferior - Metadatos DICOM y mediciones */}
-      <footer className="pacs-info-panel-enhanced">
-        <div className="pacs-info-content">
-          {/* Información del paciente DICOM */}
-          <div className="pacs-info-card">
-            <h4>👤 Paciente DICOM</h4>
-            <div><strong>Nombre:</strong> {dicomMetadata?.patientName || 'Anónimo'}</div>
-            <div><strong>Estudio:</strong> {dicomMetadata?.studyDescription || 'N/A'}</div>
-            <div><strong>Fecha:</strong> {dicomMetadata?.studyDate || 'N/A'}</div>
-            <div><strong>Modalidad:</strong> {dicomMetadata?.modality || 'DICOM'}</div>
-          </div>
-          
-          {/* Equipo e institución */}
-          <div className="pacs-info-card">
-            <h4>🏥 Equipo Médico</h4>
-            <div><strong>Fabricante:</strong> {dicomMetadata?.manufacturerModelName || 'N/A'}</div>
-            <div><strong>Institución:</strong> {dicomMetadata?.institutionName || 'Fundación Canguro'}</div>
-            <div><strong>Serie:</strong> {dicomMetadata?.seriesDescription || 'Principal'}</div>
-            <div><strong>Comentarios:</strong> {dicomMetadata?.imageComments || 'Estudio médico'}</div>
-          </div>
-          
-          {/* Mediciones realizadas */}
-          <div className="pacs-info-card">
-            <h4>📏 Mediciones Actuales</h4>
-            {measurements.length === 0 ? (
-              <div className="pacs-no-measurements">
-                Sin mediciones • Use las herramientas de arriba
-              </div>
-            ) : (
-              measurements.map((measurement) => (
-                <div key={measurement.id} className="pacs-measurement-item">
-                  <strong>{measurement.type === 'distance' ? '📏' : '▭'} {measurement.type.charAt(0).toUpperCase() + measurement.type.slice(1)}:</strong> {' '}
-                  {measurement.value.toFixed(2)} {measurement.unit}
-                  {measurement.width && ` (${measurement.width.toFixed(1)}×${measurement.height.toFixed(1)})`}
-                </div>
-              ))
-            )}
-          </div>
-          
-          {/* Información técnica */}
-          <div className="pacs-info-card">
-            <h4>⚙️ Información Técnica</h4>
-            <div><strong>Archivo:</strong> {currentFile.name}</div>
-            <div><strong>Formato:</strong> DICOM (.dcm)</div>
-            <div><strong>Tipo:</strong> {currentFile.type}</div>
-            <div><strong>Rendering:</strong> VTK.js WebGL</div>
-          </div>
-        </div>
-      </footer>
+      {/* Modal configuración omitted for brevity */}
     </div>
   );
-}
+};
+
+export default ImageViewer;
+// Note: The image source is hardcoded to 'test.png' for demonstration purposes.

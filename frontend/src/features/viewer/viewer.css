@@ -1,653 +1,169 @@
-/* Reset y base */
-html, body, #root, .pacs-root-fullscreen {
-  height: 100vh;
-  width: 100vw;
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: "Segoe UI", "Roboto", "Inter", Arial, sans-serif;
-  background: #181a1b;
-  overflow: hidden;
+.image-viewer-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: linear-gradient(135deg, #f0f8ff 0%, #e6f3ff 100%);
 }
 
-/* Header médico mejorado */
-.pacs-header-compact {
+/* Header del visor */
+.viewer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
   background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 25px;
-  border-bottom: 2px solid #2196f3;
-  height: 55px;
-  min-height: 55px;
+  border-bottom: 3px solid #2196f3;
   box-shadow: 0 3px 10px rgba(33, 150, 243, 0.2);
-  z-index: 1000;
 }
 
-.pacs-logorow {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.pacs-logo {
-  height: 32px;
-  width: 32px;
-}
-
-.pacs-title {
+.viewer-title {
   font-size: 1.3rem;
-  color: #0d47a1;
   font-weight: 800;
-  letter-spacing: 0.02em;
+  color: #0d47a1;
+  margin: 0;
 }
 
-.pacs-header-info {
+.viewer-controls {
   display: flex;
-  align-items: center;
   gap: 15px;
+  flex-wrap: wrap;
 }
 
-.pacs-study-info {
-  font-size: 0.9rem;
-  color: #1565c0;
-  font-weight: 600;
-}
-
-.pacs-comparison-btn {
-  background: #4caf50 !important;
-  border: 2px solid #4caf50 !important;
-}
-
-.pacs-comparison-btn:hover {
-  background: #388e3c !important;
-}
-
-.pacs-btn {
-  background: #2196f3;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  padding: 8px 16px;
-  font-weight: 600;
-  cursor: pointer;
-  font-size: 0.85rem;
-  box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
-  transition: all 0.2s ease;
-  border: 2px solid transparent;
-}
-
-.pacs-btn:hover {
-  background: #1976d2;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
-}
-
-.pacs-btn:disabled {
-  background: #bdbdbd;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
-
-/* Main layout fullscreen */
-.pacs-main-fullscreen {
-  display: flex;
-  flex-direction: column;
-  height: calc(100vh - 145px);
-  width: 100vw;
-}
-
-/* Barra de información del estudio */
-.pacs-study-bar {
-  background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
-  padding: 8px 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid #ce93d8;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.pacs-study-left {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.pacs-study-title {
-  font-size: 1rem;
-  font-weight: 700;
-  color: #4a148c;
-}
-
-.pacs-study-meta {
-  font-size: 0.8rem;
-  color: #6a1b9a;
-  font-weight: 500;
-}
-
-.pacs-study-right {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #4a148c;
-}
-
-.pacs-measurements-count {
-  background: rgba(255, 255, 255, 0.8);
-  padding: 4px 8px;
-  border-radius: 12px;
-  border: 1px solid #ce93d8;
-}
-
-/* Viewport fullscreen */
-.pacs-viewport-fullscreen {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  background: #181a1b;
-  overflow: hidden;
-}
-
-/* Controles médicos mejorados */
-.pacs-tools-enhanced {
-  background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c8 100%);
-  padding: 12px 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 2px solid #4caf50;
-  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.2);
-  min-height: 60px;
-}
-
-.pacs-tools-left {
-  flex: 0 0 auto;
-}
-
-.pacs-tools-title {
-  font-size: 1rem;
-  font-weight: 700;
-  color: #1b5e20;
-}
-
-/* Herramientas de medición médica */
-.pacs-tools-center {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-}
-
-.pacs-drawing-tools {
-  display: flex;
-  gap: 10px;
-  background: rgba(255, 255, 255, 0.9);
-  padding: 8px 15px;
-  border-radius: 25px;
-  box-shadow: 0 3px 12px rgba(0,0,0,0.15);
-  border: 2px solid #4caf50;
-}
-
-.pacs-tool-btn {
-  background: #ffffff;
-  color: #2e7d32;
-  border: 2px solid #4caf50;
-  border-radius: 20px;
-  padding: 8px 14px;
-  font-weight: 700;
-  cursor: pointer;
-  font-size: 0.85rem;
-  transition: all 0.2s ease;
-  min-width: 80px;
-}
-
-.pacs-tool-btn:hover {
-  background: #4caf50;
-  color: white;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
-}
-
-.pacs-tool-btn.active {
-  background: #2e7d32;
-  color: white;
-  border-color: #2e7d32;
-  box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.3);
-}
-
-.pacs-clear-btn {
-  background: #f44336 !important;
-  border-color: #f44336 !important;
-  color: white !important;
-}
-
-.pacs-clear-btn:hover {
-  background: #d32f2f !important;
-}
-
-/* Controles médicos a la derecha */
-.pacs-tools-right {
-  display: flex;
-  gap: 20px;
-  align-items: center;
-}
-
-.pacs-control {
+.control-group {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-weight: 600;
-  color: #1b5e20;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 8px 12px;
+  border-radius: 20px;
+  border: 2px solid #90caf9;
   font-size: 0.85rem;
+  color: #1565c0;
 }
 
-.pacs-control input[type="range"] {
-  width: 75px;
-  cursor: pointer;
-  height: 6px;
+.control-group input[type="range"] {
+  width: 70px;
+  height: 5px;
+  background: #bbdefb;
   border-radius: 3px;
-  background: #c8e6c8;
-  outline: none;
-}
-
-.pacs-control input[type="range"]::-webkit-slider-thumb {
   appearance: none;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: #4caf50;
-  cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  -webkit-appearance: none;
+  -moz-appearance: none;
 }
 
-.pacs-value {
-  min-width: 45px;
-  text-align: right;
-  font-weight: 800;
-  color: #2e7d32;
-}
-
-/* Container de viewport con comparación */
-.pacs-viewport-container {
-  flex: 1;
-  display: flex;
-  margin: 15px;
-  gap: 15px;
-  overflow: hidden;
-}
-
-.pacs-viewport-container.comparison-mode .pacs-vtk-container-main {
-  flex: 0 0 60%;
-}
-
-.pacs-vtk-container-main {
-  flex: 1;
-  background: #101010;
-  border: 3px solid #2196f3;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 4px 20px rgba(33, 150, 243, 0.3);
-  position: relative;
-}
-
-.pacs-comparison-panel {
-  flex: 0 0 35%;
-  background: #1a1a1a;
-  border: 3px solid #ff9800;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-}
-
-.pacs-comparison-placeholder {
+.control-value {
+  min-width: 40px;
   text-align: center;
-  padding: 20px;
+  font-weight: 800;
+  color: #0d47a1;
 }
 
-.pacs-comparison-placeholder h3 {
-  color: #ff9800;
-  margin-bottom: 10px;
+/* Herramientas */
+.medical-tools {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c8 100%);
+  border-bottom: 2px solid #4caf50;
 }
 
-.pacs-comparison-placeholder p {
-  color: #cccccc;
-  margin: 5px 0;
+.tool-btn {
+  background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+  color: white;
+  padding: 8px 15px;
+  border-radius: 20px;
+  border: none;
+  font-weight: 700;
+  transition: transform 0.2s;
 }
 
-/* Navegación mejorada */
-.pacs-nav-enhanced {
+.tool-btn:hover {
+  transform: translateY(-2px);
+}
+
+.tool-btn.active {
+  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+}
+
+.tool-btn.danger {
+  background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+}
+
+/* Panel de mediciones */
+.measurement-panel {
   background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
   padding: 12px 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   border-top: 2px solid #ff9800;
-  box-shadow: 0 -2px 10px rgba(255, 152, 0, 0.2);
 }
 
-.pacs-nav-controls {
+.measurement-info {
   display: flex;
-  align-items: center;
-  gap: 20px;
+  gap: 12px;
 }
 
-.pacs-nav-btn {
-  background: #1976d2 !important;
-  padding: 8px 16px;
-  font-size: 0.9rem;
-}
-
-.pacs-nav-btn:hover {
-  background: #1565c0 !important;
-}
-
-.pacs-nav-info {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 0 20px;
-}
-
-.pacs-nav-current {
-  font-weight: 700;
-  color: #e65100;
-  font-size: 1rem;
-}
-
-.pacs-nav-details {
-  font-size: 0.8rem;
-  color: #f57c00;
-  font-weight: 500;
-}
-
-.pacs-nav-actions {
-  display: flex;
-  gap: 10px;
-}
-
-.pacs-save-btn {
-  background: #4caf50 !important;
-  padding: 8px 16px;
-}
-
-.pacs-save-btn:hover {
-  background: #388e3c !important;
-}
-
-.pacs-print-btn {
-  background: #9c27b0 !important;
-  padding: 8px 16px;
-}
-
-.pacs-print-btn:hover {
-  background: #7b1fa2 !important;
-}
-
-/* Panel de información médica mejorado */
-.pacs-info-panel-enhanced {
-  background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c8 100%);
-  border-top: 2px solid #4caf50;
-  height: 90px;
-  overflow-y: auto;
-  box-shadow: 0 -3px 15px rgba(76, 175, 80, 0.2);
-  z-index: 100;
-}
-
-.pacs-info-content {
-  display: flex;
-  gap: 15px;
-  padding: 12px 20px;
-  min-width: max-content;
-}
-
-.pacs-info-card {
-  background: #ffffff;
-  border-radius: 10px;
-  padding: 10px 15px;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-  border: 2px solid #e8f5e8;
-  min-width: 220px;
-  flex-shrink: 0;
-}
-
-.pacs-info-card h4 {
-  color: #2e7d32;
-  font-size: 0.9rem;
-  margin-bottom: 8px;
-  font-weight: 800;
-  border-bottom: 2px solid #4caf50;
-  padding-bottom: 4px;
-}
-
-.pacs-info-card div {
-  margin-bottom: 4px;
-  font-size: 0.8rem;
-  line-height: 1.4;
-}
-
-.pacs-info-card strong {
-  color: #2e7d32;
-  font-weight: 700;
-}
-
-.pacs-no-measurements {
-  color: #757575;
-  font-style: italic;
-}
-
-.pacs-measurement-item {
-  background: #f1f8e9;
-  padding: 6px;
-  border-radius: 6px;
-  margin-bottom: 4px;
-  border-left: 3px solid #4caf50;
-}
-
-/* VTK Container */
-.vtk-container {
-  width: 100% !important;
-  height: 100% !important;
-  background: transparent !important;
-  position: relative;
-  overflow: hidden;
-  cursor: grab;
-}
-
-.vtk-container:active {
-  cursor: grabbing;
-}
-
-/* Estados de carga y error */
-.vtk-loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
+.measurement-type {
+  background: #ff9800;
   color: white;
-  font-size: 1.1rem;
+  padding: 4px 12px;
+  border-radius: 15px;
+}
+
+.measurement-value {
+  font-weight: 800;
+  color: #e65100;
+}
+
+.viewer-status {
+  display: flex;
+  justify-content: center;
   gap: 15px;
+  padding: 10px 20px;
+  background: rgba(33, 150, 243, 0.05);
+  border-top: 1px solid #e3f2fd;
 }
 
-.vtk-spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid #333;
-  border-top: 4px solid #2196f3;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
+.status-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: white;
+  padding: 6px 12px;
+  border-radius: 15px;
+  border: 1px solid #90caf9;
+  font-size: 0.8rem;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+/* VTK wrapper */
+.vtk-container-wrapper {
+  display: flex;
+  flex: 1;
 }
 
+.vtk-container {
+  flex: 1;
+}
+
+/* Loading/Error */
+.vtk-loading,
 .vtk-error {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #f44336;
-  font-size: 1rem;
-  gap: 10px;
-  text-align: center;
-  padding: 20px;
+  color: white;
 }
 
-.vtk-error small {
-  color: #999;
-  font-size: 0.8rem;
+.vtk-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #333;
+  border-top: 4px solid #4caf50;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 }
 
-/* Scrollbars personalizados */
-.pacs-info-panel-enhanced::-webkit-scrollbar {
-  height: 6px;
-}
-
-.pacs-info-panel-enhanced::-webkit-scrollbar-track {
-  background: #e8f5e8;
-}
-
-.pacs-info-panel-enhanced::-webkit-scrollbar-thumb {
-  background: #4caf50;
-  border-radius: 3px;
-}
-
-.pacs-info-panel-enhanced::-webkit-scrollbar-thumb:hover {
-  background: #388e3c;
-}
-
-/* Responsive design */
-@media (max-width: 1400px) {
-  .pacs-tools-enhanced {
-    flex-wrap: wrap;
-    gap: 10px;
-    min-height: 80px;
-  }
-  
-  .pacs-drawing-tools {
-    gap: 8px;
-  }
-  
-  .pacs-tool-btn {
-    padding: 6px 10px;
-    font-size: 0.8rem;
-    min-width: 70px;
-  }
-}
-
-@media (max-width: 1024px) {
-  .pacs-main-fullscreen {
-    height: calc(100vh - 160px);
-  }
-  
-  .pacs-info-panel-enhanced {
-    height: 110px;
-  }
-  
-  .pacs-viewport-container.comparison-mode {
-    flex-direction: column;
-  }
-  
-  .pacs-viewport-container.comparison-mode .pacs-vtk-container-main {
-    flex: 1;
-  }
-  
-  .pacs-comparison-panel {
-    flex: 0 0 200px;
-  }
-  
-  .pacs-nav-enhanced {
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-  
-  .pacs-info-content {
-    gap: 10px;
-  }
-  
-  .pacs-info-card {
-    min-width: 200px;
-  }
-}
-
-@media (max-width: 768px) {
-  .pacs-header-compact {
-    flex-direction: column;
-    height: auto;
-    min-height: 70px;
-    gap: 8px;
-  }
-  
-  .pacs-header-info {
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-  
-  .pacs-tools-enhanced {
-    flex-direction: column;
-    gap: 10px;
-    min-height: 120px;
-  }
-  
-  .pacs-drawing-tools {
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-  
-  .pacs-nav-enhanced {
-    flex-direction: column;
-    gap: 10px;
-  }
-  
-  .pacs-nav-controls {
-    gap: 15px;
-  }
-  
-  .pacs-nav-actions {
-    justify-content: center;
-  }
-}
-
-/* Animaciones médicas */
-@keyframes fadeInMedical {
-  from { 
-    opacity: 0; 
-    transform: translateY(15px); 
-  }
-  to { 
-    opacity: 1; 
-    transform: translateY(0); 
-  }
-}
-
-.pacs-vtk-container-main {
-  animation: fadeInMedical 0.4s ease-out;
-}
-
-.pacs-info-card {
-  animation: fadeInMedical 0.3s ease-out;
-}
-
-/* Modo de impresión */
-@media print {
-  .pacs-header-compact,
-  .pacs-nav-enhanced,
-  .pacs-info-panel-enhanced {
-    display: none;
-  }
-  
-  .pacs-main-fullscreen {
-    height: 100vh;
-  }
-  
-  .pacs-tools-enhanced {
-    background: white !important;
-    color: black !important;
-  }
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }

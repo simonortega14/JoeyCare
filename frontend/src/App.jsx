@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "./features/auth/LoginPage";
-import ImageViewer from "./features/viewer/ImageViewer";
+import VtkViewer from "./features/viewer/VtkViewer"; 
 import AppHeader from "./components/AppHeader";
 import Sidebar from "./components/AppSidebar";
 import MiPerfil from "./features/profile/ProfilePage";
@@ -31,7 +31,7 @@ export default function App() {
           <Routes>
             <Route path="/perfil" element={<MiPerfil />} />
             <Route path="/buscar-pacientes" element={<BuscarPacientes />} />
-            <Route path="/visualizar-ecografias" element={<ImageViewer />} />
+            <Route path="/visualizar-ecografias" element={<VtkViewer />} /> {/* 👈 Aquí el cambio */}
             <Route path="/cargar-ecografias" element={<CargarEcografia />} />
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="*" element={<Navigate to="/visualizar-ecografias" replace />} />

@@ -8,30 +8,55 @@ import MiPerfil from "./features/profile/ProfilePage";
 import BuscarPacientes from "./features/paciente/PacientePage";
 import CargarEcografia from "./features/cargar_ecografia/CargarEcografiaPage";
 import DashboardPage from "./features/dashboard/dashBoardPage";
+import RegisterPage from "./features/auth/RegisterPage";
 import "./App.css";
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState(null);
 
   async function handleLogin(form) {
-    form.username = form.username.trim().toLowerCase();
-    setIsLoggedIn(true);
+    try {
+      const response = await fetch("http://localhost:4000/api/doctores/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: form.username, password: form.password }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Credenciales inválidas");
+      }
+
+      const userData = await response.json();
+      setUser(userData);
+      setIsLoggedIn(true);
+      localStorage.setItem("user", JSON.stringify(userData)); // guarda la sesión
+    } catch (error) {
+      alert(error.message || "Error en el inicio de sesión");
+    }
   }
 
   if (!isLoggedIn) {
-    return <LoginPage onSubmit={handleLogin} />;
+    return (
+      <Router>
+        <Routes>
+          <Route path="/" element={<LoginPage onSubmit={handleLogin} />} />
+          <Route path="/register" element={<RegisterPage />} /> 
+        </Routes>
+      </Router>
+    );
   }
 
   return (
     <Router>
-      <AppHeader />
+      <AppHeader user={user} />
       <div className="app-container">
         <Sidebar />
         <div className="main-content">
           <Routes>
-            <Route path="/perfil" element={<MiPerfil />} />
+            <Route path="/perfil" element={<MiPerfil user={user} />} />
             <Route path="/buscar-pacientes" element={<BuscarPacientes />} />
-            <Route path="/visualizar-ecografias" element={<VtkViewer />} /> {/* 👈 Aquí el cambio */}
+            <Route path="/visualizar-ecografias" element={<VtkViewer />} /> 
             <Route path="/cargar-ecografias" element={<CargarEcografia />} />
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="*" element={<Navigate to="/visualizar-ecografias" replace />} />

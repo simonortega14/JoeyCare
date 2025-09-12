@@ -1,7 +1,14 @@
-import React, { useState } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+  Outlet,
+} from "react-router-dom";
+
 import LoginPage from "./features/auth/LoginPage";
-import VtkViewer from "./features/viewer/VtkViewer"; 
+import VtkViewer from "./features/viewer/VtkViewer";
 import AppHeader from "./components/AppHeader";
 import Sidebar from "./components/AppSidebar";
 import MiPerfil from "./features/profile/ProfilePage";
@@ -9,11 +16,27 @@ import BuscarPacientes from "./features/paciente/PacientePage";
 import CargarEcografia from "./features/cargar_ecografia/CargarEcografiaPage";
 import DashboardPage from "./features/dashboard/dashBoardPage";
 import RegisterPage from "./features/auth/RegisterPage";
+import CompareImages from "./features/compare/CompareImages";
+
 import "./App.css";
 
 export default function App() {
+  // Estado de sesión
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
+
+  // Al montar, intentar recuperar sesión desde localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("user");
+      if (saved) {
+        setUser(JSON.parse(saved));
+        setIsLoggedIn(true);
+      }
+    } catch (e) {
+      console.warn("No se pudo leer la sesión del localStorage", e);
+    }
+  }, []);
 
   async function handleLogin(form) {
     try {
@@ -30,39 +53,74 @@ export default function App() {
       const userData = await response.json();
       setUser(userData);
       setIsLoggedIn(true);
-      localStorage.setItem("user", JSON.stringify(userData)); // guarda la sesión
+      localStorage.setItem("user", JSON.stringify(userData));
     } catch (error) {
       alert(error.message || "Error en el inicio de sesión");
     }
   }
 
-  if (!isLoggedIn) {
+  // Componente que protege rutas privadas
+  function RequireAuth({ children }) {
+    if (!isLoggedIn) {
+      return <Navigate to="/" replace />;
+    }
+    return children;
+  }
+
+  // Layout para la parte autenticada (header + sidebar + outlet)
+  function AuthLayout() {
     return (
-      <Router>
-        <Routes>
-          <Route path="/" element={<LoginPage onSubmit={handleLogin} />} />
-          <Route path="/register" element={<RegisterPage />} /> 
-        </Routes>
-      </Router>
+      <>
+        <AppHeader user={user} />
+        <div className="app-container">
+          <Sidebar />
+          <div className="main-content">
+            <Outlet />
+          </div>
+        </div>
+      </>
     );
   }
 
   return (
     <Router>
-      <AppHeader user={user} />
-      <div className="app-container">
-        <Sidebar />
-        <div className="main-content">
-          <Routes>
-            <Route path="/perfil" element={<MiPerfil user={user} />} />
-            <Route path="/buscar-pacientes" element={<BuscarPacientes />} />
-            <Route path="/visualizar-ecografias" element={<VtkViewer />} /> 
-            <Route path="/cargar-ecografias" element={<CargarEcografia />} />
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="*" element={<Navigate to="/visualizar-ecografias" replace />} />
-          </Routes>
-        </div>
-      </div>
+      <Routes>
+        {/* Rutas públicas */}
+        <Route path="/" element={<LoginPage onSubmit={handleLogin} />} />
+        <Route path="/register" element={<RegisterPage />} />
+
+        {/* Rutas privadas: montadas bajo AuthLayout y protegidas */}
+        <Route
+          path="/"
+          element={
+            <RequireAuth>
+              <AuthLayout />
+            </RequireAuth>
+          }
+        >
+          <Route path="perfil" element={<MiPerfil user={user} />} />
+          <Route path="buscar-pacientes" element={<BuscarPacientes />} />
+          <Route path="visualizar-ecografias" element={<VtkViewer />} />
+          <Route
+            path="visualizar-ecografias/comparar"
+            element={<CompareImages />}
+          />
+          <Route path="cargar-ecografias" element={<CargarEcografia />} />
+          <Route path="dashboard" element={<DashboardPage />} />
+        </Route>
+
+        {/* Fallback */}
+        <Route
+          path="*"
+          element={
+            isLoggedIn ? (
+              <Navigate to="/visualizar-ecografias" replace />
+            ) : (
+              <Navigate to="/" replace />
+            )
+          }
+        />
+      </Routes>
     </Router>
   );
 }

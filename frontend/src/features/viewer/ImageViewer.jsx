@@ -1,8 +1,10 @@
 import React, { useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';   // ⬅️ IMPORTANTE
 import PngVtkViewer from './PngVtkViewer';
 import './viewer.css';
 
 const ImageViewer = () => {
+  const navigate = useNavigate(); // ⬅️ HOOK PARA NAVEGAR
   const [imageSettings, setImageSettings] = useState({
     zoom: 1,
     brightness: 100,
@@ -137,8 +139,17 @@ const ImageViewer = () => {
           <span className="status-value">🖼️ test.png</span>
         </div>
       </div>
-
-      {/* Modal configuración omitted for brevity */}
+      
+      {/* 🔥 NUEVO BOTÓN PARA COMPARACIÓN */}
+      <div style={{ display: "flex", justifyContent: "center", margin: "15px 0" }}>
+        <button
+          className="tool-btn"
+          style={{ background: "linear-gradient(135deg,#ff9800 0%,#f57c00 100%)" }}
+          onClick={() => navigate("/compare")}
+        >
+          🆚 Comparar Imágenes
+        </button>
+      </div>
     </div>
   );
 };

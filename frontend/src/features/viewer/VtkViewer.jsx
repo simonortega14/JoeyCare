@@ -1,5 +1,6 @@
 import { useRef, useEffect } from "react";
-import "@kitware/vtk.js/Rendering/Profiles/All"; // importante para ImageMapper
+import { useNavigate } from "react-router-dom"; // 👈 Agregado
+import "@kitware/vtk.js/Rendering/Profiles/All";
 import vtkFullScreenRenderWindow from "@kitware/vtk.js/Rendering/Misc/FullScreenRenderWindow";
 import vtkImageMapper from "@kitware/vtk.js/Rendering/Core/ImageMapper";
 import vtkImageSlice from "@kitware/vtk.js/Rendering/Core/ImageSlice";
@@ -9,6 +10,7 @@ import vtkImageData from "@kitware/vtk.js/Common/DataModel/ImageData";
 function VtkViewer() {
   const vtkContainerRef = useRef(null);
   const context = useRef(null);
+  const navigate = useNavigate(); // 👈 Hook de navegación
 
   useEffect(() => {
     if (!context.current) {
@@ -19,12 +21,9 @@ function VtkViewer() {
       const renderer = fullScreenRenderer.getRenderer();
       const renderWindow = fullScreenRenderer.getRenderWindow();
 
-      // ----- Cargar la imagen -----
       const img = new Image();
-      img.src = "/test.png"; // debe estar en /public/test.png
+      img.src = "/test.png";
       img.onload = () => {
-        console.log("Imagen cargada:", img.width, "x", img.height);
-
         const canvas = document.createElement("canvas");
         canvas.width = img.width;
         canvas.height = img.height;
@@ -32,13 +31,11 @@ function VtkViewer() {
         ctx.drawImage(img, 0, 0);
 
         const pixels = ctx.getImageData(0, 0, img.width, img.height).data;
-
-        // Convertir a RGB (sin alpha)
         const rgbPixels = new Uint8Array(img.width * img.height * 3);
         for (let i = 0; i < img.width * img.height; i++) {
-          rgbPixels[i * 3] = pixels[i * 4];       // R
-          rgbPixels[i * 3 + 1] = pixels[i * 4+1]; // G
-          rgbPixels[i * 3 + 2] = pixels[i * 4+2]; // B
+          rgbPixels[i * 3] = pixels[i * 4];
+          rgbPixels[i * 3 + 1] = pixels[i * 4 + 1];
+          rgbPixels[i * 3 + 2] = pixels[i * 4 + 2];
         }
 
         const image = vtkImageData.newInstance();
@@ -78,7 +75,29 @@ function VtkViewer() {
   }, []);
 
   return (
-    <div ref={vtkContainerRef} style={{ width: "100%", height: "100vh", background: "black" }} />
+    <div style={{ width: "100%", height: "100vh", background: "#2f3241", position: "relative" }}>
+      {/* 🔘 Botón flotante para ir a comparar imágenes */}
+      <button
+        onClick={() => navigate("/visualizar-ecografias/comparar")}
+        style={{
+          position: "absolute",
+          top: "15px",
+          right: "15px",
+          zIndex: 9999,
+          backgroundColor: "#007bff",
+          color: "white",
+          border: "none",
+          borderRadius: "8px",
+          padding: "8px 14px",
+          cursor: "pointer",
+          boxShadow: "0px 2px 6px rgba(0,0,0,0.3)",
+        }}
+      >
+        Comparar Imágenes
+      </button>
+      {/* Contenedor de VTK */}
+      <div ref={vtkContainerRef} style={{ width: "100%", height: "100%" }} />
+    </div>
   );
 }
 

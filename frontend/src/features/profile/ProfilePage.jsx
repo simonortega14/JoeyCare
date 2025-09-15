@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import MarcaDeAgua from '../../assets/Marca De Agua.png';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import logoPerfil from '../../assets/logo perfil.png';
 import logoPacientes from '../../assets/logo pacientes.png';
 import AppHeader from '../../components/AppHeader.jsx';
@@ -7,27 +7,37 @@ import AppSidebar from '../../components/AppSidebar.jsx';
 import './profile.css';
 
 const ProfilePage = ({ onOpenSettings }) => {
+  const navigate = useNavigate();
+
   // Datos de ejemplo para pacientes revisados
   const pacientesRevisados = [
-    { nombre: "Bebé García", id: "123", peso: "2.4 kg", edad: "32 semanas" },
-    { nombre: "Bebé Rodríguez", id: "456", peso: "2.1 kg", edad: "28 semanas" },
-    { nombre: "Bebé López", id: "789", peso: "2.6 kg", edad: "30 semanas" },
-    { nombre: "Bebé Martínez", id: "012", peso: "2.3 kg", edad: "31 semanas" },
-    { nombre: "Bebé González", id: "345", peso: "2.5 kg", edad: "33 semanas" }
+    { nombre: "Bebé García", id: "BG-123", peso: "2.4 kg", edad: "32 semanas" },
+    { nombre: "Bebé Rodríguez", id: "BR-456", peso: "2.1 kg", edad: "28 semanas" },
+    { nombre: "Bebé López", id: "BL-789", peso: "2.6 kg", edad: "30 semanas" },
+    { nombre: "Bebé Martínez", id: "BM-012", peso: "2.3 kg", edad: "31 semanas" },
+    { nombre: "Bebé González", id: "BG-345", peso: "2.5 kg", edad: "33 semanas" }
   ];
 
+  // Función para manejar el clic en "Ver detalles"
+  const handleViewDetails = (pacienteId) => {
+    navigate(`/paciente/${pacienteId}`);
+  };
+
   return (
-    <div className="page-container">
+    <div className="profile-container">
       <AppHeader onOpenSettings={onOpenSettings} />
       <AppSidebar activeItem="Mi perfil" />
+      
       <div className="profile-content">
         {/* Contenedor de información del perfil */}
         <div className="profile-info-card">
           <div className="profile-info-content">
-            <img src={logoPerfil} alt="Perfil" className="profile-logo" />
+            <div className="profile-image-container">
+              <img src={logoPerfil} alt="Perfil" className="profile-logo" />
+            </div>
             <div className="profile-info-text">
               <h1>Nombre Apellido</h1>
-              <p>Sede en la que labora</p>
+              <p><strong>Sede en la que labora</strong></p>
             </div>
           </div>
         </div>
@@ -45,12 +55,18 @@ const ProfilePage = ({ onOpenSettings }) => {
           <div className="patients-grid">
             {pacientesRevisados.map((paciente, index) => (
               <div key={index} className="patient-item-card">
-                <img src={logoPacientes} alt="Paciente" className="patient-logo" />
+                <div className="patient-image-container">
+                  <img src={logoPacientes} alt="Paciente" className="patient-logo" />
+                </div>
                 <div className="patient-info">
-                  <div className="patient-name-id">{paciente.nombre}</div>
-                  <div className="patient-name-id">{paciente.id}</div>
-                  <div className="patient-details">{paciente.peso}</div>
-                  <div className="patient-details">{paciente.edad}</div>
+                  <div className="patient-name-id">{paciente.nombre} {paciente.id}</div>
+                  <div className="patient-details">{paciente.peso} {paciente.edad}</div>
+                  <button 
+                    className="view-paciente-btn"
+                    onClick={() => handleViewDetails(paciente.id)}
+                  >
+                    Ver detalles
+                  </button>
                 </div>
               </div>
             ))}

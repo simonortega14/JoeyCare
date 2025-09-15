@@ -1,148 +1,139 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import "./CargarEcografia.css";
+import React, { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import AppHeader from '../../components/AppHeader';
+import AppSidebar from '../../components/AppSidebar';
+import './CargarEcografia.css';
 
-const FAKE_PATIENTS = [
-  { id: "123", nombre: "Bebé García" },
-  { id: "456", nombre: "Bebé Rodríguez" },
-  { id: "789", nombre: "Bebé López" },
-  { id: "012", nombre: "Bebé Martínez" },
-  { id: "345", nombre: "Bebé González" },
-];
+const CargarEcografiaPage = ({ onOpenSettings }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Obtener datos del paciente desde la navegación
+  const { paciente } = location.state || {};
+  const pacienteNombre = paciente?.nombre || 'Paciente no especificado';
+  const pacienteId = paciente?.id || 'ID no disponible';
 
-const CargarEcografiaPage = () => {
-  const [file, setFile] = useState(null);
-  const [query, setQuery] = useState("");           // texto de búsqueda
-  const [patient, setPatient] = useState(null);     // paciente seleccionado
-  const [openList, setOpenList] = useState(false);  // controla dropdown
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const listRef = useRef(null);
+  const [formData, setFormData] = useState({
+    fecha: '',
+    observaciones: '',
+    archivo: null
+  });
+  const [uploadProgress, setUploadProgress] = useState(0);
 
-  // Filtrar pacientes por id o nombre
-  const suggestions = useMemo(() => {
-    if (!query.trim()) return [];
-    const q = query.toLowerCase();
-    return FAKE_PATIENTS.filter(
-      (p) => p.id.toLowerCase().includes(q) || p.nombre.toLowerCase().includes(q)
-    ).slice(0, 6);
-  }, [query]);
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
 
-  // Cerrar lista si se hace click fuera
-  useEffect(() => {
-    function handleClickOutside(e) {
-      if (listRef.current && !listRef.current.contains(e.target)) {
-        setOpenList(false);
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFormData(prev => ({ ...prev, archivo: file }));
+      simulateUpload();
+    }
+  };
+
+  const simulateUpload = () => {
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += 10;
+      setUploadProgress(progress);
+      if (progress >= 100) {
+        clearInterval(interval);
       }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    }, 200);
+  };
 
-  const handleChangeFile = (e) => setFile(e.target.files[0]);
-
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    if (!patient) return alert("Selecciona primero un paciente");
-    if (!file)    return alert("Por favor selecciona un archivo primero");
-
-    try {
-      setIsSubmitting(true);
-      // Ejemplo de envío al backend:
-      // const fd = new FormData();
-      // fd.append("patientId", patient.id);
-      // fd.append("ecografia", file);
-      // const res = await fetch("/api/dicom/upload", { method: "POST", body: fd });
-      // const json = await res.json();
-      // if (!res.ok) throw new Error(json?.message || "Error al subir");
-      alert(`Subida lista: paciente ${patient.id} • archivo ${file.name}`);
-      setFile(null); // limpiar
-    } catch (err) {
-      alert(err.message || "Error inesperado al subir");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handlePick = (p) => {
-    setPatient(p);
-    setQuery(`${p.id} — ${p.nombre}`);
-    setOpenList(false);
-  };
-
-  const resetPatient = () => {
-    setPatient(null);
-    setQuery("");
+    const datosCompletos = {
+      ...formData,
+      pacienteNombre,
+      pacienteId,
+      tipo: 'cerebral' 
+    };
+    console.log('Datos a enviar:', datosCompletos);
+    navigate('/buscar-pacientes');
   };
 
   return (
-    <div className="cargar-page">
-      <div className="cargar-card">
-        <h2 className="cargar-title">Cargar Ecografía</h2>
-
-        {/* Selección de Paciente */}
-        <div className="campo">
-          <label className="cargar-label">Paciente</label>
-          <div className="patient-picker" ref={listRef}>
-            <input
-              className="cargar-input"
-              placeholder="Buscar por ID o nombre (ej: 123 o García)"
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
-                setPatient(null);
-                setOpenList(true);
-              }}
-              onFocus={() => setOpenList(true)}
-              disabled={!!patient} // si ya está seleccionado, bloquea el input
-            />
-            {patient ? (
-              <button type="button" className="mini-btn" onClick={resetPatient} title="Cambiar paciente">
-                Cambiar
-              </button>
-            ) : null}
-
-            {/* Lista de sugerencias */}
-            {openList && suggestions.length > 0 && !patient && (
-              <ul className="patient-list">
-                {suggestions.map((p) => (
-                  <li key={p.id} className="patient-item" onClick={() => handlePick(p)}>
-                    <span className="patient-id">{p.id}</span>
-                    <span className="patient-name">{p.nombre}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
+    <div className="cargar-container">
+      <AppHeader onOpenSettings={onOpenSettings} />
+      <AppSidebar activeItem="Cargar Ecografías" />
+      
+      <div className="cargar-content">
+        <div className="cargar-card">
+          <h1 className="cargar-title">Cargar nueva ecografía</h1>
+          
+          {/* Información del paciente */}
+          <div className="patient-info-header">
+            <h3 className="patient-name">{pacienteNombre}</h3>
+            <p className="patient-id">ID: {pacienteId}</p>
           </div>
-          {!patient && <div className="cargar-hint">Selecciona un paciente para habilitar la carga.</div>}
-          {patient && (
-            <div className="pill-ok">
-              Paciente seleccionado: <strong>{patient.id}</strong> — {patient.nombre}
+          
+          <form className="cargar-form" onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label className="cargar-label">Fecha del estudio</label>
+              <input
+                type="date"
+                className="cargar-input"
+                name="fecha"
+                value={formData.fecha}
+                onChange={handleInputChange}
+                required
+              />
             </div>
-          )}
+
+            <div className="form-group">
+              <label className="cargar-label">Observaciones</label>
+              <textarea
+                className="cargar-input"
+                name="observaciones"
+                value={formData.observaciones}
+                onChange={handleInputChange}
+                rows="4"
+                placeholder="Agregar observaciones relevantes del estudio..."
+              />
+              <span className="cargar-hint">Opcional</span>
+            </div>
+
+            <div className="form-group">
+              <label className="cargar-label">Archivo de ecografía </label>
+              <div className="file-upload-area">
+                <div className="upload-icon">📁</div>
+                <div className="upload-text">Arrastra y suelta el archivo DICOM aquí</div>
+                <div className="upload-subtext">o</div>
+                <input
+                  type="file"
+                  onChange={handleFileUpload}
+                  accept=".dcm,.dicom"
+                  style={{ display: 'none' }}
+                  id="file-input"
+                />
+                <label htmlFor="file-input" className="cargar-btn">
+                  Seleccionar archivo DICOM
+                </label>
+              </div>
+              {formData.archivo && (
+                <div className="cargar-filename">
+                  📄 {formData.archivo.name}
+                  {uploadProgress > 0 && uploadProgress < 100 && (
+                    <div className="upload-progress">
+                      <div 
+                        className="progress-bar" 
+                        style={{ width: `${uploadProgress}%` }}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <button type="submit" className="cargar-btn cargar-btn-primary">
+              ⬆️ Subir ecografía 
+            </button>
+          </form>
         </div>
-
-        {/* Formulario de carga */}
-        <form onSubmit={handleSubmit}>
-          <label className="cargar-label">Archivo (.dcm, .dicom o .zip)</label>
-          <input
-            className="cargar-input"
-            type="file"
-            accept=".dcm,.dicom,.zip"
-            onChange={handleChangeFile}
-            disabled={!patient}  // bloquea hasta elegir paciente
-          />
-          <div className="cargar-hint">Tamaño recomendado &lt; 1 GB.</div>
-
-          <button
-            type="submit"
-            className="cargar-btn"
-            disabled={!patient || !file || isSubmitting}
-            title={!patient ? "Selecciona un paciente" : (!file ? "Selecciona un archivo" : "Subir")}
-          >
-            {isSubmitting ? "Subiendo..." : "Subir"}
-          </button>
-        </form>
-
-        {file && <div className="cargar-filename">Seleccionado: {file.name}</div>}
       </div>
     </div>
   );

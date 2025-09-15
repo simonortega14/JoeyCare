@@ -17,7 +17,7 @@ const ProfilePage = ({ onOpenSettings }) => {
   ];
 
   return (
-    <div className="profile-container">
+    <div className="page-container">
       <AppHeader onOpenSettings={onOpenSettings} />
       <AppSidebar activeItem="Mi perfil" />
       <div className="profile-content">

@@ -1,63 +1,96 @@
-:root {
+/* Reset básico */
+* {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-/* Layout principal */
-.app-container {
-  display: flex;
-  height: 100vh;
-  width: 100vw;
-  overflow: hidden;
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  overflow-x: hidden;
 }
 
-/* Sidebar fijo */
-.sidebar {
-  width: 250px;
-  background: #2c3e50;
-  color: white;
+/* Layout principal para toda la aplicación */
+.app-container {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  background-color: #F5FFFF;
+}
+
+/* Header fijo */
+.jc-header {
   position: fixed;
-  height: 100vh;
   top: 0;
   left: 0;
+  right: 0;
+  height: 70px;
   z-index: 1000;
 }
 
-/* Resto del contenido */
+/* Contenedor principal que evita el header y sidebar */
 .main-content {
-  margin-left: 250px;
-  display: flex;
-  flex-direction: column;
   flex: 1;
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
+  margin-left: 249px; /* Ancho del sidebar */
+  padding-top: 70px; /* Altura del header */
+  background-color: #F5FFFF;
+  overflow-y: auto;
 }
 
-/* Header */
-.header {
-  height: 60px;
-  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-  display: flex;
-  align-items: center;
-  padding: 0 20px;
-  font-size: 1.2rem;
-  color: #0d47a1;
-  box-shadow: 0 2px 5px rgba(33, 150, 243, 0.3);
+/* Asegurar que todas las páginas ocupen el espacio completo */
+.page-container {
+  width: 100%;
+  min-height: calc(100vh - 70px);
+  padding: 20px;
 }
 
-/* Contenedor del visor */
+/* Estilos específicos para el visor VTK (mantener estos) */
 .viewer-container {
   flex: 1;
   display: flex;
   position: relative;
   background: #181a1b;
   overflow: hidden;
+  height: calc(100vh - 70px);
 }
 
-/* Canvas VTK */
 .vtk-container {
   flex: 1;
   background-color: #222 !important;
 }
-/* Visor de imágenes */
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .main-content {
+    margin-left: 220px;
+    padding: 15px;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0;
+    padding: 15px;
+  }
+  
+  .app-sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+  
+  .app-sidebar.open {
+    transform: translateX(0);
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: 10px;
+  }
+  
+  .page-container {
+    padding: 15px;
+  }
+}

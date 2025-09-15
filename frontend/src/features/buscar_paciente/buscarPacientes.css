@@ -1,0 +1,238 @@
+/* Estilos generales de la página de buscar pacientes */
+.buscar-pacientes-container {
+  width: 100%;
+  min-height: calc(100vh - 70px);
+  background-color: #F5FFFF;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.buscar-pacientes-content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+/* Encabezado de búsqueda */
+.buscar-pacientes-header {
+  background-color: rgba(77, 194, 255, 0.46);
+  border-radius: 12px;
+  padding: 25px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.buscar-pacientes-header h1 {
+  color: #000000;
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.search-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-input {
+  width: 300px;
+  height: 45px;
+  padding: 0 50px 0 20px;
+  border: none;
+  border-radius: 25px;
+  background-color: #F5FFFF;
+  color: #000000;
+  font-size: 14px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  outline: none;
+}
+
+.search-input::placeholder {
+  color: #7f8c8d;
+}
+
+.search-icon {
+  position: absolute;
+  right: 20px;
+  color: #7f8c8d;
+  font-size: 18px;
+}
+
+/* Grid de pacientes */
+.pacientes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.paciente-card {
+  background-color: rgba(77, 194, 255, 0.46);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.paciente-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+.paciente-image-container {
+  width: 80px;
+  height: 80px;
+  background-color: #F5FFFF;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.paciente-logo {
+  width: 50px;
+  height: 50px;
+  background-color: #4DC2FF;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.paciente-info {
+  width: 100%;
+}
+
+.paciente-name-id {
+  color: #000000;
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0 0 12px 0;
+  line-height: 1.3;
+}
+
+.paciente-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+.detail-item {
+  background-color: #F5FFFF;
+  padding: 10px;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.detail-label {
+  display: block;
+  color: #000000;
+  font-size: 12px;
+  font-weight: 500;
+  margin-bottom: 3px;
+}
+
+.detail-value {
+  display: block;
+  color: #000000;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.view-paciente-btn {
+  background-color: #F5FFFF;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: #000000;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  width: 100%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.view-paciente-btn:hover {
+  background-color: #000000;
+  color: #FFFFFF;
+  transform: scale(1.03);
+}
+
+/* Sin resultados */
+.no-results {
+  text-align: center;
+  padding: 30px;
+  background-color: rgba(77, 194, 255, 0.46);
+  border-radius: 12px;
+}
+
+.no-results p {
+  color: #000000;
+  font-size: 16px;
+  margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .buscar-pacientes-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 15px;
+  }
+  
+  .search-input {
+    width: 250px;
+  }
+  
+  .pacientes-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .pacientes-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .paciente-card {
+    padding: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .search-input {
+    width: 200px;
+    height: 40px;
+    font-size: 13px;
+  }
+  
+  .paciente-image-container {
+    width: 70px;
+    height: 70px;
+  }
+  
+  .paciente-logo {
+    width: 45px;
+    height: 45px;
+    font-size: 14px;
+  }
+  
+  .paciente-name-id {
+    font-size: 15px;
+  }
+}

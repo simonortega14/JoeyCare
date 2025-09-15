@@ -1,55 +1,35 @@
 /* Estilos generales de la página de paciente */
 .paciente-container {
-  min-height: 100vh;
+  width: 100%;
+  min-height: calc(100vh - 70px);
   background-color: #F5FFFF;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  position: relative;
-}
-
-/* Fondo con marca de agua */
-.profile-container::before {
-  content: "";
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 1000px;
-  height: 1000px;
-  background-image: url('../../assets/Marca De Agua.png');
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-  opacity: 0.9;
-  z-index: 0;
-  pointer-events: none;
 }
 
 .paciente-content {
-  padding: 100px 30px 30px 280px;
-  position: relative;
-  z-index: 1;
+  width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 30px;
+  gap: 25px;
 }
 
 /* Tarjeta de información del paciente */
 .paciente-info-card {
   background-color: rgba(77, 194, 255, 0.46);
   border-radius: 12px;
-  padding: 30px;
+  padding: 25px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .paciente-header {
   display: flex;
   align-items: center;
-  gap: 30px;
+  gap: 25px;
 }
 
 .paciente-image-container {
-  width: 120px;
-  height: 120px;
+  width: 100px;
+  height: 100px;
   background-color: #F5FFFF;
   border-radius: 50%;
   display: flex;
@@ -59,8 +39,8 @@
 }
 
 .paciente-logo {
-  width: 80px;
-  height: 80px;
+  width: 70px;
+  height: 70px;
   background-color: #4DC2FF;
   border-radius: 50%;
   display: flex;
@@ -68,25 +48,25 @@
   justify-content: center;
   color: white;
   font-weight: bold;
-  font-size: 24px;
+  font-size: 20px;
 }
 
 .paciente-details h1 {
   color: #000000;
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 700;
-  margin: 0 0 20px 0;
+  margin: 0 0 15px 0;
 }
 
 .paciente-stats {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
 }
 
 .stat-item {
   background-color: #F5FFFF;
-  padding: 15px;
+  padding: 12px;
   border-radius: 8px;
   text-align: center;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -95,15 +75,15 @@
 .stat-label {
   display: block;
   color: #000000;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
-  margin-bottom: 5px;
+  margin-bottom: 4px;
 }
 
 .stat-value {
   display: block;
   color: #000000;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
 }
 
@@ -111,29 +91,29 @@
 .ecografias-section {
   background-color: rgba(77, 194, 255, 0.46);
   border-radius: 12px;
-  padding: 30px;
+  padding: 25px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .ecografias-section h2 {
   color: #000000;
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 700;
-  margin: 0 0 25px 0;
-  padding-bottom: 15px;
+  margin: 0 0 20px 0;
+  padding-bottom: 12px;
   border-bottom: 2px solid rgba(0, 0, 0, 0.1);
 }
 
 .ecografias-list {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 12px;
 }
 
 .ecografia-card {
   background-color: #F5FFFF;
-  border-radius: 10px;
-  padding: 20px;
+  border-radius: 8px;
+  padding: 15px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -142,21 +122,21 @@
 
 .ecografia-info h3 {
   color: #000000;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
-  margin: 0 0 5px 0;
+  margin: 0 0 4px 0;
 }
 
 .ecografia-info p {
   color: #000000;
-  font-size: 14px;
+  font-size: 13px;
   margin: 0;
 }
 
 .ecografia-status {
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 14px;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 13px;
   font-weight: 500;
 }
 
@@ -178,10 +158,10 @@
 .ecografia-action-btn {
   background-color: rgba(77, 194, 255, 0.46);
   border: none;
-  padding: 10px 20px;
-  border-radius: 8px;
+  padding: 8px 16px;
+  border-radius: 6px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   color: #000000;
   transition: background-color 0.2s;
@@ -192,16 +172,6 @@
 }
 
 /* Responsive */
-@media (max-width: 1200px) {
-  .paciente-content {
-    padding-left: 250px;
-  }
-  
-  .paciente-stats {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
 @media (max-width: 900px) {
   .paciente-header {
     flex-direction: column;
@@ -211,7 +181,7 @@
   
   .ecografia-card {
     flex-direction: column;
-    gap: 15px;
+    gap: 12px;
     text-align: center;
   }
   
@@ -229,32 +199,32 @@
 }
 
 @media (max-width: 768px) {
-  .paciente-content {
-    padding: 100px 15px 30px 15px;
-  }
-  
   .paciente-stats {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
 @media (max-width: 480px) {
   .paciente-image-container {
-    width: 100px;
-    height: 100px;
+    width: 80px;
+    height: 80px;
   }
   
   .paciente-logo {
-    width: 60px;
-    height: 60px;
-    font-size: 20px;
+    width: 55px;
+    height: 55px;
+    font-size: 18px;
   }
   
   .paciente-details h1 {
-    font-size: 24px;
+    font-size: 20px;
+  }
+  
+  .paciente-stats {
+    grid-template-columns: 1fr;
   }
   
   .ecografias-section h2 {
-    font-size: 20px;
+    font-size: 18px;
   }
 }

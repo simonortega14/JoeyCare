@@ -1,10 +1,10 @@
 import { useRef, useEffect } from "react";
-import "@kitware/vtk.js/Rendering/Profiles/All"; // importante para ImageMapper
+import "@kitware/vtk.js/Rendering/Profiles/All";
 import vtkFullScreenRenderWindow from "@kitware/vtk.js/Rendering/Misc/FullScreenRenderWindow";
-import vtkImageMapper from "@kitware/vtk.js/Rendering/Core/ImageMapper";
-import vtkImageSlice from "@kitware/vtk.js/Rendering/Core/ImageSlice";
-import vtkDataArray from "@kitware/vtk.js/Common/Core/DataArray";
-import vtkImageData from "@kitware/vtk.js/Common/DataModel/ImageData";
+import vtkPlaneSource from "@kitware/vtk.js/Filters/Sources/PlaneSource";
+import vtkMapper from "@kitware/vtk.js/Rendering/Core/Mapper";
+import vtkActor from "@kitware/vtk.js/Rendering/Core/Actor";
+import vtkTexture from "@kitware/vtk.js/Rendering/Core/Texture";
 
 function VtkViewer() {
   const vtkContainerRef = useRef(null);
@@ -19,53 +19,35 @@ function VtkViewer() {
       const renderer = fullScreenRenderer.getRenderer();
       const renderWindow = fullScreenRenderer.getRenderWindow();
 
-      // ----- Cargar la imagen -----
+      // Crear plano (superficie para la imagen)
+      const planeSource = vtkPlaneSource.newInstance({
+        XResolution: 1,
+        YResolution: 1,
+      });
+
+      const mapper = vtkMapper.newInstance();
+      mapper.setInputConnection(planeSource.getOutputPort());
+
+      const actor = vtkActor.newInstance();
+      actor.setMapper(mapper);
+
+      // Crear textura
+      const texture = vtkTexture.newInstance();
       const img = new Image();
-      img.src = "/test.png"; // debe estar en /public/test.png
+      img.src = "/ecografia.png"; // 👈 debe estar en /public
       img.onload = () => {
-        console.log("Imagen cargada:", img.width, "x", img.height);
+        texture.setImage(img);
+        actor.addTexture(texture);
 
-        const canvas = document.createElement("canvas");
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0);
-
-        const pixels = ctx.getImageData(0, 0, img.width, img.height).data;
-
-        // Convertir a RGB (sin alpha)
-        const rgbPixels = new Uint8Array(img.width * img.height * 3);
-        for (let i = 0; i < img.width * img.height; i++) {
-          rgbPixels[i * 3] = pixels[i * 4];       // R
-          rgbPixels[i * 3 + 1] = pixels[i * 4+1]; // G
-          rgbPixels[i * 3 + 2] = pixels[i * 4+2]; // B
-        }
-
-        const image = vtkImageData.newInstance();
-        image.setDimensions(img.width, img.height, 1);
-        image.getPointData().setScalars(
-          vtkDataArray.newInstance({
-            name: "Pixels",
-            numberOfComponents: 3,
-            values: rgbPixels,
-          })
-        );
-
-        const mapper = vtkImageMapper.newInstance();
-        mapper.setInputData(image);
-        mapper.setSlicingMode(vtkImageMapper.SlicingMode.Z);
-        mapper.setSlice(0);
-
-        const actor = vtkImageSlice.newInstance();
-        actor.setMapper(mapper);
-        actor.getProperty().setColorWindow(255);
-        actor.getProperty().setColorLevel(127.5);
+        // Ajustar proporción del plano a la imagen
+        const aspect = img.width / img.height;
+        actor.setScale(aspect, 1, 1);
 
         renderer.addActor(actor);
         renderer.resetCamera();
         renderWindow.render();
 
-        context.current = { fullScreenRenderer, renderer, renderWindow, actor, mapper, image };
+        context.current = { fullScreenRenderer, renderer, renderWindow };
       };
     }
 
@@ -78,7 +60,10 @@ function VtkViewer() {
   }, []);
 
   return (
-    <div ref={vtkContainerRef} style={{ width: "100%", height: "100vh", background: "black" }} />
+    <div
+      ref={vtkContainerRef}
+      style={{ width: "100%", height: "100vh", background: "black" }}
+    />
   );
 }
 

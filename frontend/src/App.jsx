@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "./features/auth/LoginPage";
 import VtkViewer from "./features/viewer/VtkViewer"; 
+import DicomViewer from "./features/viewer/DicomViewer";
 import AppHeader from "./components/AppHeader";
 import Sidebar from "./components/AppSidebar";
 import MiPerfil from "./features/profile/ProfilePage";
@@ -57,6 +58,7 @@ export default function App() {
             <Route path="/perfil" element={<MiPerfil user={user} />} />
             <Route path="/buscar-pacientes" element={<BuscarPacientes />} />
             <Route path="/visualizar-ecografias" element={<VtkViewer />} /> 
+            <Route path="/dicom-test" element={<DicomViewer />} />
             <Route path="/cargar-ecografias" element={<CargarEcografia />} />
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="*" element={<Navigate to="/visualizar-ecografias" replace />} />

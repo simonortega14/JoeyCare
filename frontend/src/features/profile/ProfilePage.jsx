@@ -1,30 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import MarcaDeAgua from '../../assets/Marca De Agua.png';
-import logoPerfil from '../../assets/logo perfil.png';
-import logoPacientes from '../../assets/logo pacientes.png';
-import AppHeader from '../../components/AppHeader.jsx';
-import AppSidebar from '../../components/AppSidebar.jsx';
-import './profile.css';
+import React, { useState, useEffect } from "react";
+import MarcaDeAgua from "../../assets/Marca De Agua.png";
+import logoPerfil from "../../assets/logo perfil.png";
+import logoPacientes from "../../assets/logo pacientes.png";
+import AppHeader from "../../components/AppHeader.jsx";
+import AppSidebar from "../../components/AppSidebar.jsx";
+import "./profile.css";
 
 const ProfilePage = ({ onOpenSettings }) => {
   const [doctor, setDoctor] = useState(null);
 
   useEffect(() => {
-    const fetchDoctor = async () => {
-      try {
-        const res = await axios.get("http://localhost:4000/api/doctores");
-        // Por ahora tomamos el primer doctor que devuelva la API
-        setDoctor(res.data[0]);
-      } catch (error) {
-        console.error("Error cargando doctor:", error);
-      }
-    };
-
-    fetchDoctor();
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setDoctor(JSON.parse(storedUser));
+    }
   }, []);
 
-  // Si no hay doctor cargado aún
   if (!doctor) {
     return <div>Cargando perfil...</div>;
   }
@@ -39,7 +30,9 @@ const ProfilePage = ({ onOpenSettings }) => {
           <div className="profile-info-content">
             <img src={logoPerfil} alt="Perfil" className="profile-logo" />
             <div className="profile-info-text">
-              <h1>{doctor.nombre} {doctor.apellido}</h1>
+              <h1>
+                {doctor.nombre} {doctor.apellido}
+              </h1>
               <p>{doctor.sede}</p>
               <p>{doctor.email}</p>
             </div>

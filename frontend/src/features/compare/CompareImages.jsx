@@ -1,7 +1,7 @@
 // src/features/compare/CompareImages.jsx
 import React, { useState } from "react";
 import PngVtkViewer from "../viewer/PngVtkViewer";
-import "../viewer.css";
+import "../viewer/viewer.css";
 
 const CompareImages = () => {
   // inicializamos con test.png para que ambos muestren la misma imagen por defecto

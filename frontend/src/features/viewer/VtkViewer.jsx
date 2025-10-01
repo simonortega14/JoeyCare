@@ -5,6 +5,12 @@ import vtkPlaneSource from "@kitware/vtk.js/Filters/Sources/PlaneSource";
 import vtkMapper from "@kitware/vtk.js/Rendering/Core/Mapper";
 import vtkActor from "@kitware/vtk.js/Rendering/Core/Actor";
 import vtkTexture from "@kitware/vtk.js/Rendering/Core/Texture";
+
+
+import vtkImageStream from '@kitware/vtk.js/IO/Core/ImageStream';
+import vtkPNGReader from '@kitware/vtk.js/IO/Core/vtkPNGReader';
+
+
 import "./viewer.css";
 
 function VtkViewer() {
@@ -67,6 +73,8 @@ function VtkViewer() {
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.src = `http://localhost:4000/uploads/${selectedEcografia.filename}`;
+
+ 
 
     img.onload = () => {
       try {

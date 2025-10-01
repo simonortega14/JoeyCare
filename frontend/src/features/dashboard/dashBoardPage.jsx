@@ -57,7 +57,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="dashboard-container">
+    <div className="page-container">
       {/* Header del Dashboard */}
       <header className="dashboard-header">
         <div className="dashboard-title">

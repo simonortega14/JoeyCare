@@ -4,9 +4,7 @@
   background: linear-gradient(135deg, #e3f2fd 0%, #f5f5f5 100%);
   padding: 2rem;
   display: flex;
-  align-items: center;
   justify-content: center;
-  box-sizing: border-box;
 }
 
 /* ===== TARJETA PRINCIPAL ===== */
@@ -225,6 +223,9 @@
 .cargar-btn:active:not(:disabled) {
   transform: translateY(0);
 }
+
+.cargar-btn:disabled {
+  opacity: 0.6;
 
 .cargar-btn:disabled {
   opacity: 0.6;

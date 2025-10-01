@@ -24,11 +24,14 @@ const ProfilePage = ({ onOpenSettings }) => {
     <div className="profile-container">
       <AppHeader onOpenSettings={onOpenSettings} />
       <AppSidebar activeItem="Mi perfil" />
+      
       <div className="profile-content">
         {/* Contenedor de información del perfil */}
         <div className="profile-info-card">
           <div className="profile-info-content">
-            <img src={logoPerfil} alt="Perfil" className="profile-logo" />
+            <div className="profile-image-container">
+              <img src={logoPerfil} alt="Perfil" className="profile-logo" />
+            </div>
             <div className="profile-info-text">
               <h1>
                 {doctor.nombre} {doctor.apellido}

@@ -6,7 +6,7 @@ import DicomViewer from "./features/viewer/DicomViewer";
 import AppHeader from "./components/AppHeader";
 import Sidebar from "./components/AppSidebar";
 import MiPerfil from "./features/profile/ProfilePage";
-import BuscarPacientes from "./features/paciente/PacientePage";
+import BuscarPacientes from "./features/buscar_paciente/BuscarPacientesPage";
 import CargarEcografia from "./features/cargar_ecografia/CargarEcografiaPage";
 import DashboardPage from "./features/dashboard/dashBoardPage";
 import RegisterPage from "./features/auth/RegisterPage";
@@ -52,7 +52,8 @@ export default function App() {
     <Router>
       <AppHeader user={user} />
       <div className="app-container">
-        <Sidebar />
+        <AppHeader onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
+        <Sidebar isOpen={sidebarOpen} />
         <div className="main-content">
           <Routes>
             <Route path="/perfil" element={<MiPerfil user={user} />} />

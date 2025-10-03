@@ -1,3 +1,4 @@
+// src/features/viewer/CargarEcografiaPage.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import "./CargarEcografia.css";
 
@@ -12,27 +13,22 @@ const CargarEcografiaPage = () => {
   const [error, setError] = useState(null);
   const listRef = useRef(null);
 
-  // Cargar pacientes desde el backend con manejo de errores mejorado
+  // Tipos permitidos
+  const allowedTypes = [".png", ".jpg", ".jpeg", ".dcm"];
+
+  // Cargar pacientes
   useEffect(() => {
     const cargarPacientes = async () => {
       try {
         setLoading(true);
         setError(null);
-        
-        // Usar fetch en lugar de axios para evitar dependencias
         const response = await fetch("http://localhost:4000/api/pacientes");
-        
-        if (!response.ok) {
-          throw new Error(`Error del servidor: ${response.status}`);
-        }
-        
+        if (!response.ok) throw new Error(`Error del servidor: ${response.status}`);
         const data = await response.json();
         setPacientes(data || []);
       } catch (err) {
         console.error("Error cargando pacientes:", err);
         setError("No se pudieron cargar los pacientes. Usando datos de prueba.");
-        
-        // Fallback a datos de prueba si falla la conexión
         setPacientes([
           { id: "123", nombre: "Bebé García" },
           { id: "456", nombre: "Bebé Rodríguez" },
@@ -44,11 +40,10 @@ const CargarEcografiaPage = () => {
         setLoading(false);
       }
     };
-
     cargarPacientes();
   }, []);
 
-  // Filtrar pacientes por id o nombre
+  // Filtrar pacientes
   const suggestions = useMemo(() => {
     if (!query.trim()) return [];
     const q = query.toLowerCase();
@@ -57,23 +52,34 @@ const CargarEcografiaPage = () => {
     ).slice(0, 6);
   }, [query, pacientes]);
 
-  // Cerrar lista si se hace click fuera
+  // Click fuera
   useEffect(() => {
     function handleClickOutside(e) {
-      if (listRef.current && !listRef.current.contains(e.target)) {
-        setOpenList(false);
-      }
+      if (listRef.current && !listRef.current.contains(e.target)) setOpenList(false);
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleChangeFile = (e) => setFile(e.target.files[0]);
+  // Validar tipo de archivo
+  const handleChangeFile = (e) => {
+    const selected = e.target.files[0];
+    if (!selected) return setFile(null);
+
+    const ext = selected.name.split(".").pop().toLowerCase();
+    if (!allowedTypes.includes("." + ext)) {
+      alert(`Tipo de archivo no permitido. Usa: ${allowedTypes.join(", ")}`);
+      e.target.value = null;
+      return setFile(null);
+    }
+
+    setFile(selected);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!patient) return alert("Selecciona primero un paciente");
-    if (!file) return alert("Por favor selecciona un archivo primero");
+    if (!file) return alert("Por favor selecciona un archivo válido");
 
     try {
       setIsSubmitting(true);
@@ -82,27 +88,20 @@ const CargarEcografiaPage = () => {
 
       const response = await fetch(
         `http://localhost:4000/api/ecografias/${patient.id}`,
-        {
-          method: "POST",
-          body: formData,
-        }
+        { method: "POST", body: formData }
       );
 
       if (!response.ok) {
-        // Verificar si la respuesta es JSON o HTML
         const contentType = response.headers.get("content-type");
         let errorMessage = "Error al subir ecografía";
-        
         if (contentType && contentType.includes("application/json")) {
           const errorData = await response.json();
           errorMessage = errorData.message || errorMessage;
         } else {
-          // Si es HTML, mostrar el status y texto
           const errorText = await response.text();
           console.error("Respuesta del servidor:", errorText);
-          errorMessage = `Error ${response.status}: ${response.statusText}. Verificar endpoint del backend.`;
+          errorMessage = `Error ${response.status}: ${response.statusText}`;
         }
-        
         throw new Error(errorMessage);
       }
 
@@ -129,7 +128,6 @@ const CargarEcografiaPage = () => {
     setQuery("");
   };
 
-  // Mostrar loading mientras carga los pacientes
   if (loading) {
     return (
       <div className="cargar-page">
@@ -145,14 +143,12 @@ const CargarEcografiaPage = () => {
       <div className="cargar-card">
         <h2 className="cargar-title">Cargar Ecografía</h2>
 
-        {/* Mostrar error si existe */}
         {error && (
           <div className="error-message" style={{color: 'orange', marginBottom: '1rem'}}>
             {error}
           </div>
         )}
 
-        {/* Selección de Paciente */}
         <div className="campo">
           <label className="cargar-label">Paciente</label>
           <div className="patient-picker" ref={listRef}>
@@ -187,7 +183,7 @@ const CargarEcografiaPage = () => {
           </div>
           {!patient && (
             <div className="cargar-hint">
-              Selecciona un paciente para habilitar la carga. 
+              Selecciona un paciente para habilitar la carga.
               {pacientes.length === 0 && " (No hay pacientes disponibles)"}
             </div>
           )}
@@ -198,13 +194,12 @@ const CargarEcografiaPage = () => {
           )}
         </div>
 
-        {/* Formulario de carga */}
         <form onSubmit={handleSubmit}>
-          <label className="cargar-label">Archivo (.png)</label>
+          <label className="cargar-label">Archivo (.png, .jpg, .jpeg, .dcm)</label>
           <input
             className="cargar-input"
             type="file"
-            accept=".png"
+            accept=".png,.jpg,.jpeg,.dcm"
             onChange={handleChangeFile}
             disabled={!patient}
           />
@@ -214,7 +209,6 @@ const CargarEcografiaPage = () => {
             type="submit"
             className="cargar-btn"
             disabled={!patient || !file || isSubmitting}
-            title={!patient ? "Selecciona un paciente" : (!file ? "Selecciona un archivo" : "Subir")}
           >
             {isSubmitting ? "Subiendo..." : "Subir"}
           </button>

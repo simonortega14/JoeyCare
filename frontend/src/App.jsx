@@ -10,11 +10,13 @@ import BuscarPacientes from "./features/buscar_paciente/BuscarPacientesPage";
 import CargarEcografia from "./features/cargar_ecografia/CargarEcografiaPage";
 import DashboardPage from "./features/dashboard/dashBoardPage";
 import RegisterPage from "./features/auth/RegisterPage";
+import EcografiaApp from "./features/viewer/EcografiaApp";
 import "./App.css";
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false); // 👈 ESTADO DEL SIDEBAR
 
   async function handleLogin(form) {
     try {
@@ -50,15 +52,14 @@ export default function App() {
 
   return (
     <Router>
-      <AppHeader user={user} />
+      <AppHeader user={user} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
       <div className="app-container">
-        <AppHeader onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
         <Sidebar isOpen={sidebarOpen} />
         <div className="main-content">
           <Routes>
             <Route path="/perfil" element={<MiPerfil user={user} />} />
             <Route path="/buscar-pacientes" element={<BuscarPacientes />} />
-            <Route path="/visualizar-ecografias" element={<VtkViewer />} /> 
+            <Route path="/visualizar-ecografias" element={<EcografiaApp />} />
             <Route path="/dicom-test" element={<DicomViewer />} />
             <Route path="/cargar-ecografias" element={<CargarEcografia />} />
             <Route path="/dashboard" element={<DashboardPage />} />

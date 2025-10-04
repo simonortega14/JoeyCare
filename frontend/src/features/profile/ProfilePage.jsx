@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+
 import MarcaDeAgua from '../../assets/Marca De Agua.png';
 import logoPerfil from '../../assets/logo perfil.png';
 import logoPacientes from '../../assets/logo pacientes.png';
@@ -10,6 +9,13 @@ import './profile.css';
 
 const ProfilePage = ({ onOpenSettings }) => {
   const [doctor, setDoctor] = useState(null);
+
+  // Dummy data for recently reviewed patients
+  const pacientesRevisados = [
+    { nombre: "Juan Pérez", id: "12345", peso: "70kg", edad: "30 años" },
+    { nombre: "Ana Gómez", id: "67890", peso: "65kg", edad: "25 años" },
+    { nombre: "Carlos Ruiz", id: "54321", peso: "80kg", edad: "40 años" }
+  ];
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");

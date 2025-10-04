@@ -19,9 +19,18 @@
   gap: 15px;
 }
 
+.menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 5px;
+}
+
 .jc-logo {
   height: 55px;
-  width:55px;
+  width: 55px;
 }
 
 .jc-brand {
@@ -47,4 +56,35 @@
 
 .jc-btn--config:hover {
   background-color: rgba(77, 194, 255, 0.6);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .menu-toggle {
+    display: block;
+  }
+  
+  .jc-header {
+    padding: 0 15px;
+  }
+  
+  .jc-brand {
+    font-size: 28px;
+  }
+  
+  .jc-logo {
+    height: 45px;
+    width: 45px;
+  }
+}
+
+@media (max-width: 480px) {
+  .jc-brand {
+    font-size: 24px;
+  }
+  
+  .jc-btn--config {
+    padding: 8px 15px;
+    font-size: 12px;
+  }
 }

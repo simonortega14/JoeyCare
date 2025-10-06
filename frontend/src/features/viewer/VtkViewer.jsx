@@ -1,13 +1,11 @@
 import { useRef, useEffect, useState } from "react";
 import "@kitware/vtk.js/Rendering/Profiles/All";
 import vtkFullScreenRenderWindow from "@kitware/vtk.js/Rendering/Misc/FullScreenRenderWindow";
-import vtkPlaneSource from "@kitware/vtk.js/Filters/Sources/PlaneSource";
-import vtkMapper from "@kitware/vtk.js/Rendering/Core/Mapper";
-import vtkActor from "@kitware/vtk.js/Rendering/Core/Actor";
-import vtkTexture from "@kitware/vtk.js/Rendering/Core/Texture";
-import vtkInteractorStyleImage from "@kitware/vtk.js/Interaction/Style/InteractorStyleImage";
-import dicomParser from "dicom-parser";
+import vtkHttpDataSetReader from '@kitware/vtk.js/IO/Core/HttpDataSetReader';
+import vtkImageMapper from '@kitware/vtk.js/Rendering/Core/ImageMapper';
+import vtkImageSlice from '@kitware/vtk.js/Rendering/Core/ImageSlice';
 import "./viewer.css";
+
 
 function VtkViewer() {
   const vtkContainerRef = useRef(null);
@@ -83,187 +81,80 @@ function VtkViewer() {
     setLoading(true);
     setError(null);
 
-    const fullScreenRenderer = vtkFullScreenRenderWindow.newInstance({
+    const fullScreenRenderWindow = vtkFullScreenRenderWindow.newInstance({
       rootContainer: vtkContainerRef.current,
       containerStyle: { width: "100%", height: "100%", position: "relative" },
+      background: [0, 0, 0],
     });
-    const renderer = fullScreenRenderer.getRenderer();
-    const renderWindow = fullScreenRenderer.getRenderWindow();
+
+    const renderWindow = fullScreenRenderWindow.getRenderWindow();
+    const renderer = fullScreenRenderWindow.getRenderer();
     renderer.setBackground(0.1, 0.1, 0.15);
 
-    const ext = selectedEcografia.filename.split('.').pop().toLowerCase();
+    const imageActorI = vtkImageSlice.newInstance();
 
-    if (ext === "dcm") {
-      fetch(`http://localhost:4000/api/uploads/${selectedEcografia.filename}`)
-        .then(res => {
-          if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-          return res.arrayBuffer();
-        })
-        .then(buffer => {
-          try {
-            const byteArray = new Uint8Array(buffer);
-            const dataSet = dicomParser.parseDicom(byteArray);
-            
-            // Obtener dimensiones
-            const width = dataSet.uint16('x00280011');
-            const height = dataSet.uint16('x00280010');
-            const bitsAllocated = dataSet.uint16('x00280100') || 16;
-            const pixelRepresentation = dataSet.uint16('x00280103') || 0;
-            
-            // Obtener Window/Level del DICOM si existe
-            let windowWidth = dataSet.uint16('x00281051');
-            let windowCenter = dataSet.uint16('x00281050');
-            
-            // Si no tiene window/level, calcular automáticamente
-            if (!windowWidth || !windowCenter) {
-              windowWidth = Math.pow(2, bitsAllocated);
-              windowCenter = windowWidth / 2;
-            }
-            
-            setWindowLevel({ width: windowWidth, center: windowCenter });
-            
-            // Obtener pixel data
-            const pixelDataElement = dataSet.elements.x7fe00010;
-            let pixelData;
-            
-            if (bitsAllocated === 16) {
-              if (pixelRepresentation === 1) {
-                pixelData = new Int16Array(
-                  byteArray.buffer,
-                  pixelDataElement.dataOffset,
-                  pixelDataElement.length / 2
-                );
-              } else {
-                pixelData = new Uint16Array(
-                  byteArray.buffer,
-                  pixelDataElement.dataOffset,
-                  pixelDataElement.length / 2
-                );
-              }
-            } else {
-              pixelData = new Uint8Array(
-                byteArray.buffer,
-                pixelDataElement.dataOffset,
-                pixelDataElement.length
-              );
-            }
-            
-            // Aplicar window/level y crear canvas
-            const canvas = applyWindowLevel(pixelData, width, height, windowWidth, windowCenter);
-            
-            // Crear textura VTK
-            const actor = vtkActor.newInstance();
-            const planeSource = vtkPlaneSource.newInstance({ XResolution: 1, YResolution: 1 });
-            const mapper = vtkMapper.newInstance();
-            mapper.setInputConnection(planeSource.getOutputPort());
-            actor.setMapper(mapper);
+    renderer.addActor(imageActorI);
 
-            const texture = vtkTexture.newInstance();
-            texture.setCanvas(canvas);
-            texture.setInterpolate(true);
-            actor.addTexture(texture);
-
-            const aspect = width / height;
-            if (aspect > 1) {
-              planeSource.setOrigin(-aspect / 2, -0.5, 0);
-              planeSource.setPoint1(aspect / 2, -0.5, 0);
-              planeSource.setPoint2(-aspect / 2, 0.5, 0);
-            } else {
-              const invAspect = 1 / aspect;
-              planeSource.setOrigin(-0.5, -invAspect / 2, 0);
-              planeSource.setPoint1(0.5, -invAspect / 2, 0);
-              planeSource.setPoint2(-0.5, invAspect / 2, 0);
-            }
-
-            renderer.addActor(actor);
-            const camera = renderer.getActiveCamera();
-            camera.setParallelProjection(true);
-            camera.setPosition(0, 0, 1);
-            camera.setFocalPoint(0, 0, 0);
-            camera.setViewUp(0, 1, 0);
-            renderer.resetCamera();
-
-            const interactor = renderWindow.getInteractor();
-            interactor.setInteractorStyle(vtkInteractorStyleImage.newInstance());
-            
-            context.current = { 
-              fullScreenRenderer, 
-              renderer, 
-              renderWindow, 
-              camera,
-              pixelData,
-              width,
-              height,
-              actor,
-              texture
-            };
-            
-            renderWindow.render();
-            setLoading(false);
-          } catch (err) {
-            console.error("Error procesando DICOM:", err);
-            setError(`Error al procesar DICOM: ${err.message}`);
-            setLoading(false);
-          }
-        })
-        .catch(err => {
-          console.error("Error cargando DICOM:", err);
-          setError(`Error al cargar archivo: ${err.message}`);
-          setLoading(false);
-        });
-    } else {
-      // Cargar imágenes PNG/JPG
-      const actor = vtkActor.newInstance();
-      const planeSource = vtkPlaneSource.newInstance({ XResolution: 1, YResolution: 1 });
-      const mapper = vtkMapper.newInstance();
-      mapper.setInputConnection(planeSource.getOutputPort());
-      actor.setMapper(mapper);
-
-      const texture = vtkTexture.newInstance();
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.src = `http://localhost:4000/api/uploads/${selectedEcografia.filename}`;
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
-        canvas.width = img.width;
-        canvas.height = img.height;
-        ctx.drawImage(img, 0, 0);
-        texture.setCanvas(canvas);
-        texture.setInterpolate(true);
-        actor.addTexture(texture);
-
-        const aspect = img.width / img.height;
-        if (aspect > 1) {
-          planeSource.setOrigin(-aspect / 2, -0.5, 0);
-          planeSource.setPoint1(aspect / 2, -0.5, 0);
-          planeSource.setPoint2(-aspect / 2, 0.5, 0);
-        } else {
-          const invAspect = 1 / aspect;
-          planeSource.setOrigin(-0.5, -invAspect / 2, 0);
-          planeSource.setPoint1(0.5, -invAspect / 2, 0);
-          planeSource.setPoint2(-0.5, invAspect / 2, 0);
-        }
-
-        renderer.addActor(actor);
-        const camera = renderer.getActiveCamera();
-        camera.setParallelProjection(true);
-        camera.setPosition(0, 0, 1);
-        camera.setFocalPoint(0, 0, 0);
-        camera.setViewUp(0, 1, 0);
-        renderer.resetCamera();
-
-        const interactor = renderWindow.getInteractor();
-        interactor.setInteractorStyle(vtkInteractorStyleImage.newInstance());
-        context.current = { fullScreenRenderer, renderer, renderWindow, camera };
-        renderWindow.render();
-        setLoading(false);
-      };
-      img.onerror = () => {
-        setError(`No se pudo cargar la ecografía: ${selectedEcografia.filename}`);
-        setLoading(false);
-      };
+    function updateColorLevel(e) {
+      const colorLevel = Number(
+        (e ? e.target : document.querySelector('.colorLevel')).value
+      );
+      imageActorI.getProperty().setColorLevel(colorLevel);
+      renderWindow.render();
     }
+
+    function updateColorWindow(e) {
+      const colorLevel = Number(
+        (e ? e.target : document.querySelector('.colorWindow')).value
+      );
+      imageActorI.getProperty().setColorWindow(colorLevel);
+      renderWindow.render();
+    }
+
+    const reader = vtkHttpDataSetReader.newInstance({
+      fetchGzip: true,
+    });
+
+    reader
+      .setUrl(`http://localhost:4000/api/uploads/${selectedEcografia.filename}`, { loadData: true })
+      .then(() => {
+        const data = reader.getOutputData();
+        const dataRange = data.getPointData().getScalars().getRange();
+        const extent = data.getExtent();
+
+        const imageMapperI = vtkImageMapper.newInstance();
+        imageMapperI.setInputData(data);
+        imageMapperI.setISlice(30);
+        imageActorI.setMapper(imageMapperI);
+        
+        renderer.resetCamera();
+        renderer.resetCameraClippingRange();
+        renderWindow.render();
+       
+          ".sliceI".forEach((selector, idx) => {
+        const el = document.querySelector(selector);
+        el.setAttribute('min', extent[idx * 2 + 0]);
+        el.setAttribute('max', extent[idx * 2 + 1]);
+        el.setAttribute('value', 30);
+      });
+
+      ['.colorLevel', '.colorWindow'].forEach((selector) => {
+        document.querySelector(selector).setAttribute('max', dataRange[1]);
+        document.querySelector(selector).setAttribute('value', dataRange[1]);
+        });
+        document
+          .querySelector('.colorLevel')
+          .setAttribute('value', (dataRange[0] + dataRange[1]) / 2);
+        updateColorLevel();
+        updateColorWindow();
+      });
+
+      document
+        .querySelector('.colorLevel')
+        .addEventListener('input', updateColorLevel);
+      document
+        .querySelector('.colorWindow')
+        .addEventListener('input', updateColorWindow);
 
     return () => {
       if (context.current) {

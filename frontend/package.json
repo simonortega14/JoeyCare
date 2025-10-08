@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@itk-wasm/dicom": "^7.6.2",
     "@itk-wasm/image-io": "^1.6.0",
     "@kitware/vtk.js": "^34.11.1",
     "axios": "^1.11.0",

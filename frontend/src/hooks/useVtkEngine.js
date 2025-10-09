@@ -1,143 +1,109 @@
 // src/hooks/useVtkEngine.js
-import { useRef, useEffect, useState, useCallback } from "react";
-// Importaciones de VTK necesarias
-import "@kitware/vtk.js/Rendering/Profiles/All";
-import vtkFullScreenRenderWindow from '@kitware/vtk.js/Rendering/Misc/FullScreenRenderWindow';
-import vtkImageMapper from '@kitware/vtk.js/Rendering/Core/ImageMapper';
-import vtkImageSlice from '@kitware/vtk.js/Rendering/Core/ImageSlice';
+import { useState, useEffect, useRef } from "react";
 
-// NUEVA DEPENDENCIA: Usamos el lector de Cornerstone
-import { useCornerstoneReader } from './useCornerstoneReader'; 
-import { calculateAutoWindowLevel } from '../utils/imageProcessing'; 
+import vtkGenericRenderWindow from "@kitware/vtk.js/Rendering/Misc/GenericRenderWindow";
+import vtkImageMapper from "@kitware/vtk.js/Rendering/Core/ImageMapper";
+import vtkImageSlice from "@kitware/vtk.js/Rendering/Core/ImageSlice";
+import vtkInteractorStyleImage from "@kitware/vtk.js/Interaction/Style/InteractorStyleImage";
+import vtkHttpDataSetReader from "@kitware/vtk.js/IO/Core/HttpDataSetReader";
 
-/**
- * Hook personalizado para la inicialización y el control del motor de visualización VTK.js.
- * Ahora obtiene los datos de imagen decodificados de useCornerstoneReader.
- */
 export function useVtkEngine(selectedEcografia) {
-    const vtkContainerRef = useRef(null);
-    const context = useRef(null);
+  const vtkContainerRef = useRef(null);
+  const renderWindowRef = useRef(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [zoom, setZoom] = useState(1);
+  const [windowLevel, setWindowLevel] = useState({ width: 400, center: 40 });
 
-    const [zoom, setZoom] = useState(1);
-    const [windowLevel, setWindowLevel] = useState({ width: 256, center: 128 });
+  useEffect(() => {
+    if (!selectedEcografia || !vtkContainerRef.current) return;
 
-    // *** NUEVA LÍNEA: Consumir el hook de lectura Cornerstone ***
-    const { vtkImageData, pixelData, loading: csLoading, error: csError } = useCornerstoneReader(selectedEcografia);
+    const fileUrl = selectedEcografia.fileUrl;
+    if (!fileUrl) {
+      setError("No se encontró la URL del archivo.");
+      return;
+    }
 
-    // El estado de carga y error del visor ahora depende del lector Cornerstone
-    const loading = csLoading;
-    const error = csError;
+    setLoading(true);
+    setError(null);
 
-    // Detectar si es DICOM para aplicar lógica de W/L automática o específica.
-    const isDicom = selectedEcografia?.filename.toLowerCase().endsWith(".dcm");
+    if (renderWindowRef.current) {
+      renderWindowRef.current.delete();
+    }
 
-    // =========================================================================
-    // EFECTO PRINCIPAL: INICIALIZACIÓN Y MONTAJE DE DATOS VTK
-    // =========================================================================
-    useEffect(() => {
-        // Ejecutar solo cuando los datos de Cornerstone están listos
-        if (!vtkImageData || !vtkContainerRef.current) return;
+    const genericRenderWindow = vtkGenericRenderWindow.newInstance({
+      background: [0, 0, 0],
+    });
+    genericRenderWindow.setContainer(vtkContainerRef.current);
+    renderWindowRef.current = genericRenderWindow;
 
-        // Limpieza de instancias anteriores
-        if (context.current) {
-            context.current.fullScreenRenderer.delete();
-            context.current = null;
+    const renderer = genericRenderWindow.getRenderer();
+    const renderWindow = genericRenderWindow.getRenderWindow();
+    const interactor = genericRenderWindow.getInteractor();
+    interactor.setInteractorStyle(vtkInteractorStyleImage.newInstance());
+
+    // Usamos un lector genérico de datos HTTP
+    const reader = vtkHttpDataSetReader.newInstance({ fetchGzip: true });
+
+    // Cargar la imagen o dataset desde URL
+    const readerPromise = reader.setUrl(fileUrl, { loadData: true });
+
+    Promise.resolve(readerPromise)
+      .then(() => {
+        const imageData = reader.getOutputData(0);
+
+        if (!imageData) {
+          throw new Error("No se pudo leer la imagen o no contiene datos de píxeles.");
         }
 
-        // --- 1. Inicialización del Renderizador ---
-        const fullScreenRenderWindow = vtkFullScreenRenderWindow.newInstance({
-            rootContainer: vtkContainerRef.current,
-            containerStyle: { width: "100%", height: "100%", position: "relative" },
-        });
-        const renderWindow = fullScreenRenderWindow.getRenderWindow();
-        const renderer = fullScreenRenderWindow.getRenderer();
-        renderer.setBackground(0.1, 0.1, 0.15); 
-        
-        const imageActorI = vtkImageSlice.newInstance();
-        renderer.addActor(imageActorI);
-        const camera = renderer.getActiveCamera();
-        
-        context.current = { fullScreenRenderer: fullScreenRenderWindow, renderWindow, renderer, imageActorI, camera };
+        const mapper = vtkImageMapper.newInstance();
+        mapper.setInputData(imageData);
 
-        // --- 2. Montaje de Datos desde Cornerstone/VTK ---
-        const dataRange = vtkImageData.getPointData().getScalars().getRange();
-                
-        const imageMapperI = vtkImageMapper.newInstance();
-        imageMapperI.setInputData(vtkImageData); // <--- Usa los datos convertidos por Cornerstone
-        imageActorI.setMapper(imageMapperI);
-        
-        // Inicializar el W/L si es DICOM
-        if (isDicom) {
-            const initialWidth = dataRange[1] - dataRange[0];
-            const initialCenter = (dataRange[0] + dataRange[1]) / 2;
-            setWindowLevel({ width: initialWidth, center: initialCenter });
-        }
+        const slice = vtkImageSlice.newInstance();
+        slice.setMapper(mapper);
 
+        renderer.addViewProp(slice);
         renderer.resetCamera();
         renderWindow.render();
 
-        // Función de limpieza de React
-        return () => {
-            if (context.current) {
-                context.current.fullScreenRenderer.delete();
-                context.current = null;
-            }
-        };
-        // Se ejecuta cuando vtkImageData (de Cornerstone) está listo
-    }, [vtkImageData, isDicom]);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Error al cargar imagen:", err);
+        setError("Error al cargar la imagen: " + err.message);
+        setLoading(false);
+      });
 
-
-    // =========================================================================
-    // EFECTOS DE CONTROL DE INTERACCIÓN (Zoom y W/L)
-    // =========================================================================
-
-    // Aplicar Zoom
-    useEffect(() => {
-        if (context.current && context.current.camera) {
-            context.current.camera.setParallelScale(1 / zoom); 
-            context.current.renderWindow.render();
-        }
-    }, [zoom]);
-
-    // Aplicar Window/Level
-    useEffect(() => {
-        if (context.current && context.current.imageActorI) {
-            context.current.imageActorI.getProperty().setColorWindow(windowLevel.width);
-            context.current.imageActorI.getProperty().setColorLevel(windowLevel.center);
-            context.current.renderWindow.render();
-        }
-    }, [windowLevel]);
-
-
-    // =========================================================================
-    // FUNCIONES DE CONTROL
-    // =========================================================================
-    
-    // Control: Resetear Vista
-    const handleResetView = useCallback(() => {
-        if (context.current) {
-            context.current.renderer.resetCamera();
-            context.current.renderWindow.render();
-            setZoom(1); 
-        }
-    }, []);
-    
-    // Control: Auto Window/Level
-    const handleAutoWindowLevel = useCallback(() => {
-        // Usa los pixelData directamente del useCornerstoneReader
-        if (pixelData) {
-            const { width, center } = calculateAutoWindowLevel(pixelData);
-            setWindowLevel({ width, center });
-        }
-    }, [pixelData]);
-
-
-    return {
-        vtkContainerRef,
-        zoom, setZoom,
-        loading, error,
-        windowLevel, setWindowLevel,
-        handleAutoWindowLevel,
-        handleResetView,
+    return () => {
+      if (renderWindowRef.current) {
+        renderWindowRef.current.delete();
+        renderWindowRef.current = null;
+      }
     };
+  }, [selectedEcografia]);
+
+  // Controles del visor
+  const handleResetView = () => {
+    if (renderWindowRef.current) {
+      const renderer = renderWindowRef.current.getRenderer();
+      renderer.resetCamera();
+      renderWindowRef.current.getRenderWindow().render();
+    }
+  };
+
+  const handleAutoWindowLevel = () => {
+    setWindowLevel({ width: 400, center: 40 });
+  };
+
+  return {
+    vtkContainerRef,
+    loading,
+    error,
+    zoom,
+    setZoom,
+    windowLevel,
+    setWindowLevel,
+    handleResetView,
+    handleAutoWindowLevel,
+  };
 }

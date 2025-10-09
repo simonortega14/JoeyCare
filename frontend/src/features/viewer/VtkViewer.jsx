@@ -1,53 +1,69 @@
 // src/features/viewer/VtkViewer.jsx
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 
 // 1. HOOKS (Lógica)
-import { usePatientData } from '../../hooks/usePatientData'; 
-import { useVtkEngine } from '../../hooks/useVtkEngine'; 
+import { usePatientData } from "../../hooks/usePatientData";
+import { useCornerstoneViewer } from "../../hooks/useCornerstoneViewer";
+import { useVtkEngine } from "../../hooks/useVtkEngine";
 
 // 2. COMPONENTES DE UI (Presentación)
-import { ViewerUI } from '../../components/ViewerUI';
-import { SelectionForm } from '../../components/SelectionForm';
+import { ViewerUI } from "../../components/ViewerUI";
+import { SelectionForm } from "../../components/SelectionForm";
 
 /**
- * Componente principal (Orquestador) de la característica del Visor.
- * - Conecta los hooks de datos y de motor VTK.
- * - Decide qué componente de UI renderizar (Selección o Visor).
+ * Componente principal (Orquestador) del visor de imágenes médicas.
+ * - Conecta el hook de datos del paciente, el lector de imagen (CornerstoneReader)
+ *   y el motor de renderizado VTK (useVtkEngine).
  */
 function VtkViewer() {
-    // 1. CAPA DE DATOS
-    const dataProps = usePatientData(); 
-    const { selectedEcografia } = dataProps;
-    
-    // ESTADO LOCAL
-    const [showViewer, setShowViewer] = useState(false);
+  // 1️⃣ Datos de paciente y ecografía seleccionada
+  const dataProps = usePatientData();
+  const { selectedEcografia } = dataProps;
 
-    // 2. CAPA DE VISOR: Inicializa el motor VTK.
-    // El objeto vtkProps contiene loading, error, zoom, etc.
-    const vtkProps = useVtkEngine(selectedEcografia); 
+  // 2️⃣ Estado local para controlar si el visor está visible
+  const [showViewer, setShowViewer] = useState(false);
 
-    // ********* LÓGICA DEL ORQUESTADOR *********
-    
-    // Si hay una ecografía seleccionada y el visor está abierto.
-    if (showViewer && selectedEcografia) { 
-        // Renderiza la interfaz del visor (ViewerUI), pasándole el objeto completo vtkProps.
-        // ViewerUI es donde se utiliza realmente vtkProps.loading y vtkProps.error.
-        return (
-            <ViewerUI 
-                ecografia={selectedEcografia} 
-                onBack={() => setShowViewer(false)} 
-                vtkProps={vtkProps} 
-            />
-        );
-    }
+  // 3️⃣ Hook del lector de imagen (usa fetch y decodifica DICOM / PNG / JPG)
+  const { vtkImageData, loading, error } = useCornerstoneViewer(selectedEcografia);
 
-    // RENDERIZADO DEL FORMULARIO DE SELECCIÓN
+  // 4️⃣ Referencia al contenedor donde se montará VTK
+  const containerRef = useRef(null);
+
+  // 5️⃣ Inicializa motor VTK (solo si hay imagen lista)
+  useVtkEngine(vtkImageData, containerRef);
+
+  // 6️⃣ Render lógico
+  if (showViewer && selectedEcografia) {
     return (
-        <SelectionForm 
-            {...dataProps} 
-            onVisualize={() => setShowViewer(true)} 
+      <ViewerUI
+        ecografia={selectedEcografia}
+        onBack={() => setShowViewer(false)}
+        vtkProps={{
+          loading,
+          error,
+          containerRef, // para que ViewerUI pueda acceder si es necesario
+        }}
+      >
+        {/* Contenedor donde se renderiza VTK */}
+        <div
+          ref={containerRef}
+          style={{
+            width: "100%",
+            height: "100%",
+            backgroundColor: "black",
+          }}
         />
+      </ViewerUI>
     );
+  }
+
+  // Si aún no se está visualizando, muestra el formulario de selección
+  return (
+    <SelectionForm
+      {...dataProps}
+      onVisualize={() => setShowViewer(true)}
+    />
+  );
 }
 
 export default VtkViewer;

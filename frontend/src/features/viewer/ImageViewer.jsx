@@ -1,10 +1,11 @@
 import { useRef, useEffect, useState } from "react";
 import "@kitware/vtk.js/Rendering/Profiles/All";
 import vtkFullScreenRenderWindow from "@kitware/vtk.js/Rendering/Misc/FullScreenRenderWindow";
-import vtkImageMapper from "@kitware/vtk.js/Rendering/Core/ImageMapper";
-import vtkImageSlice from "@kitware/vtk.js/Rendering/Core/ImageSlice";
+import vtkPlaneSource from "@kitware/vtk.js/Filters/Sources/PlaneSource";
+import vtkMapper from "@kitware/vtk.js/Rendering/Core/Mapper";
+import vtkActor from "@kitware/vtk.js/Rendering/Core/Actor";
+import vtkTexture from "@kitware/vtk.js/Rendering/Core/Texture";
 import vtkInteractorStyleImage from "@kitware/vtk.js/Interaction/Style/InteractorStyleImage";
-import vtkITKHelper from "@kitware/vtk.js/Common/DataModel/ITKHelper";
 import { readImage } from "@itk-wasm/image-io";
 import "./viewer.css";
 
@@ -13,12 +14,11 @@ function ImageViewer({ imageFile, onClose }) {
   const context = useRef(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [windowLevel, setWindowLevel] = useState({ width: 256, center: 128 });
 
   useEffect(() => {
     if (!imageFile || !vtkContainerRef.current) return;
-
     loadAndRenderImage();
-
     return () => {
       if (context.current) {
         context.current.fullScreenRenderer.delete();
@@ -27,66 +27,111 @@ function ImageViewer({ imageFile, onClose }) {
     };
   }, [imageFile]);
 
+  // Actualizar window/level cuando cambia
+  useEffect(() => {
+    if (context.current && context.current.isGrayscale && context.current.rawPixelData) {
+      updateWindowLevel();
+    }
+  }, [windowLevel]);
+
+  const updateWindowLevel = () => {
+    const { rawPixelData, width, height, texture, renderWindow } = context.current;
+    
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    const imageData = ctx.createImageData(width, height);
+    
+    const minValue = windowLevel.center - windowLevel.width / 2;
+    const maxValue = windowLevel.center + windowLevel.width / 2;
+    const range = maxValue - minValue;
+    
+    for (let i = 0; i < rawPixelData.length; i++) {
+      let value = rawPixelData[i];
+      
+      if (value <= minValue) {
+        value = 0;
+      } else if (value >= maxValue) {
+        value = 255;
+      } else {
+        value = ((value - minValue) / range) * 255;
+      }
+      
+      imageData.data[i * 4] = value;
+      imageData.data[i * 4 + 1] = value;
+      imageData.data[i * 4 + 2] = value;
+      imageData.data[i * 4 + 3] = 255;
+    }
+    
+    ctx.putImageData(imageData, 0, 0);
+    texture.setCanvas(canvas);
+    renderWindow.render();
+  };
+
   const loadAndRenderImage = async () => {
     setLoading(true);
     setError(null);
 
     try {
-      console.log('1. Iniciando carga de:', imageFile.filename);
-      
-      // Descargar el archivo
       const response = await fetch(`http://localhost:4000/api/uploads/${imageFile.filename}`);
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      
       const arrayBuffer = await response.arrayBuffer();
-      console.log('2. Archivo descargado, tamaño:', arrayBuffer.byteLength, 'bytes');
-      
-      // Crear un File object para itk-wasm
+
       const file = new File([arrayBuffer], imageFile.filename, {
         type: getMimeType(imageFile.filename)
       });
 
-      console.log('3. Leyendo imagen con itk-wasm...');
+      const result = await readImage(file);
+      const itkImage = result.image;
+
+      const width = itkImage.size[0];
+      const height = itkImage.size[1];
+      const pixelData = itkImage.data;
+      const isRGB = itkImage.imageType.components === 3;
+      const isGrayscale = itkImage.imageType.components === 1;
+
+      console.log('Imagen:', width, 'x', height, isRGB ? 'RGB' : 'Grayscale');
+
+      // Para escala de grises, calcular window/level inicial
+      if (isGrayscale) {
+        let min = Infinity;
+        let max = -Infinity;
+        for (let i = 0; i < pixelData.length; i++) {
+          if (pixelData[i] < min) min = pixelData[i];
+          if (pixelData[i] > max) max = pixelData[i];
+        }
+        const initialWidth = max - min;
+        const initialCenter = min + initialWidth / 2;
+        setWindowLevel({ width: initialWidth, center: initialCenter });
+      }
+
+      // Crear canvas
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      const imageData = ctx.createImageData(width, height);
       
-      // Leer la imagen con itk-wasm (soporta DICOM, PNG, JPG, etc.)
-      let itkImage;
-      try {
-        const result = await readImage(file);
-        itkImage = result.image;
-        console.log('4. Imagen ITK cargada exitosamente');
-      } catch (itkError) {
-        console.error('Error en readImage:', itkError);
-        throw new Error(`Error leyendo imagen con itk-wasm: ${itkError.message}`);
+      if (isRGB) {
+        for (let i = 0; i < width * height; i++) {
+          imageData.data[i * 4] = pixelData[i * 3];
+          imageData.data[i * 4 + 1] = pixelData[i * 3 + 1];
+          imageData.data[i * 4 + 2] = pixelData[i * 3 + 2];
+          imageData.data[i * 4 + 3] = 255;
+        }
+      } else {
+        for (let i = 0; i < width * height; i++) {
+          const value = pixelData[i];
+          imageData.data[i * 4] = value;
+          imageData.data[i * 4 + 1] = value;
+          imageData.data[i * 4 + 2] = value;
+          imageData.data[i * 4 + 3] = 255;
+        }
       }
       
-      console.log('5. Detalles imagen ITK:', {
-        dimensions: itkImage.size,
-        spacing: itkImage.spacing,
-        components: itkImage.imageType.components,
-        pixelType: itkImage.imageType.pixelType,
-        componentType: itkImage.imageType.componentType
-      });
+      ctx.putImageData(imageData, 0, 0);
 
-      // Convertir imagen ITK a VTK
-      console.log('6. Convirtiendo ITK a VTK...');
-      const vtkImageData = vtkITKHelper.convertItkToVtkImage(itkImage);
-      
-      // Para imágenes RGB, configurar correctamente
-      const scalars = vtkImageData.getPointData().getScalars();
-      scalars.setNumberOfComponents(itkImage.imageType.components);
-      
-      const dims = vtkImageData.getDimensions();
-      const range = scalars.getRange();
-      
-      console.log('7. Imagen VTK convertida:', {
-        dimensions: dims,
-        dataRange: range,
-        numberOfComponents: scalars.getNumberOfComponents(),
-        numberOfPoints: vtkImageData.getNumberOfPoints()
-      });
-
-      // Crear el renderizador
-      console.log('8. Creando renderizador...');
       if (context.current) {
         context.current.fullScreenRenderer.delete();
         context.current = null;
@@ -99,91 +144,102 @@ function ImageViewer({ imageFile, onClose }) {
 
       const renderer = fullScreenRenderer.getRenderer();
       const renderWindow = fullScreenRenderer.getRenderWindow();
-      renderer.setBackground(0.1, 0.1, 0.15);
+      renderer.setBackground(0, 0, 0);
 
-      // IMPORTANTE: Esperar a que el canvas se cree
-      await new Promise(resolve => setTimeout(resolve, 100));
+      const planeSource = vtkPlaneSource.newInstance();
+      const mapper = vtkMapper.newInstance();
+      mapper.setInputConnection(planeSource.getOutputPort());
       
-      console.log('9. Canvas creado:', vtkContainerRef.current?.querySelector('canvas') !== null);
+      const actor = vtkActor.newInstance();
+      actor.setMapper(mapper);
 
-      // Crear el mapper de imagen
-      const imageMapper = vtkImageMapper.newInstance();
-      imageMapper.setInputData(vtkImageData);
+      const texture = vtkTexture.newInstance();
+      texture.setCanvas(canvas);
+      texture.setInterpolate(true);
+      actor.addTexture(texture);
 
-      // Configurar para imagen 2D
-      const slicingMode = vtkImageMapper.SlicingMode.K; // Z axis
-      imageMapper.setSlicingMode(slicingMode);
-      
-      // Si es 3D, usar el slice del medio, si es 2D usar 0
-      const sliceToShow = dims[2] > 1 ? Math.floor(dims[2] / 2) : 0;
-      imageMapper.setSlice(sliceToShow);
-
-      console.log('10. Configuración mapper:', {
-        slicingMode,
-        slice: sliceToShow,
-        totalSlices: dims[2]
-      });
-
-      // Crear el actor
-      const imageActor = vtkImageSlice.newInstance();
-      imageActor.setMapper(imageMapper);
-      
-      // Configurar el property del actor
-      const property = imageActor.getProperty();
-      
-      // Para imágenes RGB, no usar window/level
-      const isRGB = itkImage.imageType.components === 3;
-      
-      if (isRGB) {
-        console.log('10.1. Imagen RGB detectada - sin window/level');
-        property.setIndependentComponents(false);
+      const aspect = width / height;
+      if (aspect > 1) {
+        planeSource.setOrigin(-aspect / 2, -0.5, 0);
+        planeSource.setPoint1(aspect / 2, -0.5, 0);
+        planeSource.setPoint2(-aspect / 2, 0.5, 0);
       } else {
-        property.setColorWindow(range[1] - range[0]);
-        property.setColorLevel((range[0] + range[1]) / 2);
-        console.log('10.2. Configuración de color (escala de grises):', {
-          window: range[1] - range[0],
-          level: (range[0] + range[1]) / 2
-        });
+        const invAspect = 1 / aspect;
+        planeSource.setOrigin(-0.5, -invAspect / 2, 0);
+        planeSource.setPoint1(0.5, -invAspect / 2, 0);
+        planeSource.setPoint2(-0.5, invAspect / 2, 0);
       }
 
-      renderer.addActor(imageActor);
-      console.log('12. Actor agregado al renderer');
+      renderer.addActor(actor);
 
-      // Configurar cámara para visualización 2D correcta
       const camera = renderer.getActiveCamera();
       camera.setParallelProjection(true);
+      camera.setPosition(0, 0, 1);
+      camera.setFocalPoint(0, 0, 0);
+      camera.setViewUp(0, 1, 0);
       
-      // Posicionar la cámara mirando hacia la imagen
-      const bounds = vtkImageData.getBounds();
-      const centerX = (bounds[0] + bounds[1]) / 2;
-      const centerY = (bounds[2] + bounds[3]) / 2;
-      const centerZ = (bounds[4] + bounds[5]) / 2;
-      
-      camera.setFocalPoint(centerX, centerY, centerZ);
-      camera.setPosition(centerX, centerY, centerZ + 1);
-      camera.setViewUp(0, 1, 0); // Cambié de -1 a 1 para que no esté invertida
-      
-      // Resetear cámara para ajustar al contenido
       renderer.resetCamera();
       renderer.resetCameraClippingRange();
-      
-      console.log('13. Cámara configurada:', {
-        position: camera.getPosition(),
-        focalPoint: camera.getFocalPoint(),
-        viewUp: camera.getViewUp()
-      });
 
-      // Configurar interactor DESPUÉS de que todo esté listo
-      const canvas = vtkContainerRef.current?.querySelector('canvas');
-      console.log('14. Canvas para interactor:', canvas !== null);
+      await new Promise(resolve => setTimeout(resolve, 100));
       
-      if (canvas) {
-        const interactor = renderWindow.getInteractor();
-        const interactorStyle = vtkInteractorStyleImage.newInstance();
-        interactor.setInteractorStyle(interactorStyle);
-        console.log('15. Interactor configurado correctamente');
-      } else {
-        console.warn('⚠️ Canvas no encontrado, interactor no configurado');
+      // Configurar interactor con eventos personalizados
+      const interactor = renderWindow.getInteractor();
+      const interactorStyle = vtkInteractorStyleImage.newInstance();
+      interactor.setInteractorStyle(interactorStyle);
+
+      // Agregar listener para window/level con mouse
+      if (isGrayscale) {
+        let isDragging = false;
+        let lastX = 0;
+        let lastY = 0;
+
+        const canvas = vtkContainerRef.current?.querySelector('canvas');
+        if (canvas) {
+          canvas.addEventListener('mousedown', (e) => {
+            if (e.button === 0) { // Click izquierdo
+              isDragging = true;
+              lastX = e.clientX;
+              lastY = e.clientY;
+              canvas.style.cursor = 'crosshair';
+            }
+          });
+
+          canvas.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+              const deltaX = e.clientX - lastX;
+              const deltaY = e.clientY - lastY;
+              
+              // Ajustar window/level
+              setWindowLevel(prev => ({
+                width: Math.max(1, prev.width + deltaX * 2),
+                center: prev.center + deltaY * 2
+              }));
+              
+              lastX = e.clientX;
+              lastY = e.clientY;
+            }
+          });
+
+          canvas.addEventListener('mouseup', () => {
+            isDragging = false;
+            canvas.style.cursor = 'default';
+          });
+
+          canvas.addEventListener('mouseleave', () => {
+            isDragging = false;
+            canvas.style.cursor = 'default';
+          });
+
+          // Zoom con rueda del mouse
+          canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? 1.1 : 0.9;
+            const currentScale = camera.getParallelScale();
+            camera.setParallelScale(currentScale * delta);
+            renderWindow.render();
+          }, { passive: false });
+        }
       }
 
       context.current = {
@@ -191,22 +247,22 @@ function ImageViewer({ imageFile, onClose }) {
         renderer,
         renderWindow,
         camera,
-        imageMapper,
-        imageActor,
-        vtkImageData,
-        property,
-        isRGB
+        actor,
+        planeSource,
+        texture,
+        rawPixelData: isGrayscale ? pixelData : null,
+        width,
+        height,
+        isRGB,
+        isGrayscale
       };
 
-      console.log('16. Renderizando...');
       renderWindow.render();
-      
+      console.log('✅ Renderizado completo');
       setLoading(false);
-      console.log('✅ Imagen renderizada correctamente');
 
     } catch (err) {
-      console.error("❌ Error completo:", err);
-      console.error("Stack:", err.stack);
+      console.error("Error:", err);
       setError(`Error: ${err.message}`);
       setLoading(false);
     }
@@ -218,9 +274,7 @@ function ImageViewer({ imageFile, onClose }) {
       'dcm': 'application/dicom',
       'png': 'image/png',
       'jpg': 'image/jpeg',
-      'jpeg': 'image/jpeg',
-      'nii': 'application/octet-stream',
-      'nrrd': 'application/octet-stream'
+      'jpeg': 'image/jpeg'
     };
     return mimeTypes[ext] || 'application/octet-stream';
   };
@@ -232,20 +286,21 @@ function ImageViewer({ imageFile, onClose }) {
     }
   };
 
-  const handleAdjustBrightness = (delta) => {
-    if (context.current && context.current.property && !context.current.isRGB) {
-      const currentLevel = context.current.property.getColorLevel();
-      context.current.property.setColorLevel(currentLevel + delta);
-      context.current.renderWindow.render();
-    }
-  };
-
-  const handleAdjustContrast = (delta) => {
-    if (context.current && context.current.property && !context.current.isRGB) {
-      const currentWindow = context.current.property.getColorWindow();
-      const newWindow = Math.max(1, currentWindow + delta);
-      context.current.property.setColorWindow(newWindow);
-      context.current.renderWindow.render();
+  const handleAutoWindowLevel = () => {
+    if (context.current && context.current.isGrayscale && context.current.rawPixelData) {
+      const pixelData = context.current.rawPixelData;
+      let min = Infinity;
+      let max = -Infinity;
+      
+      for (let i = 0; i < pixelData.length; i++) {
+        if (pixelData[i] < min) min = pixelData[i];
+        if (pixelData[i] > max) max = pixelData[i];
+      }
+      
+      setWindowLevel({
+        width: max - min,
+        center: min + (max - min) / 2
+      });
     }
   };
 
@@ -254,16 +309,22 @@ function ImageViewer({ imageFile, onClose }) {
       <div className="vtk-toolbar">
         <button onClick={onClose}>← Volver</button>
         <button onClick={handleResetView}>Reset View</button>
-        {context.current && !context.current.isRGB && (
+        
+        {context.current?.isGrayscale && (
           <>
-            <button onClick={() => handleAdjustBrightness(10)}>Brillo +</button>
-            <button onClick={() => handleAdjustBrightness(-10)}>Brillo -</button>
-            <button onClick={() => handleAdjustContrast(50)}>Contraste +</button>
-            <button onClick={() => handleAdjustContrast(-50)}>Contraste -</button>
+            <button onClick={handleAutoWindowLevel}>Auto W/L</button>
+            <span style={{ marginLeft: "10px", color: "#fff", fontSize: "14px" }}>
+              W: {Math.round(windowLevel.width)} | L: {Math.round(windowLevel.center)}
+            </span>
           </>
         )}
-        <span style={{ marginLeft: "10px", color: "#fff", fontSize: "14px" }}>
+        
+        <span style={{ marginLeft: "auto", color: "#fff", fontSize: "14px" }}>
           {imageFile.filename}
+        </span>
+        
+        <span style={{ marginLeft: "10px", color: "#aaa", fontSize: "12px" }}>
+          💡 Rueda: zoom | Click izq: W/L
         </span>
       </div>
 

@@ -10,12 +10,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@itk-wasm/dicom": "^7.6.2",
     "@itk-wasm/image-io": "^1.6.0",
     "@kitware/vtk.js": "^34.11.1",
+    "axios": "^1.11.0",
     "cornerstone-core": "^2.6.1",
     "cornerstone-tools": "^6.0.10",
     "cornerstone-web-image-loader": "^2.1.1",
-    "itk-wasm": "^1.0.0-b.183",
+    "dicom-parser": "^1.8.21",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.9.1"

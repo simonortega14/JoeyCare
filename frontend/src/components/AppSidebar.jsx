@@ -7,7 +7,8 @@ const AppSidebar = ({ isOpen }) => {
     { id: 0, name: "Dashboards", icon: "📊", path: "/dashboard"},
     { id: 1, name: "Mi perfil", icon: "👤", path: "/perfil" },
     { id: 2, name: "Visualizar Ecografías", icon: "🖼️", path: "/visualizar-ecografias" },
-    { id: 3, name: "Buscar Pacientes", icon: "🔍", path: "/buscar-pacientes" }
+    { id: 3, name: "Cargar Ecografías", icon: "📁", path: "/cargar-ecografias"},
+    { id: 4, name: "Buscar Pacientes", icon: "🔍", path: "/buscar-pacientes" }
   ];
 
   return (

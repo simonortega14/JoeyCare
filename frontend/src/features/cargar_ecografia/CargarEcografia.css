@@ -1,296 +1,317 @@
-
-:root {
-  --header-bg: #e8f5fb;
-  --sidebar-bg: rgba(77, 194, 255, 0.46);
-  --page-bg: #F5FFFF;
-  --card-bg: rgba(77, 194, 255, 0.46);
-  --card-border: rgba(0, 0, 0, 0.1);
-  --text: #000000;
-  --text-on-dark: #000000;
-  --muted: #7f8c8d;
-  --input-bg: #F5FFFF;
-  --input-border: rgba(0, 0, 0, 0.2);
-  --btn: rgba(77, 194, 255, 0.46);
-  --btn-hover: rgba(77, 194, 255, 0.6);
-  --btn-text: #000000;
-  --btn-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  --header-h: 70px;
-  --sidebar-w: 249px;
-  --accent: #4DC2FF;
-}
-
-/* Contenedor principal centrado */
-.cargar-container {
-  width: 100%;
-  min-height: calc(100vh - var(--header-h));
-  background-color: var(--page-bg);
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-/* Contenido centrado */
-.cargar-content {
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 30px 20px;
+/* ===== CONTENEDOR PRINCIPAL ===== */
+.cargar-page {
+  min-height: calc(100vh - 80px);
+  background: linear-gradient(135deg, #e3f2fd 0%, #f5f5f5 100%);
+  padding: 2rem;
   display: flex;
   justify-content: center;
 }
 
-/* Tarjeta principal */
+/* ===== TARJETA PRINCIPAL ===== */
 .cargar-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 2.5rem;
+  max-width: 600px;
   width: 100%;
-  max-width: 800px;
-  background: var(--card-bg);
-  color: var(--text-on-dark);
-  border-radius: 12px;
-  padding: 30px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.1),
+    0 10px 25px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  animation: fadeInUp 0.6s ease-out;
 }
 
-/* Título de la tarjeta */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== TÍTULO ===== */
 .cargar-title {
-  margin: 0 0 20px;
-  font-size: 28px;
+  font-size: 2.2rem;
   font-weight: 700;
-  color: var(--text);
-  padding-bottom: 15px;
-  border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+  text-align: center;
+  background: linear-gradient(135deg, #1976d2 0%, #42a5f5 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0 0 2rem 0;
 }
 
-/* Información del paciente */
-.patient-info-header {
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 8px;
-  padding: 15px;
-  margin-bottom: 20px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
+/* ===== CAMPO/SECCIÓN ===== */
+.campo {
+  margin-bottom: 1.5rem;
+  animation: slideInFromLeft 0.4s ease-out;
 }
 
-.patient-name {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text);
-  margin: 0 0 5px 0;
+.campo:nth-child(1) { animation-delay: 0.1s; }
+.campo:nth-child(2) { animation-delay: 0.2s; }
+.campo:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes slideInFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
-.patient-id {
-  font-size: 14px;
-  color: var(--muted);
-  margin: 0;
-}
-
-/* Contenedor de formulario */
-.cargar-form {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-/* Grupos de formulario */
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-/* Labels e hints */
+/* ===== LABELS ===== */
 .cargar-label {
   display: block;
-  color: var(--text);
-  font-size: 16px;
   font-weight: 600;
-  margin-bottom: 5px;
+  color: #495057;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
 }
 
-.cargar-hint {
-  font-size: 14px;
-  color: var(--muted);
-  margin-top: 4px;
-}
-
-/* Inputs armonizados */
+/* ===== INPUTS ===== */
 .cargar-input {
   width: 100%;
-  padding: 12px 16px;
-  border-radius: 8px;
-  border: 1px solid var(--input-border);
-  background: var(--input-bg);
-  color: var(--text);
-  outline: none;
+  padding: 1rem 1.25rem;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  font-size: 1rem;
+  background: white;
+  color: #495057;
+  transition: all 0.3s ease;
   box-sizing: border-box;
-  font-size: 14px;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  outline: none;
 }
 
 .cargar-input:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(77, 194, 255, 0.25);
+  border-color: #1976d2;
+  box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+  transform: translateY(-1px);
 }
 
-/* Área de carga de archivos */
-.file-upload-area {
-  border: 2px dashed var(--input-border);
-  border-radius: 8px;
-  padding: 30px;
-  text-align: center;
-  background: var(--input-bg);
-  transition: border-color 0.3s ease, background-color 0.3s ease;
-  cursor: pointer;
+.cargar-input:hover:not(:disabled) {
+  border-color: #1976d2;
 }
 
-.file-upload-area:hover {
-  border-color: var(--accent);
-  background: rgba(77, 194, 255, 0.1);
+.cargar-input:disabled {
+  background-color: #f8f9fa;
+  color: #6c757d;
+  cursor: not-allowed;
 }
 
-.file-upload-area.dragover {
-  border-color: var(--accent);
-  background: rgba(77, 194, 255, 0.2);
+/* ===== CONTENEDOR SELECTOR DE PACIENTES ===== */
+.patient-picker {
+  position: relative;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
 }
 
-.upload-icon {
-  font-size: 48px;
-  margin-bottom: 15px;
-  color: var(--muted);
-}
-
-.upload-text {
-  font-size: 16px;
-  color: var(--text);
-  margin-bottom: 10px;
-}
-
-.upload-subtext {
-  font-size: 14px;
-  color: var(--muted);
-}
-
-/* Botón con la paleta */
-.cargar-btn {
-  width: 100%;
-  padding: 14px 20px;
-  border-radius: 8px;
+/* ===== BOTÓN MINI ===== */
+.mini-btn {
+  padding: 0.5rem 1rem;
+  background: #dc3545;
+  color: white;
   border: none;
-  background: var(--btn);
-  color: var(--btn-text);
-  font-size: 16px;
+  border-radius: 8px;
+  font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: var(--btn-shadow);
-  transition: background-color 0.3s ease, transform 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
+  transition: all 0.3s ease;
+  white-space: nowrap;
 }
 
-.cargar-btn:hover {
-  background: var(--btn-hover);
+.mini-btn:hover {
+  background: #c82333;
+  transform: translateY(-1px);
+}
+
+/* ===== LISTA DE PACIENTES ===== */
+.patient-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 12px;
+  max-height: 200px;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  margin-top: 0.5rem;
+}
+
+.patient-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  border-bottom: 1px solid #f1f1f1;
+}
+
+.patient-item:last-child {
+  border-bottom: none;
+}
+
+.patient-item:hover {
+  background-color: #f8f9fa;
+}
+
+.patient-id {
+  font-weight: 600;
+  color: #1976d2;
+  min-width: 60px;
+}
+
+.patient-name {
+  color: #495057;
+}
+
+/* ===== HINTS/AYUDA ===== */
+.cargar-hint {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: #6c757d;
+  font-style: italic;
+}
+
+/* ===== PILL DE CONFIRMACIÓN ===== */
+.pill-ok {
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+  color: #155724;
+  border: 1px solid #c3e6cb;
+  border-radius: 12px;
+  font-size: 0.9rem;
+}
+
+/* ===== BOTÓN PRINCIPAL ===== */
+.cargar-btn {
+  width: 100%;
+  padding: 1.25rem 2rem;
+  background: linear-gradient(135deg, #1976d2 0%, #42a5f5 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(25, 118, 210, 0.3);
+  margin-top: 1rem;
+}
+
+.cargar-btn:hover:not(:disabled) {
   transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(25, 118, 210, 0.4);
+  background: linear-gradient(135deg, #1565c0 0%, #1976d2 100%);
+}
+
+.cargar-btn:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .cargar-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  box-shadow: none;
   transform: none;
 }
 
-.cargar-btn-primary {
-  background: var(--accent);
-  color: #000000;
-}
-
-.cargar-btn-primary:hover {
-  background: #3ab0ff;
-}
-
-/* Nombre del archivo */
+/* ===== NOMBRE DEL ARCHIVO ===== */
 .cargar-filename {
-  margin-top: 10px;
-  font-size: 14px;
-  color: var(--text);
-  padding: 8px 12px;
-  background: var(--input-bg);
-  border-radius: 6px;
-  border: 1px solid var(--input-border);
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: rgba(25, 118, 210, 0.1);
+  color: #1976d2;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border: 1px solid rgba(25, 118, 210, 0.2);
 }
 
-/* Progress bar */
-.upload-progress {
-  width: 100%;
-  height: 6px;
-  background: var(--input-bg);
-  border-radius: 3px;
-  overflow: hidden;
-  margin-top: 10px;
+/* ===== LOADING ===== */
+.loading {
+  text-align: center;
+  padding: 2rem;
+  color: #6c757d;
+  font-size: 1.1rem;
 }
 
-.progress-bar {
-  height: 100%;
-  background: var(--accent);
-  transition: width 0.3s ease;
+/* ===== MENSAJE DE ERROR ===== */
+.error-message {
+  padding: 1rem;
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  border-radius: 10px;
+  color: #856404;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
 }
 
-/* Responsivo */
-@media (max-width: 1200px) {
-  .cargar-content {
-    max-width: 1000px;
-    padding: 25px 20px;
-  }
+/* ===== FORMULARIO ===== */
+form {
+  animation: slideInFromLeft 0.4s ease-out;
+  animation-delay: 0.4s;
 }
 
-@media (max-width: 900px) {
-  .cargar-card {
-    max-width: 600px;
-  }
-}
-
+/* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
-  .cargar-content {
-    padding: 20px 15px;
+  .cargar-page {
+    padding: 1rem;
+    align-items: flex-start;
+    padding-top: 2rem;
   }
   
   .cargar-card {
-    padding: 20px;
+    padding: 1.5rem;
   }
   
   .cargar-title {
-    font-size: 24px;
+    font-size: 1.8rem;
   }
   
-  .file-upload-area {
-    padding: 20px;
+  .patient-picker {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+  
+  .mini-btn {
+    align-self: flex-start;
   }
 }
 
-@media (max-width: 480px) {
-  .cargar-content {
-    padding: 15px 10px;
-  }
-  
-  .cargar-card {
-    padding: 15px;
-  }
-  
-  .cargar-title {
-    font-size: 22px;
-  }
-  
-  .cargar-input {
-    padding: 10px 12px;
-  }
-  
-  .file-upload-area {
-    padding: 15px;
-  }
-  
-  .upload-icon {
-    font-size: 36px;
-  }
-  
-  .cargar-btn {
-    padding: 12px 16px;
-    font-size: 14px;
-  }
+/* ===== ESTILOS ADICIONALES PARA INPUT FILE ===== */
+.cargar-input[type="file"] {
+  padding: 0.75rem;
+  cursor: pointer;
+}
+
+.cargar-input[type="file"]::-webkit-file-upload-button {
+  padding: 0.5rem 1rem;
+  background: #1976d2;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-right: 1rem;
+  font-weight: 500;
+}
+
+.cargar-input[type="file"]::-webkit-file-upload-button:hover {
+  background: #1565c0;
 }

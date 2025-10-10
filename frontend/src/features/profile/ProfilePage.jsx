@@ -42,7 +42,7 @@ const ProfilePage = ({ onOpenSettings }) => {
           </div>
         </div>
 
-        {/* Contenedor de pacientes asignados */}
+        {/* Aquí dejamos el resto igual, pacientes asignados, etc */}
         <div className="patients-assigned-card">
           <h3>Pacientes asignados</h3>
           <div className="patients-number">22</div>

@@ -1,12 +1,14 @@
-import { useState } from 'react';
-import logoJoey from '../../assets/Logo Joey care.png';
-import marcaAgua from '../../assets/Marca De Agua.png';
-import './auth.css';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import logoJoey from "../../assets/Logo Joey care.png";
+import marcaAgua from "../../assets/Marca De Agua.png";
+import "./auth.css";
 
 export default function LoginPage({ onSubmit }) {
-  const [form, setForm] = useState({ username: '', password: '' });
+  const [form, setForm] = useState({ username: "", password: "" });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   const canSubmit =
     form.username.trim().length > 0 && form.password.length >= 6 && !loading;
@@ -18,33 +20,33 @@ export default function LoginPage({ onSubmit }) {
     e.preventDefault();
     if (!canSubmit) return;
     setLoading(true);
-    setError('');
+    setError("");
     try {
       await onSubmit?.(form);
     } catch (err) {
-      setError(err?.message || 'No se pudo iniciar sesión');
+      setError(err?.message || "No se pudo iniciar sesión");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="login-page" style={{ position: 'relative' }}>
+    <div className="login-page" style={{ position: "relative" }}>
       <div
         className="login-bg"
         style={{
           backgroundImage: `url(${marcaAgua})`,
-          backgroundSize: 'contain',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
+          backgroundSize: "contain",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
           opacity: 0.08,
-          position: 'absolute',
+          position: "absolute",
           inset: 0,
-          pointerEvents: 'none',
+          pointerEvents: "none",
           zIndex: 0,
         }}
       />
-      <div className="login-card" style={{ position: 'relative', zIndex: 10 }}>
+      <div className="login-card" style={{ position: "relative", zIndex: 10 }}>
         <div className="login-avatar">
           <img src={logoJoey} alt="Logo Joey Care" />
         </div>
@@ -85,12 +87,23 @@ export default function LoginPage({ onSubmit }) {
             <button
               type="button"
               className="link"
-              onClick={() => alert('Recuperar contraseña')}
+              onClick={() => alert("Recuperar contraseña")}
             >
               ¿Olvidaste tu contraseña?
             </button>
             <button className="jc-btn" type="submit" disabled={!canSubmit}>
-              {loading ? 'Ingresando…' : 'Continuar'}
+              {loading ? "Ingresando…" : "Continuar"}
+            </button>
+          </div>
+
+          {/* Botón para ir a registro */}
+          <div className="actions" style={{ marginTop: "20px", justifyContent: "center" }}>
+            <button
+              type="button"
+              className="jc-btn jc-btn--ghost"
+              onClick={() => navigate("/register")}
+            >
+              Crear cuenta
             </button>
           </div>
 

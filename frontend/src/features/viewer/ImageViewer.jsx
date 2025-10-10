@@ -15,6 +15,7 @@ function ImageViewer({ imageFile, onClose }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [windowLevel, setWindowLevel] = useState({ width: 256, center: 128 });
+  const [panMode, setPanMode] = useState(false);
 
   useEffect(() => {
     if (!imageFile || !vtkContainerRef.current) return;
@@ -27,7 +28,6 @@ function ImageViewer({ imageFile, onClose }) {
     };
   }, [imageFile]);
 
-  // Actualizar window/level cuando cambia
   useEffect(() => {
     if (context.current && context.current.isGrayscale && context.current.rawPixelData) {
       updateWindowLevel();
@@ -36,34 +36,27 @@ function ImageViewer({ imageFile, onClose }) {
 
   const updateWindowLevel = () => {
     const { rawPixelData, width, height, texture, renderWindow } = context.current;
-    
-    const canvas = document.createElement('canvas');
+    const canvas = document.createElement("canvas");
     canvas.width = width;
     canvas.height = height;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     const imageData = ctx.createImageData(width, height);
-    
+
     const minValue = windowLevel.center - windowLevel.width / 2;
     const maxValue = windowLevel.center + windowLevel.width / 2;
     const range = maxValue - minValue;
-    
+
     for (let i = 0; i < rawPixelData.length; i++) {
       let value = rawPixelData[i];
-      
-      if (value <= minValue) {
-        value = 0;
-      } else if (value >= maxValue) {
-        value = 255;
-      } else {
-        value = ((value - minValue) / range) * 255;
-      }
-      
+      if (value <= minValue) value = 0;
+      else if (value >= maxValue) value = 255;
+      else value = ((value - minValue) / range) * 255;
       imageData.data[i * 4] = value;
       imageData.data[i * 4 + 1] = value;
       imageData.data[i * 4 + 2] = value;
       imageData.data[i * 4 + 3] = 255;
     }
-    
+
     ctx.putImageData(imageData, 0, 0);
     texture.setCanvas(canvas);
     renderWindow.render();
@@ -91,12 +84,8 @@ function ImageViewer({ imageFile, onClose }) {
       const isRGB = itkImage.imageType.components === 3;
       const isGrayscale = itkImage.imageType.components === 1;
 
-      console.log('Imagen:', width, 'x', height, isRGB ? 'RGB' : 'Grayscale');
-
-      // Para escala de grises, calcular window/level inicial
       if (isGrayscale) {
-        let min = Infinity;
-        let max = -Infinity;
+        let min = Infinity, max = -Infinity;
         for (let i = 0; i < pixelData.length; i++) {
           if (pixelData[i] < min) min = pixelData[i];
           if (pixelData[i] > max) max = pixelData[i];
@@ -106,13 +95,12 @@ function ImageViewer({ imageFile, onClose }) {
         setWindowLevel({ width: initialWidth, center: initialCenter });
       }
 
-      // Crear canvas
-      const canvas = document.createElement('canvas');
+      const canvas = document.createElement("canvas");
       canvas.width = width;
       canvas.height = height;
-      const ctx = canvas.getContext('2d');
+      const ctx = canvas.getContext("2d");
       const imageData = ctx.createImageData(width, height);
-      
+
       if (isRGB) {
         for (let i = 0; i < width * height; i++) {
           imageData.data[i * 4] = pixelData[i * 3];
@@ -129,7 +117,6 @@ function ImageViewer({ imageFile, onClose }) {
           imageData.data[i * 4 + 3] = 255;
         }
       }
-      
       ctx.putImageData(imageData, 0, 0);
 
       if (context.current) {
@@ -139,9 +126,8 @@ function ImageViewer({ imageFile, onClose }) {
 
       const fullScreenRenderer = vtkFullScreenRenderWindow.newInstance({
         rootContainer: vtkContainerRef.current,
-        containerStyle: { width: "100%", height: "100%", position: "relative" },
+        containerStyle: { width: "100%", height: "100%", position: "relative" }
       });
-
       const renderer = fullScreenRenderer.getRenderer();
       const renderWindow = fullScreenRenderer.getRenderWindow();
       renderer.setBackground(0, 0, 0);
@@ -149,14 +135,14 @@ function ImageViewer({ imageFile, onClose }) {
       const planeSource = vtkPlaneSource.newInstance();
       const mapper = vtkMapper.newInstance();
       mapper.setInputConnection(planeSource.getOutputPort());
-      
+
       const actor = vtkActor.newInstance();
       actor.setMapper(mapper);
 
-      const texture = vtkTexture.newInstance();
-      texture.setCanvas(canvas);
-      texture.setInterpolate(true);
-      actor.addTexture(texture);
+      const textureObj = vtkTexture.newInstance();
+      textureObj.setCanvas(canvas);
+      textureObj.setInterpolate(true);
+      actor.addTexture(textureObj);
 
       const aspect = width / height;
       if (aspect > 1) {
@@ -177,69 +163,73 @@ function ImageViewer({ imageFile, onClose }) {
       camera.setPosition(0, 0, 1);
       camera.setFocalPoint(0, 0, 0);
       camera.setViewUp(0, 1, 0);
-      
       renderer.resetCamera();
       renderer.resetCameraClippingRange();
 
       await new Promise(resolve => setTimeout(resolve, 100));
-      
-      // Configurar interactor con eventos personalizados
+
       const interactor = renderWindow.getInteractor();
       const interactorStyle = vtkInteractorStyleImage.newInstance();
       interactor.setInteractorStyle(interactorStyle);
 
-      // Agregar listener para window/level con mouse
-      if (isGrayscale) {
+      // ===== EVENTOS DEL MOUSE =====
+      const canvasElement = vtkContainerRef.current?.querySelector("canvas");
+      if (canvasElement) {
         let isDragging = false;
         let lastX = 0;
         let lastY = 0;
+        let isRightButton = false;
 
-        const canvas = vtkContainerRef.current?.querySelector('canvas');
-        if (canvas) {
-          canvas.addEventListener('mousedown', (e) => {
-            if (e.button === 0) { // Click izquierdo
-              isDragging = true;
-              lastX = e.clientX;
-              lastY = e.clientY;
-              canvas.style.cursor = 'crosshair';
-            }
-          });
+        canvasElement.addEventListener("mousedown", (e) => {
+          if (e.button === 0) isRightButton = false;
+          else if (e.button === 2) isRightButton = true;
+          isDragging = true;
+          lastX = e.clientX;
+          lastY = e.clientY;
+          canvasElement.style.cursor = panMode && isRightButton ? "grab" : "crosshair";
+        });
 
-          canvas.addEventListener('mousemove', (e) => {
-            if (isDragging) {
-              const deltaX = e.clientX - lastX;
-              const deltaY = e.clientY - lastY;
-              
-              // Ajustar window/level
-              setWindowLevel(prev => ({
-                width: Math.max(1, prev.width + deltaX * 2),
-                center: prev.center + deltaY * 2
-              }));
-              
-              lastX = e.clientX;
-              lastY = e.clientY;
-            }
-          });
+        canvasElement.addEventListener("mousemove", (e) => {
+          if (!isDragging) return;
+          const deltaX = e.clientX - lastX;
+          const deltaY = e.clientY - lastY;
 
-          canvas.addEventListener('mouseup', () => {
-            isDragging = false;
-            canvas.style.cursor = 'default';
-          });
-
-          canvas.addEventListener('mouseleave', () => {
-            isDragging = false;
-            canvas.style.cursor = 'default';
-          });
-
-          // Zoom con rueda del mouse
-          canvas.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            const delta = e.deltaY > 0 ? 1.1 : 0.9;
-            const currentScale = camera.getParallelScale();
-            camera.setParallelScale(currentScale * delta);
+          if (panMode && isRightButton) {
+            const scale = camera.getParallelScale() * 2;
+            camera.setFocalPoint(
+              camera.getFocalPoint()[0] - deltaX * 0.01 * scale,
+              camera.getFocalPoint()[1] + deltaY * 0.01 * scale,
+              0
+            );
             renderWindow.render();
-          }, { passive: false });
-        }
+          } else if (!panMode && !isRightButton && isGrayscale) {
+            setWindowLevel((prev) => ({
+              width: Math.max(1, prev.width + deltaX * 2),
+              center: prev.center + deltaY * 2
+            }));
+          }
+
+          lastX = e.clientX;
+          lastY = e.clientY;
+        });
+
+        canvasElement.addEventListener("mouseup", () => {
+          isDragging = false;
+          canvasElement.style.cursor = "default";
+        });
+
+        canvasElement.addEventListener("mouseleave", () => {
+          isDragging = false;
+          canvasElement.style.cursor = "default";
+        });
+
+        canvasElement.addEventListener("wheel", (e) => {
+          e.preventDefault();
+          const delta = e.deltaY > 0 ? 1.1 : 0.9;
+          const currentScale = camera.getParallelScale();
+          camera.setParallelScale(currentScale * delta);
+          renderWindow.render();
+        }, { passive: false });
       }
 
       context.current = {
@@ -249,7 +239,7 @@ function ImageViewer({ imageFile, onClose }) {
         camera,
         actor,
         planeSource,
-        texture,
+        texture: textureObj,
         rawPixelData: isGrayscale ? pixelData : null,
         width,
         height,
@@ -258,9 +248,7 @@ function ImageViewer({ imageFile, onClose }) {
       };
 
       renderWindow.render();
-      console.log('✅ Renderizado completo');
       setLoading(false);
-
     } catch (err) {
       console.error("Error:", err);
       setError(`Error: ${err.message}`);
@@ -269,14 +257,9 @@ function ImageViewer({ imageFile, onClose }) {
   };
 
   const getMimeType = (filename) => {
-    const ext = filename.split('.').pop().toLowerCase();
-    const mimeTypes = {
-      'dcm': 'application/dicom',
-      'png': 'image/png',
-      'jpg': 'image/jpeg',
-      'jpeg': 'image/jpeg'
-    };
-    return mimeTypes[ext] || 'application/octet-stream';
+    const ext = filename.split(".").pop().toLowerCase();
+    const mimeTypes = { dcm: "application/dicom", png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg" };
+    return mimeTypes[ext] || "application/octet-stream";
   };
 
   const handleResetView = () => {
@@ -289,18 +272,12 @@ function ImageViewer({ imageFile, onClose }) {
   const handleAutoWindowLevel = () => {
     if (context.current && context.current.isGrayscale && context.current.rawPixelData) {
       const pixelData = context.current.rawPixelData;
-      let min = Infinity;
-      let max = -Infinity;
-      
+      let min = Infinity, max = -Infinity;
       for (let i = 0; i < pixelData.length; i++) {
         if (pixelData[i] < min) min = pixelData[i];
         if (pixelData[i] > max) max = pixelData[i];
       }
-      
-      setWindowLevel({
-        width: max - min,
-        center: min + (max - min) / 2
-      });
+      setWindowLevel({ width: max - min, center: min + (max - min) / 2 });
     }
   };
 
@@ -309,7 +286,7 @@ function ImageViewer({ imageFile, onClose }) {
       <div className="vtk-toolbar">
         <button onClick={onClose}>← Volver</button>
         <button onClick={handleResetView}>Reset View</button>
-        
+
         {context.current?.isGrayscale && (
           <>
             <button onClick={handleAutoWindowLevel}>Auto W/L</button>
@@ -318,28 +295,29 @@ function ImageViewer({ imageFile, onClose }) {
             </span>
           </>
         )}
-        
+
+        {/* BOTÓN PAN */}
+        <button
+          style={{ backgroundColor: panMode ? "#4caf50" : "#222", color: "#fff", marginLeft: "10px" }}
+          onClick={() => setPanMode(!panMode)}
+        >
+          Pan {panMode ? "ON" : "OFF"}
+        </button>
+
         <span style={{ marginLeft: "auto", color: "#fff", fontSize: "14px" }}>
           {imageFile.filename}
         </span>
-        
+
         <span style={{ marginLeft: "10px", color: "#aaa", fontSize: "12px" }}>
-          💡 Rueda: zoom | Click izq: W/L
+          💡 Rueda: zoom | Click izq: W/L | Click der: Pan
         </span>
       </div>
 
       {loading && (
         <div style={{
-          position: "absolute",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          color: "white",
-          fontSize: "20px",
-          backgroundColor: "rgba(0,0,0,0.7)",
-          padding: "20px",
-          borderRadius: "8px",
-          zIndex: 1000
+          position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)",
+          color: "white", fontSize: "20px", backgroundColor: "rgba(0,0,0,0.7)",
+          padding: "20px", borderRadius: "8px", zIndex: 1000
         }}>
           Cargando imagen...
         </div>
@@ -347,18 +325,9 @@ function ImageViewer({ imageFile, onClose }) {
 
       {error && (
         <div style={{
-          position: "absolute",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          color: "red",
-          fontSize: "16px",
-          textAlign: "center",
-          padding: "20px",
-          backgroundColor: "rgba(0,0,0,0.8)",
-          borderRadius: "8px",
-          zIndex: 1000,
-          maxWidth: "80%"
+          position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)",
+          color: "red", fontSize: "16px", textAlign: "center", padding: "20px",
+          backgroundColor: "rgba(0,0,0,0.8)", borderRadius: "8px", zIndex: 1000, maxWidth: "80%"
         }}>
           {error}
         </div>

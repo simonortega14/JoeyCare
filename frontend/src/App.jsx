@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "./features/auth/LoginPage";
-import VtkViewer from "./features/viewer/VtkViewer"; 
+import VtkViewer from "./features/viewer/VtkViewer";
 import DicomViewer from "./features/viewer/DicomViewer";
+import VisorEcografiaDoble from "./features/comparacion/VisorEcografiaDoble";
 import AppHeader from "./components/AppHeader";
 import Sidebar from "./components/AppSidebar";
 import MiPerfil from "./features/profile/ProfilePage";
@@ -16,6 +17,25 @@ export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false); // ✅ agregado
+
+  useEffect(() => {
+    // Log para verificar localStorage al inicializar la app
+    const storedUser = localStorage.getItem("user");
+    console.log("App initialization - localStorage user:", storedUser);
+    if (storedUser) {
+      try {
+        const userData = JSON.parse(storedUser);
+        console.log("Parsed user data:", userData);
+        setUser(userData);
+        setIsLoggedIn(true);
+      } catch (error) {
+        console.error("Error parsing stored user data:", error);
+        localStorage.removeItem("user"); // Limpiar datos corruptos
+      }
+    } else {
+      console.log("No user data found in localStorage");
+    }
+  }, []);
 
   async function handleLogin(form) {
     try {
@@ -58,7 +78,8 @@ export default function App() {
           <Routes>
             <Route path="/perfil" element={<MiPerfil user={user} />} />
             <Route path="/buscar-pacientes" element={<BuscarPacientes />} />
-            <Route path="/visualizar-ecografias" element={<VtkViewer />} /> 
+            <Route path="/visualizar-ecografias" element={<VtkViewer />} />
+            <Route path="/comparar-ecografias" element={<VisorEcografiaDoble />} />
             <Route path="/dicom-test" element={<DicomViewer />} />
             <Route path="/cargar-ecografias" element={<CargarEcografia />} />
             <Route path="/dashboard" element={<DashboardPage />} />

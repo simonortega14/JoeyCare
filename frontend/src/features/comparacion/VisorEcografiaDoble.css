@@ -1,0 +1,70 @@
+.visor-doble-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100vh;
+  box-sizing: border-box;
+}
+
+.visor-toolbar {
+  display: flex;
+  align-items: center;
+  background-color: #222;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid #444;
+}
+
+.visor-toolbar button {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.visor-toolbar button:hover {
+  background-color: #45a049;
+}
+
+.visor-content {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 1rem;
+  flex: 1;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+/* Cada panel (izquierdo/derecho) */
+.visor-panel {
+  flex: 1;
+  background-color: #f7f9fc;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.5rem;
+}
+
+/* Título del panel */
+.titulo-panel {
+  text-align: center;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+/* Adaptabilidad */
+@media (max-width: 900px) {
+  .visor-doble-container {
+    flex-direction: column;
+  }
+
+  .visor-panel {
+    width: 100%;
+  }
+}

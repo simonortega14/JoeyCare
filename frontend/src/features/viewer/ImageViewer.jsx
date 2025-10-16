@@ -1,5 +1,4 @@
 import { useRef, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import "@kitware/vtk.js/Rendering/Profiles/All";
 import vtkFullScreenRenderWindow from "@kitware/vtk.js/Rendering/Misc/FullScreenRenderWindow";
 import vtkPlaneSource from "@kitware/vtk.js/Filters/Sources/PlaneSource";
@@ -14,13 +13,10 @@ import "./viewer.css";
 function ImageViewer({ imageFile, onClose }) {
   const vtkContainerRef = useRef(null);
   const context = useRef(null);
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [windowLevel, setWindowLevel] = useState({ width: 256, center: 128 });
   const [panMode, setPanMode] = useState(false);
-  const [showCompareModal, setShowCompareModal] = useState(false);
-  const [showImageSelector, setShowImageSelector] = useState(false);
 
   useEffect(() => {
     if (!imageFile || !vtkContainerRef.current) return;
@@ -286,56 +282,14 @@ function ImageViewer({ imageFile, onClose }) {
     }
   };
 
-  const handleCompare = () => {
-    setShowCompareModal(true);
-  };
 
-  const handleCompareWithSamePatient = async () => {
-    try {
-      // Buscar otras imágenes del mismo paciente
-      const response = await fetch(`http://localhost:4000/api/pacientes/${imageFile.paciente_id}/ecografias`);
-      const ecografias = await response.json();
 
-      // Filtrar la imagen actual
-      const otrasEcografias = ecografias.filter(ec => ec.id !== imageFile.id);
-
-      if (otrasEcografias.length === 0) {
-        alert("No hay otras ecografías disponibles para este paciente");
-        return;
-      }
-
-      // Por simplicidad, tomar la primera otra imagen
-      const imagenDerecha = otrasEcografias[0];
-
-      navigate("/comparar-ecografias", {
-        state: { imagenIzquierda: imageFile, imagenDerecha }
-      });
-    } catch (error) {
-      console.error("Error al buscar ecografías del mismo paciente:", error);
-      alert("Error al buscar ecografías. Navegando con imagen actual solo.");
-      navigate("/comparar-ecografias", {
-        state: { imagenIzquierda: imageFile }
-      });
-    }
-  };
-
-  const handleCompareWithOtherPatient = () => {
-    setShowCompareModal(false);
-    setShowImageSelector(true);
-  };
-
-  const handleCloseImageSelector = () => {
-    setShowImageSelector(false);
-  };
 
   return (
     <div className="vtk-fullscreen">
       <div className="vtk-toolbar">
         <button onClick={onClose}>← Volver</button>
         <button onClick={handleResetView}>Reset View</button>
-        <button onClick={handleCompare} style={{ backgroundColor: "#2196f3", color: "#fff", marginLeft: "10px" }}>
-          Comparar
-        </button>
 
         {context.current?.isGrayscale && (
           <>
@@ -385,83 +339,6 @@ function ImageViewer({ imageFile, onClose }) {
 
       <div ref={vtkContainerRef} className="vtk-viewer-canvas" />
 
-      {/* Modal de comparación */}
-      {showCompareModal && (
-        <div style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: "rgba(0,0,0,0.8)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 10000
-        }}>
-          <div style={{
-            backgroundColor: "#333",
-            padding: "20px",
-            borderRadius: "8px",
-            maxWidth: "400px",
-            width: "90%"
-          }}>
-            <h3 style={{ color: "#fff", marginTop: 0 }}>¿Cómo quieres comparar?</h3>
-            <p style={{ color: "#ccc", marginBottom: "20px" }}>
-              Selecciona una opción para comparar la imagen actual con otra ecografía.
-            </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-              <button
-                onClick={handleCompareWithSamePatient}
-                style={{
-                  padding: "10px",
-                  backgroundColor: "#4caf50",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: "4px",
-                  cursor: "pointer"
-                }}
-              >
-                Comparar con imagen del mismo paciente
-              </button>
-              <button
-                onClick={handleCompareWithOtherPatient}
-                style={{
-                  padding: "10px",
-                  backgroundColor: "#2196f3",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: "4px",
-                  cursor: "pointer"
-                }}
-              >
-                Comparar con imagen de otro paciente
-              </button>
-              <button
-                onClick={() => setShowCompareModal(false)}
-                style={{
-                  padding: "10px",
-                  backgroundColor: "#666",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: "4px",
-                  cursor: "pointer"
-                }}
-              >
-                Cancelar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Selector de imagen para comparación */}
-      {showImageSelector && (
-        <ImageComparisonSelector
-          currentImage={imageFile}
-          onClose={handleCloseImageSelector}
-        />
-      )}
     </div>
   );
 }

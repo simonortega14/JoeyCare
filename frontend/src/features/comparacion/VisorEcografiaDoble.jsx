@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import VtkViewer from "../viewer/VtkViewer";
+import ImageViewer from "../viewer/ImageViewer";
 import "./VisorEcografiaDoble.css"; // estilos para el layout
 
 
@@ -9,6 +9,14 @@ function VisorEcografiaDoble({ datosIzquierda = null, datosDerecha = null }) {
   const navigate = useNavigate();
   const [imagenIzquierda, setImagenIzquierda] = useState(datosIzquierda);
   const [imagenDerecha, setImagenDerecha] = useState(datosDerecha);
+
+  const handleCloseLeft = () => {
+    // No hacer nada, mantener la imagen
+  };
+
+  const handleCloseRight = () => {
+    // No hacer nada, mantener la imagen
+  };
 
   useEffect(() => {
     // Si se pasan imágenes desde la navegación, úsalas
@@ -31,12 +39,12 @@ function VisorEcografiaDoble({ datosIzquierda = null, datosDerecha = null }) {
       <div className="visor-content">
         <div className="visor-panel">
           <h3 className="titulo-panel">Ecografía A</h3>
-          <VtkViewer defaultImage={imagenIzquierda} />
+          {imagenIzquierda && <ImageViewer imageFile={imagenIzquierda} onClose={handleCloseLeft} />}
         </div>
 
         <div className="visor-panel">
           <h3 className="titulo-panel">Ecografía B</h3>
-          <VtkViewer defaultImage={imagenDerecha} />
+          {imagenDerecha && <ImageViewer imageFile={imagenDerecha} onClose={handleCloseRight} />}
         </div>
       </div>
     </div>

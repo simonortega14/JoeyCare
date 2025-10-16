@@ -10,7 +10,7 @@ import { readImage } from "@itk-wasm/image-io";
 import ImageComparisonSelector from "../comparacion/ImageComparisonSelector";
 import "./viewer.css";
 
-function ImageViewer({ imageFile, onClose }) {
+function ImageViewer({ imageFile, onClose, isEmbedded = false }) {
   const vtkContainerRef = useRef(null);
   const context = useRef(null);
   const [loading, setLoading] = useState(false);
@@ -286,7 +286,7 @@ function ImageViewer({ imageFile, onClose }) {
 
 
   return (
-    <div className="vtk-fullscreen">
+    <div className={isEmbedded ? "vtk-embedded" : "vtk-fullscreen"}>
       <div className="vtk-toolbar">
         <button onClick={onClose}>← Volver</button>
         <button onClick={handleResetView}>Reset View</button>

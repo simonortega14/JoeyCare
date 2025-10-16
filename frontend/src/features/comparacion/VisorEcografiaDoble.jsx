@@ -39,12 +39,12 @@ function VisorEcografiaDoble({ datosIzquierda = null, datosDerecha = null }) {
       <div className="visor-content">
         <div className="visor-panel">
           <h3 className="titulo-panel">Ecografía A</h3>
-          {imagenIzquierda && <ImageViewer imageFile={imagenIzquierda} onClose={handleCloseLeft} />}
+          {imagenIzquierda && <ImageViewer imageFile={imagenIzquierda} onClose={handleCloseLeft} isEmbedded={true} />}
         </div>
 
         <div className="visor-panel">
           <h3 className="titulo-panel">Ecografía B</h3>
-          {imagenDerecha && <ImageViewer imageFile={imagenDerecha} onClose={handleCloseRight} />}
+          {imagenDerecha && <ImageViewer imageFile={imagenDerecha} onClose={handleCloseRight} isEmbedded={true} />}
         </div>
       </div>
     </div>

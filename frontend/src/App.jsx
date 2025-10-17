@@ -71,22 +71,30 @@ export default function App() {
 
   return (
     <Router>
-      <AppHeader user={user} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
-      <div className="app-container">
-        <Sidebar isOpen={sidebarOpen} />
-        <div className="main-content">
-          <Routes>
-            <Route path="/perfil" element={<MiPerfil user={user} />} />
-            <Route path="/buscar-pacientes" element={<BuscarPacientes />} />
-            <Route path="/visualizar-ecografias" element={<VtkViewer />} />
-            <Route path="/comparar-ecografias" element={<VisorEcografiaDoble />} />
-            <Route path="/dicom-test" element={<DicomViewer />} />
-            <Route path="/cargar-ecografias" element={<CargarEcografia />} />
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="*" element={<Navigate to="/visualizar-ecografias" replace />} />
-          </Routes>
-        </div>
-      </div>
+      <Routes>
+        <Route path="/comparar-ecografias" element={
+          <VisorEcografiaDoble />
+        } />
+        <Route path="*" element={
+          <>
+            <AppHeader user={user} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
+            <div className="app-container">
+              <Sidebar isOpen={sidebarOpen} />
+              <div className="main-content">
+                <Routes>
+                  <Route path="/perfil" element={<MiPerfil user={user} />} />
+                  <Route path="/buscar-pacientes" element={<BuscarPacientes />} />
+                  <Route path="/visualizar-ecografias" element={<VtkViewer />} />
+                  <Route path="/dicom-test" element={<DicomViewer />} />
+                  <Route path="/cargar-ecografias" element={<CargarEcografia />} />
+                  <Route path="/dashboard" element={<DashboardPage />} />
+                  <Route path="/" element={<Navigate to="/visualizar-ecografias" replace />} />
+                </Routes>
+              </div>
+            </div>
+          </>
+        } />
+      </Routes>
     </Router>
   );
 }

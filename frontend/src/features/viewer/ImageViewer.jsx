@@ -6,26 +6,43 @@ import vtkMapper from "@kitware/vtk.js/Rendering/Core/Mapper";
 import vtkActor from "@kitware/vtk.js/Rendering/Core/Actor";
 import vtkTexture from "@kitware/vtk.js/Rendering/Core/Texture";
 import vtkInteractorStyleImage from "@kitware/vtk.js/Interaction/Style/InteractorStyleImage";
+import vtkSphereSource from "@kitware/vtk.js/Filters/Sources/SphereSource";
+import vtkPolyData from "@kitware/vtk.js/Common/DataModel/PolyData";
+import vtkPoints from "@kitware/vtk.js/Common/Core/Points";
+import vtkCellArray from "@kitware/vtk.js/Common/Core/CellArray";
 import { readImage } from "@itk-wasm/image-io";
 
 function ImageViewer({ imageFile, onClose }) {
   const vtkContainerRef = useRef(null);
-  const overlayCanvasRef = useRef(null);
   const context = useRef(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [windowLevel, setWindowLevel] = useState({ width: 256, center: 128 });
-  const [panMode, setPanMode] = useState(false);
   
   // Estados para widgets
   const [pointMode, setPointMode] = useState(false);
+  const pointModeRef = useRef(false);
   const [points, setPoints] = useState([]);
-  const interactorSubscription = useRef(null);
+  const pointActors = useRef([]);
+
+  // Estados para el lápiz
+  const [drawMode, setDrawMode] = useState(false);
+  const drawModeRef = useRef(false);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const isDrawingRef = useRef(false);
+  const [drawings, setDrawings] = useState([]);
+  const drawingActors = useRef([]);
+  const currentDrawing = useRef({ points: [], actor: null, mapper: null, polyData: null });
+  const [drawColor, setDrawColor] = useState([1, 0, 0]); // Rojo por defecto
+  const drawColorRef = useRef([1, 0, 0]); // Ref para acceder al valor actual
+  const [lineWidth, setLineWidth] = useState(2);
+  const lineWidthRef = useRef(2); // Ref para acceder al valor actual
+  const [pointColor, setPointColor] = useState([1, 0, 0]); // Rojo por defecto para puntos
+  const pointColorRef = useRef([1, 0, 0]); // Ref para acceder al valor actual
 
   useEffect(() => {
     if (!imageFile || !vtkContainerRef.current) return;
     
-    // Limpiar cualquier contenido previo
     if (vtkContainerRef.current) {
       vtkContainerRef.current.innerHTML = '';
     }
@@ -33,10 +50,8 @@ function ImageViewer({ imageFile, onClose }) {
     loadAndRenderImage();
     
     return () => {
-      if (interactorSubscription.current) {
-        interactorSubscription.current.unsubscribe();
-        interactorSubscription.current = null;
-      }
+      cleanupPoints();
+      cleanupDrawings();
       if (context.current) {
         const { fullScreenRenderer } = context.current;
         if (fullScreenRenderer) {
@@ -52,27 +67,6 @@ function ImageViewer({ imageFile, onClose }) {
       updateWindowLevel();
     }
   }, [windowLevel]);
-
-  // Configurar eventos cuando cambia el modo punto
-  useEffect(() => {
-    if (context.current && context.current.interactor) {
-      setupInteractorEvents();
-    }
-  }, [pointMode]);
-
-  // Redibujar puntos cuando cambian
-  useEffect(() => {
-    if (points.length > 0) {
-      // Pequeño delay para asegurar que el canvas esté listo
-      setTimeout(() => {
-        drawPointsOnOverlay();
-      }, 10);
-    } else if (overlayCanvasRef.current) {
-      // Limpiar si no hay puntos
-      const ctx = overlayCanvasRef.current.getContext("2d");
-      ctx.clearRect(0, 0, overlayCanvasRef.current.width, overlayCanvasRef.current.height);
-    }
-  }, [points]);
 
   const updateWindowLevel = () => {
     const { rawPixelData, width, height, texture, renderWindow } = context.current;
@@ -102,158 +96,308 @@ function ImageViewer({ imageFile, onClose }) {
     renderWindow.render();
   };
 
-  const worldToDisplay = (worldX, worldY) => {
-    if (!context.current) return null;
+  const cleanupPoints = () => {
+    if (!context.current) return;
     
-    const { renderer, renderWindow } = context.current;
-    const view = renderWindow.getViews()[0];
-    
-    // Convertir coordenadas del mundo a display
-    const displayCoord = view.worldToDisplay(worldX, worldY, 0, renderer);
-    
-    return { x: displayCoord[0], y: displayCoord[1] };
-  };
-
-  const drawPointsOnOverlay = () => {
-    if (!overlayCanvasRef.current || !context.current) return;
-    
-    const canvas = overlayCanvasRef.current;
-    const ctx = canvas.getContext("2d");
-    
-    // Actualizar tamaño del canvas si cambió
-    const { renderWindow } = context.current;
-    const view = renderWindow.getViews()[0];
-    const dims = view.getSize();
-    
-    if (canvas.width !== dims[0] || canvas.height !== dims[1]) {
-      canvas.width = dims[0];
-      canvas.height = dims[1];
-    }
-    
-    // Limpiar el canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // Dibujar cada punto
-    points.forEach((point, index) => {
-      const displayPos = worldToDisplay(point.world[0], point.world[1]);
-      if (!displayPos) return;
-      
-      const x = displayPos.x;
-      const y = displayPos.y; // Ya NO invertir Y aquí
-      
-      console.log(`Dibujando punto ${index + 1} en:`, x, y);
-      
-      // Dibujar círculo rojo
-      ctx.beginPath();
-      ctx.arc(x, y, 8, 0, 2 * Math.PI);
-      ctx.fillStyle = "rgba(255, 0, 0, 0.7)";
-      ctx.fill();
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
-      ctx.lineWidth = 2;
-      ctx.stroke();
-      
-      // Dibujar número del punto
-      ctx.fillStyle = "white";
-      ctx.font = "bold 12px Arial";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText((index + 1).toString(), x, y);
+    const { renderer } = context.current;
+    pointActors.current.forEach(({ actor }) => {
+      renderer.removeActor(actor);
+      actor.delete();
     });
+    pointActors.current = [];
   };
 
-  const setupInteractorEvents = () => {
+  const cleanupDrawings = () => {
     if (!context.current) return;
     
-    const { interactor, renderWindow } = context.current;
-    
-    // Limpiar suscripción anterior
-    if (interactorSubscription.current) {
-      interactorSubscription.current.unsubscribe();
-      interactorSubscription.current = null;
-    }
-
-    if (pointMode) {
-      console.log("Modo punto ACTIVADO");
-      
-      // Suscribirse al evento de click izquierdo
-      interactorSubscription.current = interactor.onLeftButtonPress((callData) => {
-        console.log("Click detectado!");
-        
-        const pos = callData.position;
-        const x = pos.x;
-        const y = pos.y;
-        
-        addPointAtPosition(x, y);
-      });
-      
-      // Redibujar puntos cuando se mueve la cámara
-      renderWindow.getInteractor().onAnimation(() => {
-        drawPointsOnOverlay();
-      });
-    } else {
-      console.log("Modo punto DESACTIVADO");
-    }
+    const { renderer } = context.current;
+    drawingActors.current.forEach(({ actor }) => {
+      renderer.removeActor(actor);
+      actor.delete();
+    });
+    drawingActors.current = [];
   };
 
-  const addPointAtPosition = (x, y) => {
+  const addPointActor = (worldPos, pixelPos, pixelValue) => {
     if (!context.current) return;
     
-    const { renderer, renderWindow, width, height, planeSource, rawPixelData, isGrayscale } = context.current;
+    // Usar el ref para obtener el color actual
+    const currentColor = pointColorRef.current;
     
-    // Obtener coordenadas del mundo
-    const view = renderWindow.getViews()[0];
-    const dims = view.getSize();
-    const adjustedY = dims[1] - y;
+    console.log("=== AGREGANDO PUNTO ===");
+    console.log("Color de punto seleccionado (ref):", currentColor);
     
-    const worldCoord = view.displayToWorld(x, adjustedY, 0, renderer);
-    console.log("Mundo:", worldCoord);
+    const { renderer, renderWindow, camera } = context.current;
+    const cameraScale = camera.getParallelScale();
+    const sphereRadius = cameraScale * 0.015;
     
-    // Convertir a píxeles de imagen
-    const origin = planeSource.getOrigin();
-    const point1 = planeSource.getPoint1();
-    const point2 = planeSource.getPoint2();
+    const sphereSource = vtkSphereSource.newInstance();
+    sphereSource.setCenter(worldPos[0], worldPos[1], 0.01);
+    sphereSource.setRadius(sphereRadius);
+    sphereSource.setPhiResolution(20);
+    sphereSource.setThetaResolution(20);
     
-    const planeWidth = point1[0] - origin[0];
-    const planeHeight = point2[1] - origin[1];
+    const mapper = vtkMapper.newInstance();
+    mapper.setInputConnection(sphereSource.getOutputPort());
     
-    const u = (worldCoord[0] - origin[0]) / planeWidth;
-    const v = (worldCoord[1] - origin[1]) / planeHeight;
+    const actor = vtkActor.newInstance();
+    actor.setMapper(mapper);
     
-    const pixelX = Math.round(u * width);
-    const pixelY = Math.round(v * height);
+    const property = actor.getProperty();
+    property.setColor(currentColor[0], currentColor[1], currentColor[2]);
+    property.setAmbient(0.5);
+    property.setDiffuse(0.7);
+    property.setSpecular(0.3);
+    property.setSpecularPower(20);
+    property.setOpacity(1.0);
     
-    console.log("Píxel:", pixelX, pixelY);
+    console.log("Color aplicado al punto:", property.getColor());
     
-    // Verificar que está dentro de la imagen
-    if (pixelX < 0 || pixelX >= width || pixelY < 0 || pixelY >= height) {
-      console.log("Click fuera de la imagen");
-      return;
-    }
+    renderer.addActor(actor);
     
-    // Obtener valor del píxel
-    let pixelValue = null;
-    if (isGrayscale && rawPixelData) {
-      const index = pixelY * width + pixelX;
-      pixelValue = rawPixelData[index];
-    }
-    
-    // Actualizar estado
-    setPoints(prev => [...prev, {
+    const pointData = {
+      actor,
+      sphereSource,
       id: Date.now(),
-      world: worldCoord,
-      pixel: { x: pixelX, y: pixelY },
+      pixel: pixelPos,
+      value: pixelValue,
+      world: worldPos,
+      color: [...currentColor]
+    };
+    
+    pointActors.current.push(pointData);
+    
+    setPoints(prev => [...prev, {
+      id: pointData.id,
+      pixel: pixelPos,
       value: pixelValue
     }]);
     
-    console.log("Punto agregado!");
+    console.log("Punto agregado, renderizando...");
+    renderWindow.render();
   };
 
-  const clearAllPoints = () => {
-    setPoints([]);
+  const startDrawing = (worldPos) => {
+    if (!context.current) return;
+    
+    console.log("=== INICIANDO DIBUJO ===");
+    console.log("Posición inicial:", worldPos);
+    console.log("Color seleccionado:", drawColor);
+    console.log("Ancho de línea:", lineWidth);
+    
+    const { renderer } = context.current;
+    
+    // Crear arrays para almacenar los puntos del trazo
+    const worldPoints = [worldPos];
+    
+    // Crear geometría VTK vacía inicialmente
+    const vtkPointsObj = vtkPoints.newInstance();
+    const lines = vtkCellArray.newInstance();
+    const polyData = vtkPolyData.newInstance();
+    
+    const mapper = vtkMapper.newInstance();
+    mapper.setInputData(polyData);
+    
+    const actor = vtkActor.newInstance();
+    actor.setMapper(mapper);
+    
+    const property = actor.getProperty();
+    // Intentar diferentes formas de setear el color
+    property.setColor(drawColor[0], drawColor[1], drawColor[2]);
+    property.setAmbient(1.0);
+    property.setDiffuse(1.0);
+    property.setSpecular(0.0);
+    property.setLineWidth(lineWidth);
+    property.setOpacity(1.0);
+    property.setLighting(false); // Desactivar iluminación para colores planos
+    
+    console.log("Color aplicado al actor:", property.getColor());
+    console.log("Ancho de línea aplicado:", property.getLineWidth());
+    console.log("Ambient:", property.getAmbient());
+    console.log("Diffuse:", property.getDiffuse());
+    
+    renderer.addActor(actor);
+    
+    currentDrawing.current = {
+      worldPoints,
+      actor,
+      mapper,
+      polyData,
+      vtkPoints: vtkPointsObj,
+      lines,
+      color: [...drawColor],
+      width: lineWidth
+    };
+    
+    isDrawingRef.current = true;
+    setIsDrawing(true);
+    
+    console.log("Actor de dibujo creado y agregado al renderer");
+    
+    // Forzar actualización
+    if (context.current) {
+      context.current.renderWindow.render();
+    }
+  };
+
+  const continueDrawing = (worldPos) => {
+    if (!isDrawingRef.current || !currentDrawing.current) return;
+    if (!currentDrawing.current.polyData || !currentDrawing.current.worldPoints) return;
+    
+    const { worldPoints, vtkPoints, lines, polyData } = currentDrawing.current;
+    
+    console.log("=== CONTINUANDO DIBUJO ===");
+    console.log("Nueva posición:", worldPos);
+    console.log("Puntos actuales:", worldPoints.length);
+    
+    // Agregar el nuevo punto al array
+    worldPoints.push(worldPos);
+    
+    // Recrear completamente la geometría
+    vtkPoints.setNumberOfPoints(worldPoints.length);
+    
+    // Setear todos los puntos
+    for (let i = 0; i < worldPoints.length; i++) {
+      vtkPoints.setPoint(i, worldPoints[i][0], worldPoints[i][1], 0.02);
+      console.log(`Punto ${i}: [${worldPoints[i][0]}, ${worldPoints[i][1]}, 0.02]`);
+    }
+    
+    // Limpiar y recrear las líneas
+    lines.initialize();
+    
+    if (worldPoints.length >= 2) {
+      // Crear una polyline continua: [numPuntos, idx0, idx1, idx2, ...]
+      const polylineCell = [worldPoints.length];
+      for (let i = 0; i < worldPoints.length; i++) {
+        polylineCell.push(i);
+      }
+      
+      console.log("Creando polyline con:", polylineCell);
+      lines.insertNextCell(polylineCell);
+    }
+    
+    // Actualizar el polyData
+    polyData.setPoints(vtkPoints);
+    polyData.setLines(lines);
+    polyData.modified();
+    
+    console.log("PolyData actualizado, renderizando...");
+    
+    if (context.current) {
+      context.current.renderWindow.render();
+    }
+    
+    console.log("=== FIN CONTINUANDO DIBUJO ===");
+  };
+
+  const finishDrawing = () => {
+    if (!isDrawingRef.current || !currentDrawing.current) return;
+    if (!currentDrawing.current.actor || !currentDrawing.current.worldPoints) return;
+    
+    console.log("=== FINALIZANDO DIBUJO ===");
+    console.log("Total de puntos:", currentDrawing.current.worldPoints.length);
+    
+    if (currentDrawing.current.worldPoints.length > 1) {
+      const drawingData = {
+        id: Date.now(),
+        actor: currentDrawing.current.actor,
+        mapper: currentDrawing.current.mapper,
+        polyData: currentDrawing.current.polyData,
+        points: [...currentDrawing.current.worldPoints],
+        color: currentDrawing.current.color,
+        width: currentDrawing.current.width
+      };
+      
+      drawingActors.current.push(drawingData);
+      
+      setDrawings(prev => [...prev, {
+        id: drawingData.id,
+        numPoints: drawingData.points.length
+      }]);
+      
+      console.log("Dibujo guardado exitosamente");
+    } else {
+      // Si solo tiene un punto o ninguno, eliminar el actor
+      console.log("Dibujo con muy pocos puntos, eliminando...");
+      if (context.current) {
+        context.current.renderer.removeActor(currentDrawing.current.actor);
+        currentDrawing.current.actor.delete();
+      }
+    }
+    
+    currentDrawing.current = { worldPoints: [], actor: null, mapper: null, polyData: null };
+    isDrawingRef.current = false;
+    setIsDrawing(false);
+    
+    console.log("=== FIN FINALIZANDO DIBUJO ===");
+  };
+
+  const removeLastDrawing = () => {
+    if (!context.current || drawingActors.current.length === 0) return;
+    
+    const { renderer, renderWindow } = context.current;
+    const lastDrawing = drawingActors.current.pop();
+    
+    renderer.removeActor(lastDrawing.actor);
+    lastDrawing.actor.delete();
+    
+    setDrawings(prev => prev.slice(0, -1));
+    renderWindow.render();
+  };
+
+  const clearAllDrawings = () => {
+    if (!context.current) return;
+    
+    const { renderer, renderWindow } = context.current;
+    
+    drawingActors.current.forEach(({ actor }) => {
+      renderer.removeActor(actor);
+      actor.delete();
+    });
+    
+    drawingActors.current = [];
+    setDrawings([]);
+    renderWindow.render();
   };
 
   const removeLastPoint = () => {
+    if (!context.current || pointActors.current.length === 0) return;
+    
+    const { renderer, renderWindow } = context.current;
+    const lastPoint = pointActors.current.pop();
+    
+    renderer.removeActor(lastPoint.actor);
+    lastPoint.actor.delete();
+    
     setPoints(prev => prev.slice(0, -1));
+    renderWindow.render();
+  };
+
+  const clearAllPoints = () => {
+    if (!context.current) return;
+    
+    const { renderer, renderWindow } = context.current;
+    
+    pointActors.current.forEach(({ actor }) => {
+      renderer.removeActor(actor);
+      actor.delete();
+    });
+    
+    pointActors.current = [];
+    setPoints([]);
+    renderWindow.render();
+  };
+
+  const updatePointSizes = () => {
+    if (!context.current || pointActors.current.length === 0) return;
+    
+    const { camera } = context.current;
+    const cameraScale = camera.getParallelScale();
+    const newRadius = cameraScale * 0.015;
+    
+    pointActors.current.forEach(({ sphereSource }) => {
+      sphereSource.setRadius(newRadius);
+    });
   };
 
   const loadAndRenderImage = async () => {
@@ -364,40 +508,68 @@ function ImageViewer({ imageFile, onClose }) {
       camera.setPosition(0, 0, 1);
       camera.setFocalPoint(0, 0, 0);
       camera.setViewUp(0, 1, 0);
+      camera.setClippingRange(0.001, 100.0);
       renderer.resetCamera();
-      renderer.resetCameraClippingRange();
 
       const interactor = renderWindow.getInteractor();
       const interactorStyle = vtkInteractorStyleImage.newInstance();
       interactor.setInteractorStyle(interactorStyle);
 
-      // Habilitar zoom con rueda del mouse
+      // Eventos del mouse para puntos y dibujo
+      interactor.onLeftButtonPress((callData) => {
+        const pos = callData.position;
+        const view = renderWindow.getViews()[0];
+        const worldCoord = view.displayToWorld(pos.x, pos.y, 0, renderer);
+        
+        if (drawModeRef.current) {
+          startDrawing(worldCoord);
+        } else if (pointModeRef.current) {
+          const origin = planeSource.getOrigin();
+          const point1 = planeSource.getPoint1();
+          const point2 = planeSource.getPoint2();
+          
+          const planeWidth = point1[0] - origin[0];
+          const planeHeight = point2[1] - origin[1];
+          
+          const u = (worldCoord[0] - origin[0]) / planeWidth;
+          const v = (worldCoord[1] - origin[1]) / planeHeight;
+          
+          const pixelX = Math.round(u * width);
+          const pixelY = Math.round(v * height);
+          
+          if (pixelX < 0 || pixelX >= width || pixelY < 0 || pixelY >= height) return;
+          
+          let pixelValue = null;
+          if (isGrayscale && pixelData) {
+            const index = pixelY * width + pixelX;
+            pixelValue = pixelData[index];
+          }
+          
+          addPointActor(worldCoord, { x: pixelX, y: pixelY }, pixelValue);
+        }
+      });
+
+      interactor.onMouseMove((callData) => {
+        if (isDrawingRef.current && drawModeRef.current) {
+          const pos = callData.position;
+          const view = renderWindow.getViews()[0];
+          const worldCoord = view.displayToWorld(pos.x, pos.y, 0, renderer);
+          continueDrawing(worldCoord);
+        }
+      });
+
+      interactor.onLeftButtonRelease(() => {
+        if (isDrawingRef.current && drawModeRef.current) {
+          finishDrawing();
+        }
+      });
+
       interactor.onMouseWheel((callData) => {
         const delta = callData.spinY > 0 ? 1.1 : 0.9;
         const currentScale = camera.getParallelScale();
         camera.setParallelScale(currentScale * delta);
+        updatePointSizes();
         renderWindow.render();
-        drawPointsOnOverlay(); // Redibujar puntos después del zoom
-      });
-
-      // Configurar interacción para pan
-      interactor.onRightButtonPress(() => {
-        if (panMode) {
-          interactorStyle.startPan();
-        }
-      });
-
-      interactor.onRightButtonRelease(() => {
-        if (panMode) {
-          interactorStyle.endPan();
-        }
-      });
-
-      // Redibujar puntos cuando termina el pan
-      interactor.onMouseMove(() => {
-        if (panMode) {
-          drawPointsOnOverlay();
-        }
       });
 
       context.current = {
@@ -417,32 +589,8 @@ function ImageViewer({ imageFile, onClose }) {
         interactorStyle
       };
 
-      // Configurar el canvas de overlay con el mismo tamaño
-      if (overlayCanvasRef.current) {
-        const view = renderWindow.getViews()[0];
-        const dims = view.getSize();
-        overlayCanvasRef.current.width = dims[0];
-        overlayCanvasRef.current.height = dims[1];
-      }
-
-      // IMPORTANTE: Encontrar el canvas de VTK y asegurar que el overlay esté encima
-      setTimeout(() => {
-        const vtkCanvas = vtkContainerRef.current?.querySelector('canvas');
-        if (vtkCanvas) {
-          vtkCanvas.style.position = 'absolute';
-          vtkCanvas.style.zIndex = '1';
-          console.log("Canvas VTK configurado con z-index 1");
-        }
-        if (overlayCanvasRef.current) {
-          overlayCanvasRef.current.style.zIndex = '5';
-          console.log("Canvas overlay configurado con z-index 5");
-        }
-      }, 100);
-
       renderWindow.render();
       setLoading(false);
-      
-      console.log("Imagen cargada. Dimensiones:", width, "x", height);
     } catch (err) {
       console.error("Error:", err);
       setError(`Error: ${err.message}`);
@@ -459,8 +607,8 @@ function ImageViewer({ imageFile, onClose }) {
   const handleResetView = () => {
     if (context.current) {
       context.current.renderer.resetCamera();
+      updatePointSizes();
       context.current.renderWindow.render();
-      drawPointsOnOverlay();
     }
   };
 
@@ -497,38 +645,112 @@ function ImageViewer({ imageFile, onClose }) {
         )}
 
         <button
-          style={{ ...buttonStyle, backgroundColor: panMode ? "#4caf50" : "#333" }}
-          onClick={() => {
-            setPanMode(!panMode);
-            if (!panMode) setPointMode(false);
-          }}
-        >
-          Pan {panMode ? "ON" : "OFF"}
-        </button>
-
-        <button
           style={{ ...buttonStyle, backgroundColor: pointMode ? "#2196f3" : "#333" }}
           onClick={() => {
             const newPointMode = !pointMode;
-            console.log("Modo punto:", newPointMode);
             setPointMode(newPointMode);
-            if (newPointMode) setPanMode(false);
+            pointModeRef.current = newPointMode;
+            if (newPointMode) {
+              setDrawMode(false);
+              drawModeRef.current = false;
+            }
           }}
         >
           📍 Punto {pointMode ? "ON" : "OFF"}
         </button>
 
+        {pointMode && (
+          <select 
+            value={pointColor.join(',')} 
+            onChange={(e) => {
+              const newColor = e.target.value.split(',').map(Number);
+              console.log("Cambiando color de punto a:", newColor);
+              setPointColor(newColor);
+              pointColorRef.current = newColor; // Actualizar el ref también
+            }}
+            style={{ ...buttonStyle, cursor: "pointer" }}
+          >
+            <option value="1,0,0">🔴 Rojo</option>
+            <option value="0,1,0">🟢 Verde</option>
+            <option value="0,0,1">🔵 Azul</option>
+            <option value="1,1,0">🟡 Amarillo</option>
+            <option value="1,0,1">🟣 Magenta</option>
+            <option value="0,1,1">🔵 Cian</option>
+            <option value="1,1,1">⚪ Blanco</option>
+          </select>
+        )}
+
+        <button
+          style={{ ...buttonStyle, backgroundColor: drawMode ? "#4caf50" : "#333" }}
+          onClick={() => {
+            const newDrawMode = !drawMode;
+            setDrawMode(newDrawMode);
+            drawModeRef.current = newDrawMode;
+            if (newDrawMode) {
+              setPointMode(false);
+              pointModeRef.current = false;
+            }
+          }}
+        >
+          ✏️ Lápiz {drawMode ? "ON" : "OFF"}
+        </button>
+
+        {drawMode && (
+          <>
+            <select 
+              value={drawColor.join(',')}
+              onChange={(e) => {
+                const newColor = e.target.value.split(',').map(Number);
+                console.log("Cambiando color de lápiz a:", newColor);
+                setDrawColor(newColor);
+                drawColorRef.current = newColor; // Actualizar el ref también
+              }}
+              style={{ ...buttonStyle, cursor: "pointer" }}
+            >
+              <option value="1,0,0">🔴 Rojo</option>
+              <option value="0,1,0">🟢 Verde</option>
+              <option value="0,0,1">🔵 Azul</option>
+              <option value="1,1,0">🟡 Amarillo</option>
+              <option value="1,0,1">🟣 Magenta</option>
+              <option value="0,1,1">🔵 Cian</option>
+              <option value="1,1,1">⚪ Blanco</option>
+            </select>
+            <select 
+              value={lineWidth} 
+              onChange={(e) => {
+                const newWidth = Number(e.target.value);
+                setLineWidth(newWidth);
+                lineWidthRef.current = newWidth; // Actualizar el ref también
+              }}
+              style={{ ...buttonStyle, cursor: "pointer" }}
+            >
+              <option value="1">Fino</option>
+              <option value="2">Normal</option>
+              <option value="3">Grueso</option>
+              <option value="5">Muy Grueso</option>
+            </select>
+          </>
+        )}
+
         {points.length > 0 && (
           <>
             <button onClick={removeLastPoint} style={buttonStyle}>
-              Eliminar Último
+              Eliminar Último Punto
             </button>
             <button onClick={clearAllPoints} style={buttonStyle}>
-              Limpiar Todo
+              Limpiar Puntos
             </button>
-            <span style={{ color: "#2196f3", fontSize: "13px", fontWeight: "bold" }}>
-              {points.length} punto{points.length !== 1 ? 's' : ''}
-            </span>
+          </>
+        )}
+
+        {drawings.length > 0 && (
+          <>
+            <button onClick={removeLastDrawing} style={buttonStyle}>
+              Eliminar Último Trazo
+            </button>
+            <button onClick={clearAllDrawings} style={buttonStyle}>
+              Limpiar Trazos
+            </button>
           </>
         )}
 
@@ -537,8 +759,8 @@ function ImageViewer({ imageFile, onClose }) {
         </span>
       </div>
 
-      {/* Panel lateral de puntos */}
-      {points.length > 0 && (
+      {/* Panel lateral de información */}
+      {(points.length > 0 || drawings.length > 0) && (
         <div style={{
           position: "absolute", top: "60px", right: "10px",
           background: "rgba(0,0,0,0.85)", padding: "10px",
@@ -546,25 +768,49 @@ function ImageViewer({ imageFile, onClose }) {
           maxHeight: "calc(100vh - 150px)", overflowY: "auto",
           minWidth: "200px", zIndex: 100
         }}>
-          <div style={{ fontWeight: "bold", marginBottom: "8px", fontSize: "14px" }}>
-            Puntos ({points.length})
-          </div>
-          {points.map((point, index) => (
-            <div key={point.id} style={{
-              padding: "6px", marginBottom: "5px",
-              background: "rgba(255,255,255,0.1)",
-              borderRadius: "3px", borderLeft: "3px solid #f44336"
-            }}>
-              <div style={{ fontWeight: "bold", color: "#f44336" }}>
-                Punto {index + 1}
+          {points.length > 0 && (
+            <>
+              <div style={{ fontWeight: "bold", marginBottom: "8px", fontSize: "14px" }}>
+                Puntos ({points.length})
               </div>
-              <div>X: {point.pixel.x} px</div>
-              <div>Y: {point.pixel.y} px</div>
-              {point.value !== null && (
-                <div>Valor: {Math.round(point.value)}</div>
-              )}
-            </div>
-          ))}
+              {points.map((point, index) => (
+                <div key={point.id} style={{
+                  padding: "6px", marginBottom: "5px",
+                  background: "rgba(255,255,255,0.1)",
+                  borderRadius: "3px", borderLeft: "3px solid #f44336"
+                }}>
+                  <div style={{ fontWeight: "bold", color: "#f44336" }}>
+                    Punto {index + 1}
+                  </div>
+                  <div>X: {point.pixel.x} px</div>
+                  <div>Y: {point.pixel.y} px</div>
+                  {point.value !== null && (
+                    <div>Valor: {Math.round(point.value)}</div>
+                  )}
+                </div>
+              ))}
+            </>
+          )}
+          
+          {drawings.length > 0 && (
+            <>
+              <div style={{ fontWeight: "bold", marginTop: "12px", marginBottom: "8px", fontSize: "14px" }}>
+                Trazos ({drawings.length})
+              </div>
+              {drawings.map((drawing, index) => (
+                <div key={drawing.id} style={{
+                  padding: "6px", marginBottom: "5px",
+                  background: "rgba(255,255,255,0.1)",
+                  borderRadius: "3px", borderLeft: "3px solid #4caf50"
+                }}>
+                  <div style={{ fontWeight: "bold", color: "#4caf50" }}>
+                    Trazo {index + 1}
+                  </div>
+                  <div>Puntos: {drawing.numPoints}</div>
+                </div>
+              ))}
+            </>
+          )}
         </div>
       )}
 
@@ -575,12 +821,16 @@ function ImageViewer({ imageFile, onClose }) {
         borderRadius: "5px", color: "#aaa", fontSize: "11px",
         zIndex: 100
       }}>
-        {pointMode ? (
-          <span style={{ color: "#2196f3", fontWeight: "bold" }}>🖱️ Click izq: Colocar punto</span>
-        ) : panMode ? (
-          <>🖱️ Click der: Pan | Rueda: Zoom</>
+        {drawMode ? (
+          <span style={{ color: "#4caf50", fontWeight: "bold" }}>
+            🖱️ Click izq + arrastrar: Dibujar
+          </span>
+        ) : pointMode ? (
+          <span style={{ color: "#2196f3", fontWeight: "bold" }}>
+            🖱️ Click izq: Colocar punto
+          </span>
         ) : (
-          <>🖱️ Click izq: W/L | Click der: Pan | Rueda: Zoom</>
+          <>🖱️ Rueda: Zoom | Click der: Pan</>
         )}
       </div>
 
@@ -604,7 +854,6 @@ function ImageViewer({ imageFile, onClose }) {
         </div>
       )}
 
-      {/* Contenedor VTK */}
       <div 
         ref={vtkContainerRef} 
         style={{ 
@@ -614,18 +863,6 @@ function ImageViewer({ imageFile, onClose }) {
           top: 0,
           left: 0
         }} 
-      />
-      
-      {/* Canvas de overlay para dibujar puntos */}
-      <canvas
-        ref={overlayCanvasRef}
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          pointerEvents: "none",
-          zIndex: 5
-        }}
       />
     </div>
   );

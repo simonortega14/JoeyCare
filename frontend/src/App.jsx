@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import LoginPage from "./features/auth/LoginPage";
 import VtkViewer from "./features/viewer/VtkViewer";
 import DicomViewer from "./features/viewer/DicomViewer";
@@ -18,6 +18,7 @@ export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false); // ✅ agregado
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Log para verificar localStorage al inicializar la app
@@ -63,46 +64,43 @@ export default function App() {
     setUser(null);
     setIsLoggedIn(false);
     localStorage.removeItem("user");
+    navigate("/");
   }
 
   if (!isLoggedIn) {
     return (
-      <Router>
-        <Routes>
-          <Route path="/" element={<LoginPage onSubmit={handleLogin} />} />
-          <Route path="/register" element={<RegisterPage />} /> 
-        </Routes>
-      </Router>
+      <Routes>
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="*" element={<LoginPage onSubmit={handleLogin} />} />
+      </Routes>
     );
   }
 
   return (
-    <Router>
-      <Routes>
-        <Route path="/comparar-ecografias" element={
-          <VisorEcografiaDoble />
-        } />
-        <Route path="*" element={
-          <>
-            <AppHeader user={user} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} onLogout={handleLogout} />
-            <div className="app-container">
-              <Sidebar isOpen={sidebarOpen} />
-              <div className="main-content">
-                <Routes>
-                  <Route path="/perfil" element={<MiPerfil user={user} />} />
-                  <Route path="/buscar-pacientes" element={<BuscarPacientes />} />
-                  <Route path="/paciente/:id" element={<PacientePage />} />
-                  <Route path="/visualizar-ecografias" element={<VtkViewer />} />
-                  <Route path="/dicom-test" element={<DicomViewer />} />
-                  <Route path="/cargar-ecografias" element={<CargarEcografia />} />
-                  <Route path="/dashboard" element={<DashboardPage />} />
-                  <Route path="/" element={<Navigate to="/visualizar-ecografias" replace />} />
-                </Routes>
-              </div>
+    <Routes>
+      <Route path="/comparar-ecografias" element={
+        <VisorEcografiaDoble />
+      } />
+      <Route path="*" element={
+        <>
+          <AppHeader user={user} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} onLogout={handleLogout} />
+          <div className="app-container">
+            <Sidebar isOpen={sidebarOpen} />
+            <div className="main-content">
+              <Routes>
+                <Route path="/perfil" element={<MiPerfil user={user} />} />
+                <Route path="/buscar-pacientes" element={<BuscarPacientes />} />
+                <Route path="/paciente/:id" element={<PacientePage />} />
+                <Route path="/visualizar-ecografias" element={<VtkViewer />} />
+                <Route path="/dicom-test" element={<DicomViewer />} />
+                <Route path="/cargar-ecografias" element={<CargarEcografia />} />
+                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/" element={<Navigate to="/visualizar-ecografias" replace />} />
+              </Routes>
             </div>
-          </>
-        } />
-      </Routes>
-    </Router>
+          </div>
+        </>
+      } />
+    </Routes>
   );
 }

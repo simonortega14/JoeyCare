@@ -20,9 +20,8 @@
   padding: 25px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
-  flex-wrap: wrap;
   gap: 20px;
 }
 
@@ -40,7 +39,7 @@
 }
 
 .search-input {
-  width: 300px;
+  width: 400px;
   height: 45px;
   padding: 0 50px 0 20px;
   border: none;
@@ -61,6 +60,39 @@
   right: 20px;
   color: #7f8c8d;
   font-size: 18px;
+}
+
+/* Botones de búsqueda */
+.search-buttons {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.search-btn {
+  background-color: #FFFFFF;
+  border: 2px solid #4DC2FF;
+  padding: 10px 15px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: #4DC2FF;
+  transition: background-color 0.3s ease, transform 0.2s ease, color 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.search-btn:hover {
+  background-color: #4DC2FF;
+  color: #FFFFFF;
+  transform: scale(1.05);
+}
+
+.search-btn.active {
+  background-color: #4DC2FF;
+  color: #FFFFFF;
+  border-color: #4DC2FF;
 }
 
 /* Grid de pacientes */
@@ -190,15 +222,23 @@
 /* Responsive */
 @media (max-width: 900px) {
   .buscar-pacientes-header {
-    flex-direction: column;
     text-align: center;
     gap: 15px;
   }
-  
+
   .search-input {
-    width: 250px;
+    width: 300px;
   }
-  
+
+  .search-buttons {
+    gap: 10px;
+  }
+
+  .search-btn {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
   .pacientes-grid {
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   }

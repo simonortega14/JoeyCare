@@ -6,24 +6,61 @@ import './buscarPacientes.css';
 
 const BuscarPacientesPage = ({ onOpenSettings }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchType, setSearchType] = useState('name');
   const navigate = useNavigate(); // Hook para navegación
 
   // Datos de ejemplo de pacientes
   const pacientes = [
-    { id: "BG-123", nombre: "Bebé García", peso: "2.4 kg", edadCorregida: "32 semanas" },
-    { id: "BR-456", nombre: "Bebé Rodríguez", peso: "2.1 kg", edadCorregida: "28 semanas" },
-    { id: "BL-789", nombre: "Bebé López", peso: "2.6 kg", edadCorregida: "30 semanas" },
-    { id: "BM-012", nombre: "Bebé Martínez", peso: "2.3 kg", edadCorregida: "31 semanas" },
-    { id: "BG-345", nombre: "Bebé González", peso: "2.5 kg", edadCorregida: "33 semanas" },
-    { id: "BP-678", nombre: "Bebé Pérez", peso: "2.2 kg", edadCorregida: "29 semanas" },
-    { id: "BS-901", nombre: "Bebé Sánchez", peso: "2.7 kg", edadCorregida: "34 semanas" }
+    { id: "BG-123", nombre: "Bebé García", peso: "2400 g", edadGestacional: "30 semanas", edadCorregida: "32 semanas" },
+    { id: "BR-456", nombre: "Bebé Rodríguez", peso: "2100 g", edadGestacional: "28 semanas", edadCorregida: "28 semanas" },
+    { id: "BL-789", nombre: "Bebé López", peso: "2600 g", edadGestacional: "28 semanas", edadCorregida: "30 semanas" },
+    { id: "BM-012", nombre: "Bebé Martínez", peso: "2300 g", edadGestacional: "29 semanas", edadCorregida: "31 semanas" },
+    { id: "BG-345", nombre: "Bebé González", peso: "2500 g", edadGestacional: "31 semanas", edadCorregida: "33 semanas" },
+    { id: "BP-678", nombre: "Bebé Pérez", peso: "2200 g", edadGestacional: "27 semanas", edadCorregida: "29 semanas" },
+    { id: "BS-901", nombre: "Bebé Sánchez", peso: "2700 g", edadGestacional: "32 semanas", edadCorregida: "34 semanas" }
   ];
 
-  // Filtrar pacientes basado en la búsqueda
-  const filteredPacientes = pacientes.filter(paciente =>
-    paciente.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    paciente.id.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filtrar pacientes basado en el tipo de búsqueda
+  let filteredPacientes = pacientes;
+  if (searchType === 'name') {
+    filteredPacientes = pacientes.filter(paciente =>
+      paciente.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      paciente.id.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  } else if (searchType === 'weight') {
+    if (searchTerm.includes('-')) {
+      const [min, max] = searchTerm.split('-').map(s => parseFloat(s.trim()) * 1000);
+      filteredPacientes = pacientes.filter(paciente => {
+        const peso = parseFloat(paciente.peso.replace(' g', ''));
+        return peso >= min && peso <= max;
+      });
+    } else if (searchTerm) {
+      const peso = parseFloat(searchTerm) * 1000;
+      filteredPacientes = pacientes.filter(paciente => parseFloat(paciente.peso.replace(' g', '')) === peso);
+    }
+  } else if (searchType === 'gestational') {
+    if (searchTerm.includes('-')) {
+      const [min, max] = searchTerm.split('-').map(s => parseInt(s.trim()));
+      filteredPacientes = pacientes.filter(paciente => {
+        const edad = parseInt(paciente.edadGestacional);
+        return edad >= min && edad <= max;
+      });
+    } else if (searchTerm) {
+      const edad = parseInt(searchTerm);
+      filteredPacientes = pacientes.filter(paciente => parseInt(paciente.edadGestacional) === edad);
+    }
+  } else if (searchType === 'corrected') {
+    if (searchTerm.includes('-')) {
+      const [min, max] = searchTerm.split('-').map(s => parseInt(s.trim()));
+      filteredPacientes = pacientes.filter(paciente => {
+        const edad = parseInt(paciente.edadCorregida);
+        return edad >= min && edad <= max;
+      });
+    } else if (searchTerm) {
+      const edad = parseInt(searchTerm);
+      filteredPacientes = pacientes.filter(paciente => parseInt(paciente.edadCorregida) === edad);
+    }
+  }
 
   // Función para manejar el clic en "Ver detalles"
   const handleViewDetails = (pacienteId) => {
@@ -41,12 +78,43 @@ const BuscarPacientesPage = ({ onOpenSettings }) => {
           <div className="search-container">
             <input
               type="text"
-              placeholder="Buscar por nombre o ID..."
+              placeholder={
+                searchType === 'name' ? "Buscar por nombre o ID..." :
+                searchType === 'weight' ? "Buscar por peso (ej: 2400 o 2000-3000)..." :
+                searchType === 'gestational' ? "Buscar por edad gestacional (ej: 30 o 28-32)..." :
+                "Buscar por edad corregida (ej: 30 o 28-32)..."
+              }
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="search-input"
             />
             <span className="search-icon">🔍</span>
+          </div>
+          <div className="search-buttons">
+            <button
+              className={`search-btn ${searchType === 'name' ? 'active' : ''}`}
+              onClick={() => setSearchType('name')}
+            >
+              Nombre/ID
+            </button>
+            <button
+              className={`search-btn ${searchType === 'weight' ? 'active' : ''}`}
+              onClick={() => setSearchType('weight')}
+            >
+              Peso
+            </button>
+            <button
+              className={`search-btn ${searchType === 'gestational' ? 'active' : ''}`}
+              onClick={() => setSearchType('gestational')}
+            >
+              Edad Gestacional
+            </button>
+            <button
+              className={`search-btn ${searchType === 'corrected' ? 'active' : ''}`}
+              onClick={() => setSearchType('corrected')}
+            >
+              Edad Corregida
+            </button>
           </div>
         </div>
 
@@ -62,6 +130,10 @@ const BuscarPacientesPage = ({ onOpenSettings }) => {
                   <div className="detail-item">
                     <span className="detail-label">Peso</span>
                     <span className="detail-value">{paciente.peso}</span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">Edad gestacional</span>
+                    <span className="detail-value">{paciente.edadGestacional}</span>
                   </div>
                   <div className="detail-item">
                     <span className="detail-label">Edad corregida</span>

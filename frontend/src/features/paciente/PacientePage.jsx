@@ -1,26 +1,54 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import AppHeader from '../../components/AppHeader.jsx';
 import AppSidebar from '../../components/AppSidebar.jsx';
 import './paciente.css';
 
 const PacientePage = ({ onOpenSettings }) => {
-  const { id } = useParams(); 
-  const navigate = useNavigate(); 
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [pacientes, setPacientes] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Datos de ejemplo del paciente
-  const pacientes = {
-    "BG-123": { nombre: "Bebé García", peso: "2.4 kg", edadCorregida: "32 semanas", edad: "8 meses", genero: "Femenino" },
-    "BR-456": { nombre: "Bebé Rodríguez", peso: "2.1 kg", edadCorregida: "28 semanas", edad: "7 meses", genero: "Masculino" },
-    "BL-789": { nombre: "Bebé López", peso: "2.6 kg", edadCorregida: "30 semanas", edad: "7.5 meses", genero: "Femenino" },
-  };
+  useEffect(() => {
+    const fetchPacientes = async () => {
+      try {
+        const response = await fetch("http://localhost:4000/api/pacientes");
+        if (response.ok) {
+          const data = await response.json();
+          setPacientes(data);
+        } else {
+          // Fallback a datos quemados si no se encuentra en la API
+          const pacientesQuemados = [
+            { id: "BG-123", nombre: "Bebé García", peso: "2.4 kg", edadCorregida: "32 semanas", edad: "8 meses", genero: "Femenino" },
+            { id: "BR-456", nombre: "Bebé Rodríguez", peso: "2.1 kg", edadCorregida: "28 semanas", edad: "7 meses", genero: "Masculino" },
+            { id: "BL-789", nombre: "Bebé López", peso: "2.6 kg", edadCorregida: "30 semanas", edad: "7.5 meses", genero: "Femenino" },
+          ];
+          setPacientes(pacientesQuemados);
+        }
+      } catch (error) {
+        console.error('Error fetching pacientes:', error);
+        // Fallback a datos quemados en caso de error
+        const pacientesQuemados = [
+          { id: "BG-123", nombre: "Bebé García", peso: "2.4 kg", edadCorregida: "32 semanas", edad: "8 meses", genero: "Femenino" },
+          { id: "BR-456", nombre: "Bebé Rodríguez", peso: "2.1 kg", edadCorregida: "28 semanas", edad: "7 meses", genero: "Masculino" },
+          { id: "BL-789", nombre: "Bebé López", peso: "2.6 kg", edadCorregida: "30 semanas", edad: "7.5 meses", genero: "Femenino" },
+        ];
+        setPacientes(pacientesQuemados);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const paciente = pacientes[id] || { 
-    nombre: "Paciente no encontrado", 
-    peso: "N/A", 
-    edadCorregida: "N/A", 
-    edad: "N/A", 
-    genero: "N/A" 
+    fetchPacientes();
+  }, []);
+
+  const paciente = pacientes.find(p => p.id === id) || {
+    nombre: "Paciente no encontrado",
+    peso: "N/A",
+    edadCorregida: "N/A",
+    edad: "N/A",
+    genero: "N/A"
   };
 
   // Datos de ejemplo de ecografías
@@ -48,12 +76,46 @@ const PacientePage = ({ onOpenSettings }) => {
     });
   };
 
+  if (loading) {
+    return (
+      <div className="paciente-container">
+        <AppHeader onOpenSettings={onOpenSettings} />
+        <AppSidebar activeItem="Buscar Pacientes" />
+        <div className="paciente-content">
+          <p>Cargando información del paciente...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="paciente-container">
       <AppHeader onOpenSettings={onOpenSettings} />
       <AppSidebar activeItem="Buscar Pacientes" />
-      
+
       <div className="paciente-content">
+        {/* Carrusel de pacientes */}
+        <div className="pacientes-carousel">
+          <h2>Pacientes</h2>
+          <div className="carousel-container">
+            {pacientes.map(p => (
+              <div
+                key={p.id}
+                className={`paciente-carousel-card ${p.id === id ? 'active' : ''}`}
+                onClick={() => navigate(`/paciente/${p.id}`)}
+              >
+                <div className="paciente-carousel-image">
+                  <div className="paciente-logo">{p.nombre.charAt(0)}</div>
+                </div>
+                <div className="paciente-carousel-info">
+                  <h3>{p.nombre}</h3>
+                  <p>ID: {p.id}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* Información del paciente */}
         <div className="paciente-info-card">
           <div className="paciente-header">

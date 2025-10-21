@@ -2,7 +2,7 @@ import React from 'react';
 import logoJoey from '../assets/Logo Joey care.png';
 import './header.css';
 
-const AppHeader = ({ onOpenSettings, onToggleSidebar }) => {
+const AppHeader = ({ onOpenSettings, onToggleSidebar, onLogout }) => {
   return (
     <header className="jc-header">
       <div className="jc-header__left">
@@ -12,9 +12,14 @@ const AppHeader = ({ onOpenSettings, onToggleSidebar }) => {
         <img src={logoJoey} alt="Logo Joey" className="jc-logo" />
         <span className="jc-brand">Joey Care</span>
       </div>
-      <button className="jc-btn jc-btn--config" onClick={onOpenSettings}>
-        ⚙️ Configuración
-      </button>
+      <div className="jc-header__right">
+        <button className="jc-btn jc-btn--config" onClick={onOpenSettings}>
+          ⚙️ Configuración
+        </button>
+        <button className="jc-btn jc-btn--logout" onClick={onLogout}>
+          🚪 Cerrar Sesión
+        </button>
+      </div>
     </header>
   );
 };

@@ -19,6 +19,12 @@
   gap: 15px;
 }
 
+.jc-header__right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .menu-toggle {
   display: none;
   background: none;
@@ -58,6 +64,25 @@
   background-color: rgba(77, 194, 255, 0.6);
 }
 
+.jc-btn--logout {
+  background-color: rgba(255, 77, 77, 0.46);
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #000000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.2s;
+}
+
+.jc-btn--logout:hover {
+  background-color: rgba(255, 77, 77, 0.6);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .menu-toggle {
@@ -84,6 +109,11 @@
   }
   
   .jc-btn--config {
+    padding: 8px 15px;
+    font-size: 12px;
+  }
+
+  .jc-btn--logout {
     padding: 8px 15px;
     font-size: 12px;
   }

@@ -208,6 +208,102 @@
   background-color: rgba(77, 194, 255, 0.6);
 }
 
+/* Carrusel de pacientes */
+.pacientes-carousel {
+  background-color: rgba(77, 194, 255, 0.46);
+  border-radius: 12px;
+  padding: 25px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 25px;
+}
+
+.pacientes-carousel h2 {
+  color: #000000;
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 20px 0;
+  padding-bottom: 12px;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+}
+
+.carousel-container {
+  display: flex;
+  gap: 15px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(77, 194, 255, 0.5) transparent;
+}
+
+.carousel-container::-webkit-scrollbar {
+  height: 6px;
+}
+
+.carousel-container::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.carousel-container::-webkit-scrollbar-thumb {
+  background: rgba(77, 194, 255, 0.5);
+  border-radius: 3px;
+}
+
+.carousel-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(77, 194, 255, 0.7);
+}
+
+.paciente-carousel-card {
+  background-color: #F5FFFF;
+  border-radius: 8px;
+  padding: 15px;
+  min-width: 200px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 2px solid transparent;
+  flex-shrink: 0;
+}
+
+.paciente-carousel-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.paciente-carousel-card.active {
+  border-color: #4DC2FF;
+  background-color: rgba(77, 194, 255, 0.1);
+}
+
+.paciente-carousel-image {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.paciente-carousel-image .paciente-logo {
+  width: 50px;
+  height: 50px;
+  font-size: 16px;
+}
+
+.paciente-carousel-info {
+  text-align: center;
+}
+
+.paciente-carousel-info h3 {
+  color: #000000;
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 5px 0;
+}
+
+.paciente-carousel-info p {
+  color: #666;
+  font-size: 13px;
+  margin: 0;
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
   .paciente-stats {

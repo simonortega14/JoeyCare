@@ -10,6 +10,7 @@ import MiPerfil from "./features/profile/ProfilePage";
 import BuscarPacientes from "./features/buscar_paciente/BuscarPacientesPage";
 import CargarEcografia from "./features/cargar_ecografia/CargarEcografiaPage";
 import DashboardPage from "./features/dashboard/dashBoardPage";
+import PacientePage from "./features/paciente/PacientePage";
 import RegisterPage from "./features/auth/RegisterPage";
 import "./App.css";
 
@@ -58,6 +59,12 @@ export default function App() {
     }
   }
 
+  function handleLogout() {
+    setUser(null);
+    setIsLoggedIn(false);
+    localStorage.removeItem("user");
+  }
+
   if (!isLoggedIn) {
     return (
       <Router>
@@ -77,13 +84,14 @@ export default function App() {
         } />
         <Route path="*" element={
           <>
-            <AppHeader user={user} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
+            <AppHeader user={user} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} onLogout={handleLogout} />
             <div className="app-container">
               <Sidebar isOpen={sidebarOpen} />
               <div className="main-content">
                 <Routes>
                   <Route path="/perfil" element={<MiPerfil user={user} />} />
                   <Route path="/buscar-pacientes" element={<BuscarPacientes />} />
+                  <Route path="/paciente/:id" element={<PacientePage />} />
                   <Route path="/visualizar-ecografias" element={<VtkViewer />} />
                   <Route path="/dicom-test" element={<DicomViewer />} />
                   <Route path="/cargar-ecografias" element={<CargarEcografia />} />

@@ -6,7 +6,7 @@ import AppHeader from '../../components/AppHeader.jsx';
 import AppSidebar from '../../components/AppSidebar.jsx';
 import './profile.css';
 
-const ProfilePage = ({ onOpenSettings }) => {
+const ProfilePage = ({ onOpenSettings, user }) => {
   const navigate = useNavigate();
 
   // Datos de ejemplo para pacientes revisados
@@ -36,8 +36,8 @@ const ProfilePage = ({ onOpenSettings }) => {
               <img src={logoPerfil} alt="Perfil" className="profile-logo" />
             </div>
             <div className="profile-info-text">
-              <h1>Nombre Apellido</h1>
-              <p><strong>Sede en la que labora</strong></p>
+              <h1>{user ? `${user.nombre} ${user.apellido}` : 'Nombre Apellido'}</h1>
+              <p><strong>{user ? user.sede : 'Sede en la que labora'}</strong></p>
             </div>
           </div>
         </div>

@@ -32,18 +32,32 @@
   margin: 0;
 }
 
-.search-container {
-  position: relative;
+.filters-container {
   display: flex;
-  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+  justify-content: center;
+  align-items: end;
 }
 
-.search-input {
-  width: 400px;
-  height: 45px;
-  padding: 0 50px 0 20px;
-  border: none;
-  border-radius: 25px;
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.filter-group label {
+  color: #000000;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.filter-group input {
+  width: 120px;
+  height: 35px;
+  padding: 0 10px;
+  border: 1px solid #4DC2FF;
+  border-radius: 8px;
   background-color: #F5FFFF;
   color: #000000;
   font-size: 14px;
@@ -51,48 +65,44 @@
   outline: none;
 }
 
-.search-input::placeholder {
+.filter-group input::placeholder {
   color: #7f8c8d;
-}
-
-.search-icon {
-  position: absolute;
-  right: 20px;
-  color: #7f8c8d;
-  font-size: 18px;
-}
-
-/* Botones de búsqueda */
-.search-buttons {
-  display: flex;
-  gap: 15px;
-  flex-wrap: wrap;
-  justify-content: center;
 }
 
 .search-btn {
-  background-color: #FFFFFF;
-  border: 2px solid #4DC2FF;
-  padding: 10px 15px;
+  background-color: #4DC2FF;
+  border: none;
+  padding: 10px 20px;
   border-radius: 20px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
-  color: #4DC2FF;
-  transition: background-color 0.3s ease, transform 0.2s ease, color 0.3s ease;
+  color: #FFFFFF;
+  transition: background-color 0.3s ease, transform 0.2s ease;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .search-btn:hover {
-  background-color: #4DC2FF;
-  color: #FFFFFF;
+  background-color: #3aa8e0;
   transform: scale(1.05);
 }
 
-.search-btn.active {
-  background-color: #4DC2FF;
+.compare-btn {
+  background-color: #28a745;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
   color: #FFFFFF;
-  border-color: #4DC2FF;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.compare-btn:hover {
+  background-color: #218838;
+  transform: scale(1.05);
 }
 
 /* Grid de pacientes */
@@ -129,6 +139,17 @@
   justify-content: center;
   margin-bottom: 15px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+.paciente-checkbox {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  z-index: 10;
 }
 
 .paciente-logo {
@@ -275,4 +296,22 @@
   .paciente-name-id {
     font-size: 15px;
   }
+}
+/* Loading and error states */
+.loading {
+  text-align: center;
+  padding: 20px;
+  background-color: rgba(77, 194, 255, 0.46);
+  border-radius: 12px;
+  color: #000000;
+  font-size: 16px;
+}
+
+.error {
+  text-align: center;
+  padding: 20px;
+  background-color: rgba(255, 77, 77, 0.46);
+  border-radius: 12px;
+  color: #000000;
+  font-size: 16px;
 }

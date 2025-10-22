@@ -298,7 +298,7 @@ function ImageViewer({ imageFile, onClose, isEmbedded = false }) {
 
 
   return (
-    <div className={isEmbedded ? "vtk-embedded" : "vtk-fullscreen"}>
+    <div className={isEmbedded ? "vtk-embedded" : "vtk-fullscreen"} style={isEmbedded ? { height: '100%', display: 'flex', flexDirection: 'column' } : undefined}>
       <div className="vtk-toolbar">
         <button onClick={onClose}>← Volver</button>
         <button onClick={handleResetView}>Reset View</button>
@@ -349,7 +349,7 @@ function ImageViewer({ imageFile, onClose, isEmbedded = false }) {
         </div>
       )}
 
-      <div ref={vtkContainerRef} className="vtk-viewer-canvas" />
+      <div ref={vtkContainerRef} className="vtk-viewer-canvas" style={isEmbedded ? { flex: 1, width: '100%', height: '100%' } : undefined} />
 
     </div>
   );

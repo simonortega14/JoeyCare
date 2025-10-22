@@ -13,7 +13,7 @@ function ImageSelector({ onImageSelected }) {
   const [selectedEcografiaB, setSelectedEcografiaB] = useState(null);
 
   useEffect(() => {
-    fetch("http://localhost:4000/api/pacientes")
+    fetch("http://localhost:4000/api/neonatos")
       .then(res => res.json())
       .then(setPacientes)
       .catch(() => setPacientes([{ id: 1, nombre: "Prueba", apellido: "Paciente" }]));
@@ -24,7 +24,7 @@ function ImageSelector({ onImageSelected }) {
       setEcografias([]);
       return;
     }
-    fetch(`http://localhost:4000/api/pacientes/${selectedPaciente.id}/ecografias`)
+    fetch(`http://localhost:4000/api/neonatos/${selectedPaciente.id}/ecografias`)
       .then(res => res.json())
       .then(setEcografias)
       .catch(() => setEcografias([]));
@@ -99,7 +99,7 @@ function ImageSelector({ onImageSelected }) {
                 <option value="">-- Selecciona una ecografía --</option>
                 {ecografias.map(ec => (
                   <option key={ec.id} value={ec.id}>
-                    {ec.filename} - {new Date(ec.uploaded_at).toLocaleDateString()}
+                    {ec.filepath} - {new Date(ec.fecha_hora).toLocaleDateString()}
                   </option>
                 ))}
               </select>
@@ -153,7 +153,7 @@ function ImageSelector({ onImageSelected }) {
                 <option value="">-- Selecciona ecografía A --</option>
                 {ecografias.map(ec => (
                   <option key={ec.id} value={ec.id}>
-                    {ec.filename} - {new Date(ec.uploaded_at).toLocaleDateString()}
+                    {ec.filepath} - {new Date(ec.fecha_hora).toLocaleDateString()}
                   </option>
                 ))}
               </select>
@@ -172,7 +172,7 @@ function ImageSelector({ onImageSelected }) {
                 <option value="">-- Selecciona ecografía B --</option>
                 {ecografias.map(ec => (
                   <option key={ec.id} value={ec.id}>
-                    {ec.filename} - {new Date(ec.uploaded_at).toLocaleDateString()}
+                    {ec.filepath} - {new Date(ec.fecha_hora).toLocaleDateString()}
                   </option>
                 ))}
               </select>

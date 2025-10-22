@@ -9,7 +9,7 @@ function ImageComparisonSelector({ currentImage, onClose }) {
   const [selectedEcografia, setSelectedEcografia] = useState(null);
 
   useEffect(() => {
-    fetch("http://localhost:4000/api/pacientes")
+    fetch("http://localhost:4000/api/neonatos")
       .then(res => res.json())
       .then(setPacientes)
       .catch(() => setPacientes([{ id: 1, nombre: "Prueba", apellido: "Paciente" }]));
@@ -20,7 +20,7 @@ function ImageComparisonSelector({ currentImage, onClose }) {
       setEcografias([]);
       return;
     }
-    fetch(`http://localhost:4000/api/pacientes/${selectedPaciente.id}/ecografias`)
+    fetch(`http://localhost:4000/api/neonatos/${selectedPaciente.id}/ecografias`)
       .then(res => res.json())
       .then(setEcografias)
       .catch(() => setEcografias([]));

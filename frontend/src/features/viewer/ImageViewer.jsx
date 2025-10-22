@@ -30,12 +30,23 @@ function ImageViewer({ imageFile, onClose, isEmbedded = false }) {
   }, [imageFile]);
 
   useEffect(() => {
-    if (context.current && context.current.isGrayscale && context.current.rawPixelData) {
+    return () => {
+      if (context.current) {
+        context.current.fullScreenRenderer.delete();
+        context.current = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (context.current && context.current.isGrayscale && context.current.rawPixelData && context.current.texture) {
       updateWindowLevel();
     }
   }, [windowLevel]);
 
   const updateWindowLevel = () => {
+    if (!context.current || !context.current.rawPixelData || !context.current.texture || !context.current.renderWindow) return;
+
     const { rawPixelData, width, height, texture, renderWindow } = context.current;
     const canvas = document.createElement("canvas");
     canvas.width = width;
@@ -68,12 +79,12 @@ function ImageViewer({ imageFile, onClose, isEmbedded = false }) {
     setError(null);
 
     try {
-      const response = await fetch(`http://localhost:4000/api/uploads/${imageFile.filename}`);
+      const response = await fetch(`http://localhost:4000/api/uploads/${imageFile.filepath}`);
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       const arrayBuffer = await response.arrayBuffer();
 
-      const file = new File([arrayBuffer], imageFile.filename, {
-        type: getMimeType(imageFile.filename)
+      const file = new File([arrayBuffer], imageFile.filepath, {
+        type: getMimeType(imageFile.filepath)
       });
 
       const result = await readImage(file);
@@ -120,7 +131,7 @@ function ImageViewer({ imageFile, onClose, isEmbedded = false }) {
       }
       ctx.putImageData(imageData, 0, 0);
 
-      if (context.current) {
+      if (context.current && context.current.fullScreenRenderer) {
         context.current.fullScreenRenderer.delete();
         context.current = null;
       }
@@ -191,18 +202,18 @@ function ImageViewer({ imageFile, onClose, isEmbedded = false }) {
         });
 
         canvasElement.addEventListener("mousemove", (e) => {
-          if (!isDragging) return;
+          if (!isDragging || !context.current) return;
           const deltaX = e.clientX - lastX;
           const deltaY = e.clientY - lastY;
 
-          if (panMode && isRightButton) {
-            const scale = camera.getParallelScale() * 2;
-            camera.setFocalPoint(
-              camera.getFocalPoint()[0] - deltaX * 0.01 * scale,
-              camera.getFocalPoint()[1] + deltaY * 0.01 * scale,
+          if (panMode && isRightButton && context.current.camera) {
+            const scale = context.current.camera.getParallelScale() * 2;
+            context.current.camera.setFocalPoint(
+              context.current.camera.getFocalPoint()[0] - deltaX * 0.01 * scale,
+              context.current.camera.getFocalPoint()[1] + deltaY * 0.01 * scale,
               0
             );
-            renderWindow.render();
+            context.current.renderWindow.render();
           } else if (!panMode && !isRightButton && isGrayscale) {
             setWindowLevel((prev) => ({
               width: Math.max(1, prev.width + deltaX * 2),
@@ -226,10 +237,11 @@ function ImageViewer({ imageFile, onClose, isEmbedded = false }) {
 
         canvasElement.addEventListener("wheel", (e) => {
           e.preventDefault();
+          if (!context.current || !context.current.camera || !context.current.renderWindow) return;
           const delta = e.deltaY > 0 ? 1.1 : 0.9;
-          const currentScale = camera.getParallelScale();
-          camera.setParallelScale(currentScale * delta);
-          renderWindow.render();
+          const currentScale = context.current.camera.getParallelScale();
+          context.current.camera.setParallelScale(currentScale * delta);
+          context.current.renderWindow.render();
         }, { passive: false });
       }
 
@@ -264,7 +276,7 @@ function ImageViewer({ imageFile, onClose, isEmbedded = false }) {
   };
 
   const handleResetView = () => {
-    if (context.current) {
+    if (context.current && context.current.renderer && context.current.renderWindow) {
       context.current.renderer.resetCamera();
       context.current.renderWindow.render();
     }
@@ -309,7 +321,7 @@ function ImageViewer({ imageFile, onClose, isEmbedded = false }) {
         </button>
 
         <span style={{ marginLeft: "auto", color: "#fff", fontSize: "14px" }}>
-          {imageFile.filename}
+          {imageFile.filepath}
         </span>
 
         <span style={{ marginLeft: "10px", color: "#aaa", fontSize: "12px" }}>

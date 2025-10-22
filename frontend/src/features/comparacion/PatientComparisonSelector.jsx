@@ -13,7 +13,7 @@ function PatientComparisonSelector({ selectedPacientes, onClose }) {
 
   useEffect(() => {
     if (paciente1) {
-      fetch(`http://localhost:4000/api/pacientes/${paciente1.id}/ecografias`)
+      fetch(`http://localhost:4000/api/neonatos/${paciente1.id}/ecografias`)
         .then(res => res.json())
         .then(setEcografiasPaciente1)
         .catch(() => setEcografiasPaciente1([]));
@@ -22,7 +22,7 @@ function PatientComparisonSelector({ selectedPacientes, onClose }) {
 
   useEffect(() => {
     if (paciente2) {
-      fetch(`http://localhost:4000/api/pacientes/${paciente2.id}/ecografias`)
+      fetch(`http://localhost:4000/api/neonatos/${paciente2.id}/ecografias`)
         .then(res => res.json())
         .then(setEcografiasPaciente2)
         .catch(() => setEcografiasPaciente2([]));

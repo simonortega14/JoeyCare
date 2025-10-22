@@ -85,6 +85,7 @@ const CargarEcografiaPage = () => {
       setIsSubmitting(true);
       const formData = new FormData();
       formData.append("imagen", file);
+      formData.append("uploader_medico_id", "1"); // Default médico ID
 
       const response = await fetch(
         `http://localhost:4000/api/ecografias/${patient.id}`,

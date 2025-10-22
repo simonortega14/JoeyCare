@@ -41,7 +41,7 @@ export default function App() {
 
   async function handleLogin(form) {
     try {
-      const response = await fetch("http://localhost:4000/api/doctores/login", {
+      const response = await fetch("http://localhost:4000/api/medicos/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: form.username, password: form.password }),
@@ -90,7 +90,7 @@ export default function App() {
               <Routes>
                 <Route path="/perfil" element={<MiPerfil user={user} />} />
                 <Route path="/buscar-pacientes" element={<BuscarPacientes />} />
-                <Route path="/paciente/:id" element={<PacientePage />} />
+                <Route path="/neonato/:id" element={<PacientePage />} />
                 <Route path="/visualizar-ecografias" element={<VtkViewer />} />
                 <Route path="/dicom-test" element={<DicomViewer />} />
                 <Route path="/cargar-ecografias" element={<CargarEcografia />} />

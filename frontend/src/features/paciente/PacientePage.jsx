@@ -11,36 +11,36 @@ const PacientePage = ({ onOpenSettings }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchPacientes = async () => {
+    const fetchNeonatos = async () => {
       try {
-        const response = await fetch("http://localhost:4000/api/pacientes");
+        const response = await fetch("http://localhost:4000/api/neonatos");
         if (response.ok) {
           const data = await response.json();
           setPacientes(data);
         } else {
           // Fallback a datos quemados si no se encuentra en la API
-          const pacientesQuemados = [
+          const neonatosQuemados = [
             { id: "BG-123", nombre: "Bebé García", peso: "2.4 kg", edadCorregida: "32 semanas", edad: "8 meses", genero: "Femenino" },
             { id: "BR-456", nombre: "Bebé Rodríguez", peso: "2.1 kg", edadCorregida: "28 semanas", edad: "7 meses", genero: "Masculino" },
             { id: "BL-789", nombre: "Bebé López", peso: "2.6 kg", edadCorregida: "30 semanas", edad: "7.5 meses", genero: "Femenino" },
           ];
-          setPacientes(pacientesQuemados);
+          setPacientes(neonatosQuemados);
         }
       } catch (error) {
-        console.error('Error fetching pacientes:', error);
+        console.error('Error fetching neonatos:', error);
         // Fallback a datos quemados en caso de error
-        const pacientesQuemados = [
+        const neonatosQuemados = [
           { id: "BG-123", nombre: "Bebé García", peso: "2.4 kg", edadCorregida: "32 semanas", edad: "8 meses", genero: "Femenino" },
           { id: "BR-456", nombre: "Bebé Rodríguez", peso: "2.1 kg", edadCorregida: "28 semanas", edad: "7 meses", genero: "Masculino" },
           { id: "BL-789", nombre: "Bebé López", peso: "2.6 kg", edadCorregida: "30 semanas", edad: "7.5 meses", genero: "Femenino" },
         ];
-        setPacientes(pacientesQuemados);
+        setPacientes(neonatosQuemados);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchPacientes();
+    fetchNeonatos();
   }, []);
 
   const paciente = pacientes.find(p => p.id === id) || {
@@ -102,7 +102,7 @@ const PacientePage = ({ onOpenSettings }) => {
               <div
                 key={p.id}
                 className={`paciente-carousel-card ${p.id === id ? 'active' : ''}`}
-                onClick={() => navigate(`/paciente/${p.id}`)}
+                onClick={() => navigate(`/neonato/${p.id}`)}
               >
                 <div className="paciente-carousel-image">
                   <div className="paciente-logo">{p.nombre.charAt(0)}</div>

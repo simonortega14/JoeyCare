@@ -6,7 +6,7 @@ import PatientComparisonSelector from '../comparacion/PatientComparisonSelector.
 import './buscarPacientes.css';
 
 const BuscarPacientesPage = ({ onOpenSettings }) => {
-  const [pacientes, setPacientes] = useState([]);
+  const [neonatos, setNeonatos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState({
@@ -18,11 +18,11 @@ const BuscarPacientesPage = ({ onOpenSettings }) => {
     edad_corregida_min: '',
     edad_corregida_max: ''
   });
-  const [selectedPacientes, setSelectedPacientes] = useState([]);
+  const [selectedNeonatos, setSelectedNeonatos] = useState([]);
   const [showComparisonModal, setShowComparisonModal] = useState(false);
   const navigate = useNavigate();
 
-  const fetchPacientes = async () => {
+  const fetchNeonatos = async () => {
     setLoading(true);
     setError(null);
     try {
@@ -30,10 +30,10 @@ const BuscarPacientesPage = ({ onOpenSettings }) => {
       Object.entries(filters).forEach(([key, value]) => {
         if (value) queryParams.append(key, value);
       });
-      const response = await fetch(`http://localhost:4000/api/pacientes?${queryParams}`);
-      if (!response.ok) throw new Error('Error al obtener pacientes');
+      const response = await fetch(`http://localhost:4000/api/neonatos?${queryParams}`);
+      if (!response.ok) throw new Error('Error al obtener neonatos');
       const data = await response.json();
-      setPacientes(data);
+      setNeonatos(data);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -42,7 +42,7 @@ const BuscarPacientesPage = ({ onOpenSettings }) => {
   };
 
   useEffect(() => {
-    fetchPacientes();
+    fetchNeonatos();
   }, []);
 
   const handleFilterChange = (e) => {
@@ -51,27 +51,27 @@ const BuscarPacientesPage = ({ onOpenSettings }) => {
   };
 
   const handleSearch = () => {
-    fetchPacientes();
+    fetchNeonatos();
   };
 
-  const handleViewDetails = (pacienteId) => {
-    navigate(`/paciente/${pacienteId}`);
+  const handleViewDetails = (neonatoId) => {
+    navigate(`/neonato/${neonatoId}`);
   };
 
-  const handlePacienteSelect = (paciente) => {
-    setSelectedPacientes(prev => {
-      const isSelected = prev.some(p => p.id === paciente.id);
+  const handleNeonatoSelect = (neonato) => {
+    setSelectedNeonatos(prev => {
+      const isSelected = prev.some(p => p.id === neonato.id);
       if (isSelected) {
-        return prev.filter(p => p.id !== paciente.id);
+        return prev.filter(p => p.id !== neonato.id);
       } else if (prev.length < 2) {
-        return [...prev, paciente];
+        return [...prev, neonato];
       }
       return prev;
     });
   };
 
   const handleCompareSelected = () => {
-    if (selectedPacientes.length === 2) {
+    if (selectedNeonatos.length === 2) {
       setShowComparisonModal(true);
     }
   };
@@ -87,7 +87,7 @@ const BuscarPacientesPage = ({ onOpenSettings }) => {
 
       <div className="buscar-pacientes-content">
         <div className="buscar-pacientes-header">
-          <h1>Buscar Pacientes</h1>
+          <h1>Buscar Neonatos</h1>
           <div className="filters-container">
             <div className="filter-group">
               <label>Nombre:</label>
@@ -151,48 +151,56 @@ const BuscarPacientesPage = ({ onOpenSettings }) => {
               />
             </div>
             <button onClick={handleSearch} className="search-btn">Buscar</button>
-            {selectedPacientes.length === 2 && (
+            {selectedNeonatos.length === 2 && (
               <button onClick={handleCompareSelected} className="compare-btn">
-                Comparar seleccionados ({selectedPacientes.length}/2)
+                Comparar seleccionados ({selectedNeonatos.length}/2)
               </button>
             )}
           </div>
         </div>
 
-        {loading && <div className="loading">Cargando pacientes...</div>}
+        {loading && <div className="loading">Cargando neonatos...</div>}
         {error && <div className="error">Error: {error}</div>}
 
         <div className="pacientes-grid">
-          {pacientes.map((paciente, index) => (
-            <div key={paciente.id || index} className="paciente-card">
+          {neonatos.map((neonato, index) => (
+            <div key={neonato.id || index} className="paciente-card">
               <div className="paciente-image-container">
                 <input
                   type="checkbox"
-                  checked={selectedPacientes.some(p => p.id === paciente.id)}
-                  onChange={() => handlePacienteSelect(paciente)}
+                  checked={selectedNeonatos.some(p => p.id === neonato.id)}
+                  onChange={() => handleNeonatoSelect(neonato)}
                   className="paciente-checkbox"
                 />
-                <div className="logo-placeholder paciente-logo">P</div>
+                <div className="logo-placeholder paciente-logo">N</div>
               </div>
               <div className="paciente-info">
-                <h3 className="paciente-name-id">{paciente.nombre} {paciente.apellido} - {paciente.documento}</h3>
+                <h3 className="paciente-name-id">{neonato.nombre} {neonato.apellido} - {neonato.documento}</h3>
                 <div className="paciente-details">
                   <div className="detail-item">
-                    <span className="detail-label">Peso</span>
-                    <span className="detail-value">{paciente.peso_nacimiento_g} g</span>
+                    <span className="detail-label">Peso nacimiento</span>
+                    <span className="detail-value">{neonato.peso_nacimiento_g} g</span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">Peso actual</span>
+                    <span className="detail-value">{neonato.peso_actual_g || 'N/A'} g</span>
                   </div>
                   <div className="detail-item">
                     <span className="detail-label">Edad gestacional</span>
-                    <span className="detail-value">{paciente.edad_gestacional_sem} semanas</span>
+                    <span className="detail-value">{neonato.edad_gestacional_sem} semanas</span>
                   </div>
                   <div className="detail-item">
                     <span className="detail-label">Edad corregida</span>
-                    <span className="detail-value">{paciente.edad_corregida_sem} semanas</span>
+                    <span className="detail-value">{neonato.edad_corregida_sem} semanas</span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">Perímetro cefálico</span>
+                    <span className="detail-value">{neonato.perimetro_cefalico || 'N/A'} cm</span>
                   </div>
                 </div>
                 <button
                   className="view-paciente-btn"
-                  onClick={() => handleViewDetails(paciente.id)}
+                  onClick={() => handleViewDetails(neonato.id)}
                 >
                   Ver detalles
                 </button>
@@ -201,15 +209,15 @@ const BuscarPacientesPage = ({ onOpenSettings }) => {
           ))}
         </div>
 
-        {pacientes.length === 0 && !loading && (
+        {neonatos.length === 0 && !loading && (
           <div className="no-results">
-            <p>No se encontraron pacientes que coincidan con los filtros.</p>
+            <p>No se encontraron neonatos que coincidan con los filtros.</p>
           </div>
         )}
 
         {showComparisonModal && (
           <PatientComparisonSelector
-            selectedPacientes={selectedPacientes}
+            selectedPacientes={selectedNeonatos}
             onClose={handleCloseModal}
           />
         )}

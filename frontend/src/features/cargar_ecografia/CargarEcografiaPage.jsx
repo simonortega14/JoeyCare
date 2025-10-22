@@ -16,19 +16,19 @@ const CargarEcografiaPage = () => {
   // Tipos permitidos
   const allowedTypes = [".png", ".jpg", ".jpeg", ".dcm"];
 
-  // Cargar pacientes
+  // Cargar neonatos
   useEffect(() => {
-    const cargarPacientes = async () => {
+    const cargarNeonatos = async () => {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetch("http://localhost:4000/api/pacientes");
+        const response = await fetch("http://localhost:4000/api/neonatos");
         if (!response.ok) throw new Error(`Error del servidor: ${response.status}`);
         const data = await response.json();
         setPacientes(data || []);
       } catch (err) {
-        console.error("Error cargando pacientes:", err);
-        setError("No se pudieron cargar los pacientes. Usando datos de prueba.");
+        console.error("Error cargando neonatos:", err);
+        setError("No se pudieron cargar los neonatos. Usando datos de prueba.");
         setPacientes([
           { id: "123", nombre: "Bebé García" },
           { id: "456", nombre: "Bebé Rodríguez" },
@@ -40,7 +40,7 @@ const CargarEcografiaPage = () => {
         setLoading(false);
       }
     };
-    cargarPacientes();
+    cargarNeonatos();
   }, []);
 
   // Filtrar pacientes
@@ -48,7 +48,7 @@ const CargarEcografiaPage = () => {
     if (!query.trim()) return [];
     const q = query.toLowerCase();
     return pacientes.filter(
-      (p) => p.id.toString().includes(q) || p.nombre.toLowerCase().includes(q)
+      (p) => p.documento.toString().includes(q) || p.nombre.toLowerCase().includes(q) || p.apellido.toLowerCase().includes(q)
     ).slice(0, 6);
   }, [query, pacientes]);
 
@@ -78,7 +78,7 @@ const CargarEcografiaPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!patient) return alert("Selecciona primero un paciente");
+    if (!patient) return alert("Selecciona primero un neonato");
     if (!file) return alert("Por favor selecciona un archivo válido");
 
     try {
@@ -105,7 +105,7 @@ const CargarEcografiaPage = () => {
         throw new Error(errorMessage);
       }
 
-      alert(`Ecografía subida correctamente para ${patient.nombre}`);
+      alert(`Ecografía subida correctamente para ${patient.nombre} ${patient.apellido}`);
       setFile(null);
       setPatient(null);
       setQuery("");
@@ -119,7 +119,7 @@ const CargarEcografiaPage = () => {
 
   const handlePick = (p) => {
     setPatient(p);
-    setQuery(`${p.id} — ${p.nombre}`);
+    setQuery(`${p.documento} — ${p.nombre} ${p.apellido}`);
     setOpenList(false);
   };
 
@@ -150,11 +150,11 @@ const CargarEcografiaPage = () => {
         )}
 
         <div className="campo">
-          <label className="cargar-label">Paciente</label>
+          <label className="cargar-label">Neonato</label>
           <div className="patient-picker" ref={listRef}>
             <input
               className="cargar-input"
-              placeholder="Buscar por ID o nombre"
+              placeholder="Buscar por documento o nombre"
               value={query}
               onChange={(e) => { 
                 setQuery(e.target.value); 
@@ -174,8 +174,8 @@ const CargarEcografiaPage = () => {
               <ul className="patient-list">
                 {suggestions.map((p) => (
                   <li key={p.id} className="patient-item" onClick={() => handlePick(p)}>
-                    <span className="patient-id">{p.id}</span>
-                    <span className="patient-name">{p.nombre}</span>
+                    <span className="patient-id">{p.documento}</span>
+                    <span className="patient-name">{p.nombre} {p.apellido}</span>
                   </li>
                 ))}
               </ul>
@@ -183,13 +183,13 @@ const CargarEcografiaPage = () => {
           </div>
           {!patient && (
             <div className="cargar-hint">
-              Selecciona un paciente para habilitar la carga.
-              {pacientes.length === 0 && " (No hay pacientes disponibles)"}
+              Selecciona un neonato para habilitar la carga.
+              {pacientes.length === 0 && " (No hay neonatos disponibles)"}
             </div>
           )}
           {patient && (
             <div className="pill-ok">
-              Paciente seleccionado: <strong>{patient.id}</strong> — {patient.nombre}
+              Neonato seleccionado: <strong>{patient.documento}</strong> — {patient.nombre} {patient.apellido}
             </div>
           )}
         </div>

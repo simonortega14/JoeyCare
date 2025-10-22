@@ -88,7 +88,7 @@ function PatientComparisonSelector({ selectedPacientes, onClose }) {
               <option value="">-- Selecciona ecografía --</option>
               {ecografiasPaciente1.map(ec => (
                 <option key={ec.id} value={ec.id}>
-                  {ec.filename} - {new Date(ec.uploaded_at).toLocaleDateString()}
+                  {ec.filepath} - {new Date(ec.fecha_hora).toLocaleDateString()}
                 </option>
               ))}
             </select>
@@ -122,7 +122,7 @@ function PatientComparisonSelector({ selectedPacientes, onClose }) {
               <option value="">-- Selecciona ecografía --</option>
               {ecografiasPaciente2.map(ec => (
                 <option key={ec.id} value={ec.id}>
-                  {ec.filename} - {new Date(ec.uploaded_at).toLocaleDateString()}
+                  {ec.filepath} - {new Date(ec.fecha_hora).toLocaleDateString()}
                 </option>
               ))}
             </select>

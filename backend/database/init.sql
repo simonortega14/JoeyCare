@@ -223,7 +223,7 @@ VALUES
 (1, 12, 1, 'Carlos', 'López', 'carlos.lopez@joeycare.com', '123456'),
 
 -- Médicos clínicos
-(2, 1,  1, 'Laura',  'Ramírez',  'laura.ramirez@joeycare.com',  '123456'),
+(2, 1,  1, 'Juan',  'Pérez',  'juan.perez@joeycare.com',  '123456'),
 (2, 4,  1, 'Miguel', 'Torres',   'miguel.torres@joeycare.com',  '123456'),
 (2, 3,  3, 'Ana',    'Gómez',    'ana.gomez@joeycare.com',     '123456'),
 (2, 2,  6, 'Javier', 'Hernández','javier.hernandez@joeycare.com','123456'),

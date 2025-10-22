@@ -28,8 +28,16 @@ export default function App() {
       try {
         const userData = JSON.parse(storedUser);
         console.log("Parsed user data:", userData);
-        setUser(userData);
-        setIsLoggedIn(true);
+
+        // Validar que el usuario tenga la estructura correcta de 'medicos'
+        // (rol, especialidad, sede son campos nuevos de la tabla medicos)
+        if (userData.rol && userData.especialidad && userData.sede) {
+          setUser(userData);
+          setIsLoggedIn(true);
+        } else {
+          console.log("User data is outdated (old schema), clearing localStorage");
+          localStorage.removeItem("user"); // Limpiar datos antiguos
+        }
       } catch (error) {
         console.error("Error parsing stored user data:", error);
         localStorage.removeItem("user"); // Limpiar datos corruptos

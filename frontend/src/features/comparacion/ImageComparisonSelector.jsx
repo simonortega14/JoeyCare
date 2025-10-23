@@ -9,28 +9,54 @@ function ImageComparisonSelector({ currentImage, onClose }) {
   const [selectedEcografia, setSelectedEcografia] = useState(null);
 
   useEffect(() => {
+    console.log("=== IMAGE COMPARISON SELECTOR ===");
+    console.log("currentImage:", currentImage);
+    
     fetch("http://localhost:4000/api/neonatos")
       .then(res => res.json())
-      .then(setPacientes)
-      .catch(() => setPacientes([{ id: 1, nombre: "Prueba", apellido: "Paciente" }]));
-  }, []);
+      .then(data => {
+        console.log("Pacientes cargados:", data);
+        setPacientes(data);
+      })
+      .catch(err => {
+        console.error("Error cargando pacientes:", err);
+        setPacientes([{ id: 1, nombre: "Prueba", apellido: "Paciente" }]);
+      });
+  }, [currentImage]);
 
   useEffect(() => {
     if (!selectedPaciente) {
       setEcografias([]);
       return;
     }
+    console.log("Cargando ecografías para paciente:", selectedPaciente.id);
+    
     fetch(`http://localhost:4000/api/neonatos/${selectedPaciente.id}/ecografias`)
       .then(res => res.json())
-      .then(setEcografias)
-      .catch(() => setEcografias([]));
+      .then(data => {
+        console.log("Ecografías cargadas:", data);
+        setEcografias(data);
+      })
+      .catch(err => {
+        console.error("Error cargando ecografías:", err);
+        setEcografias([]);
+      });
   }, [selectedPaciente]);
 
   const handleCompare = () => {
-    if (selectedEcografia) {
+    console.log("=== INICIANDO COMPARACIÓN ===");
+    console.log("Imagen izquierda (current):", currentImage);
+    console.log("Imagen derecha (selected):", selectedEcografia);
+    
+    if (selectedEcografia && currentImage) {
       navigate("/comparar-ecografias", {
-        state: { imagenIzquierda: currentImage, imagenDerecha: selectedEcografia }
+        state: { 
+          imagenIzquierda: currentImage, 
+          imagenDerecha: selectedEcografia 
+        }
       });
+    } else {
+      console.error("Faltan imágenes para comparar");
     }
   };
 
@@ -58,6 +84,9 @@ function ImageComparisonSelector({ currentImage, onClose }) {
       }}>
         <h3 style={{ color: "#fff", marginTop: 0 }}>Seleccionar imagen para comparar</h3>
         <p style={{ color: "#ccc", marginBottom: "20px" }}>
+          Imagen actual: <strong>{currentImage?.filename || currentImage?.filepath || 'Sin nombre'}</strong>
+        </p>
+        <p style={{ color: "#ccc", marginBottom: "20px" }}>
           Elige una ecografía de otro paciente para comparar con la imagen actual.
         </p>
 
@@ -77,6 +106,7 @@ function ImageComparisonSelector({ currentImage, onClose }) {
             value={selectedPaciente?.id || ""}
             onChange={e => {
               const p = pacientes.find(p => p.id === parseInt(e.target.value));
+              console.log("Paciente seleccionado:", p);
               setSelectedPaciente(p || null);
               setSelectedEcografia(null);
             }}
@@ -107,13 +137,14 @@ function ImageComparisonSelector({ currentImage, onClose }) {
               value={selectedEcografia?.id || ""}
               onChange={e => {
                 const ec = ecografias.find(ec => ec.id === parseInt(e.target.value));
+                console.log("Ecografía seleccionada:", ec);
                 setSelectedEcografia(ec || null);
               }}
             >
               <option value="">-- Selecciona una ecografía --</option>
               {ecografias.map(ec => (
                 <option key={ec.id} value={ec.id}>
-                  {ec.filename} - {new Date(ec.uploaded_at).toLocaleDateString()}
+                  {ec.filename || ec.filepath} - {new Date(ec.uploaded_at || ec.fecha_hora).toLocaleDateString()}
                 </option>
               ))}
             </select>

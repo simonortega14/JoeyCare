@@ -12,7 +12,7 @@
   "dependencies": {
     "@itk-wasm/dicom": "^7.6.2",
     "@itk-wasm/image-io": "^1.6.0",
-    "@kitware/vtk.js": "^34.11.1",
+    "@kitware/vtk.js": "^34.13.2",
     "axios": "^1.11.0",
     "cornerstone-core": "^2.6.1",
     "cornerstone-tools": "^6.0.10",

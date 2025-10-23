@@ -180,10 +180,14 @@ function ImageViewer({ imageFile, onClose }) {
   const startDrawing = (worldPos) => {
     if (!context.current) return;
     
+    // Usar los refs para obtener los valores actuales
+    const currentColor = drawColorRef.current;
+    const currentWidth = lineWidthRef.current;
+    
     console.log("=== INICIANDO DIBUJO ===");
     console.log("Posición inicial:", worldPos);
-    console.log("Color seleccionado:", drawColor);
-    console.log("Ancho de línea:", lineWidth);
+    console.log("Color seleccionado (ref):", currentColor);
+    console.log("Ancho de línea (ref):", currentWidth);
     
     const { renderer } = context.current;
     
@@ -202,19 +206,16 @@ function ImageViewer({ imageFile, onClose }) {
     actor.setMapper(mapper);
     
     const property = actor.getProperty();
-    // Intentar diferentes formas de setear el color
-    property.setColor(drawColor[0], drawColor[1], drawColor[2]);
+    property.setColor(currentColor[0], currentColor[1], currentColor[2]);
     property.setAmbient(1.0);
     property.setDiffuse(1.0);
     property.setSpecular(0.0);
-    property.setLineWidth(lineWidth);
+    property.setLineWidth(currentWidth);
     property.setOpacity(1.0);
-    property.setLighting(false); // Desactivar iluminación para colores planos
+    property.setLighting(false);
     
     console.log("Color aplicado al actor:", property.getColor());
     console.log("Ancho de línea aplicado:", property.getLineWidth());
-    console.log("Ambient:", property.getAmbient());
-    console.log("Diffuse:", property.getDiffuse());
     
     renderer.addActor(actor);
     
@@ -225,8 +226,8 @@ function ImageViewer({ imageFile, onClose }) {
       polyData,
       vtkPoints: vtkPointsObj,
       lines,
-      color: [...drawColor],
-      width: lineWidth
+      color: [...currentColor],
+      width: currentWidth
     };
     
     isDrawingRef.current = true;
@@ -234,7 +235,6 @@ function ImageViewer({ imageFile, onClose }) {
     
     console.log("Actor de dibujo creado y agregado al renderer");
     
-    // Forzar actualización
     if (context.current) {
       context.current.renderWindow.render();
     }

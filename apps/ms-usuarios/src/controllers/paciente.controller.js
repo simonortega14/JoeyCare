@@ -7,7 +7,10 @@ export async function getPaciente(req, res) {
 }
 
 export async function listPacientes(req, res) {
-  const { page = 1, size = 10, q = '' } = req.query;
+  const page = Number(req.query.page ?? 1);
+  const size = Number(req.query.size ?? 10);
+  const q = typeof req.query.q === 'string' ? req.query.q : '';
   const data = await pacienteSvc.list({ page, size, q });
   res.json(data);
 }
+

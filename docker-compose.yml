@@ -51,6 +51,8 @@ services:
       DB_PASSWORD: secret123
       DB_NAME: joeycare_db
       SVC_NAME: ms-usuarios
+      JWT_SECRET: supersecret_cambia_esto
+      JWT_EXPIRES_IN: 8h
     depends_on:
       mysql:
         condition: service_healthy

@@ -94,8 +94,58 @@ export async function list(req, res) {
     const page = Number.isNaN(pageRaw) || pageRaw < 1 ? 1 : pageRaw;
     const size = Number.isNaN(sizeRaw) || sizeRaw < 1 ? 10 : Math.min(sizeRaw, 100); // límite superior
 
+    // Llamamos al service
     const data = await svc.list({ neonato_id, page, size });
-    return res.json(data);
+    // data se espera tipo:
+    // {
+    //   items: [
+    //     {
+    //       id,
+    //       neonato_id,
+    //       uploader_medico_id,
+    //       sede_id,
+    //       fecha_hora,
+    //       filepath,
+    //       mime_type,
+    //       size_bytes,
+    //       thumbnail_path,
+    //       dicom_metadata
+    //     },
+    //     ...
+    //   ],
+    //   total,
+    //   page,
+    //   size
+    // }
+
+    // Enriquecemos cada item con file_url calculable vía nginx /files/
+    const enrichedItems = (data.items || []).map(item => {
+      let file_url = null;
+      try {
+        const publicPath = getPublicPath(item.filepath);
+        file_url = `/files/${encodeURI(publicPath)}`;
+      } catch {
+        file_url = null;
+      }
+
+      return {
+        id: item.id,
+        neonato_id: item.neonato_id,
+        uploader_medico_id: item.uploader_medico_id,
+        sede_id: item.sede_id,
+        fecha_hora: item.fecha_hora,
+        size_bytes: item.size_bytes,
+        mime_type: item.mime_type,
+        file_url,           // <- lo importante para el front
+      };
+    });
+
+    return res.json({
+      items: enrichedItems,
+      total: data.total ?? enrichedItems.length,
+      page: data.page ?? page,
+      size: data.size ?? size,
+    });
   } catch (err) {
     const http = toHttpError(err);
     if (http.debug) console.error('[list] error:', err);

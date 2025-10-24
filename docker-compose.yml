@@ -34,15 +34,17 @@ services:
     build:
       context: ./apps/frontend
     container_name: frontend
+    restart: unless-stopped
     ports: ["8080:80"]
     networks:
-    - red-frontend
-    - red-backend
+      - red-frontend
+      - red-backend
 
   ms-usuarios:
     build:
       context: ./apps/ms-usuarios
     container_name: ms-usuarios
+    restart: unless-stopped
     ports: ["3001:3001"]
     environment:
       DB_HOST: mysql
@@ -62,6 +64,7 @@ services:
     build:
       context: ./apps/ms-ecografias
     container_name: ms-ecografias
+    restart: unless-stopped
     ports: ["3002:3002"]
     environment:
       DB_HOST: mysql
@@ -69,7 +72,11 @@ services:
       DB_USER: userapp
       DB_PASSWORD: secret123
       DB_NAME: joeycare_db
-      SVC_NAME: ms-ecografias
+      JWT_SECRET: supersecret_cambia_esto
+      # mejor absoluta dentro del contenedor:
+      STORAGE_ROOT: /app/storage/ecografias
+    volumes:
+      - ./apps/ms-ecografias/storage/ecografias:/app/storage/ecografias
     depends_on:
       mysql:
         condition: service_healthy
@@ -79,6 +86,7 @@ services:
     build:
       context: ./apps/ms-visualizador
     container_name: ms-visualizador
+    restart: unless-stopped
     ports: ["3003:3003"]
     environment:
       SVC_NAME: ms-visualizador
@@ -91,6 +99,7 @@ services:
     build:
       context: ./apps/ms-reportes
     container_name: ms-reportes
+    restart: unless-stopped
     ports: ["3004:3004"]
     environment:
       DB_HOST: mysql

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import './DashboardPage.css';
+import './dashBoardPage.css';
 
 export default function DashboardPage() {
   const [stats, setStats] = useState({

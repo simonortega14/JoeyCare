@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import logoPerfil from '../../assets/logo perfil.png';
-import logoPacientes from '../../assets/logo pacientes.png';
+import logoPerfil from '../../assets/logo-perfil.png';
+import logoPacientes from '../../assets/logo-pacientes.png';
 import AppHeader from '../../components/AppHeader.jsx';
 import AppSidebar from '../../components/AppSidebar.jsx';
 import './profile.css';

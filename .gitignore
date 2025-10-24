@@ -1,4 +1,18 @@
-﻿node_modules/
-dist/
+﻿# Dependencias
+node_modules
+*.log
+
+# Builds
+dist
+build
 .env
+.env.local
+
+# Docker
+mysql_data
+*.pid
+
+# IDE
+.vscode
 .DS_Store
+Thumbs.db

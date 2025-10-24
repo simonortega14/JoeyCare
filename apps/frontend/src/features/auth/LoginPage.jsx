@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import logoJoey from "../../assets/Logo Joey care.png";
-import marcaAgua from "../../assets/Marca De Agua.png";
+import logoJoey from "../../assets/Logo-Joey-care.png";
+import marcaAgua from "../../assets/Marca-De-Agua.png";
 import "./auth.css";
 
 export default function LoginPage({ onSubmit }) {

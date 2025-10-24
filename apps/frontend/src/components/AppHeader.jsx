@@ -1,5 +1,5 @@
 import React from 'react';
-import logoJoey from '../assets/Logo Joey care.png';
+import logoJoey from '../assets/Logo-Joey-care.png';
 import './header.css';
 
 const AppHeader = ({ onOpenSettings, onToggleSidebar, onLogout }) => {

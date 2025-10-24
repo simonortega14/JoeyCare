@@ -8,6 +8,7 @@ volumes:
   mysql_data:
 
 services:
+  # === Base de datos MySQL ===
   mysql:
     image: mysql:8.0
     container_name: mysql-joeycare
@@ -27,19 +28,23 @@ services:
       test: ["CMD-SHELL", "mysqladmin ping -h localhost -p$${MYSQL_ROOT_PASSWORD} --silent"]
       interval: 10s
       timeout: 5s
-      retries: 10
+      retries: 20
     networks: [red-backend]
 
+  # === Frontend (build de Vite/React) ===
   frontend:
     build:
       context: ./apps/frontend
     container_name: frontend
     restart: unless-stopped
+    # no es estrictamente necesario exponerlo si Nginx sirve /usr/share/nginx/html,
+    # pero lo dejamos por si quieres probarlo aparte en http://localhost:8080
     ports: ["8080:80"]
     networks:
       - red-frontend
       - red-backend
 
+  # === Microservicio: Usuarios ===
   ms-usuarios:
     build:
       context: ./apps/ms-usuarios
@@ -60,6 +65,7 @@ services:
         condition: service_healthy
     networks: [red-backend]
 
+  # === Microservicio: Ecografías ===
   ms-ecografias:
     build:
       context: ./apps/ms-ecografias
@@ -73,7 +79,7 @@ services:
       DB_PASSWORD: secret123
       DB_NAME: joeycare_db
       JWT_SECRET: supersecret_cambia_esto
-      # mejor absoluta dentro del contenedor:
+      # ruta absoluta dentro del contenedor para persistir archivos
       STORAGE_ROOT: /app/storage/ecografias
     volumes:
       - ./apps/ms-ecografias/storage/ecografias:/app/storage/ecografias
@@ -82,6 +88,7 @@ services:
         condition: service_healthy
     networks: [red-backend]
 
+  # === Microservicio: Visualizador ===
   ms-visualizador:
     build:
       context: ./apps/ms-visualizador
@@ -95,6 +102,7 @@ services:
         condition: service_healthy
     networks: [red-backend]
 
+  # === Microservicio: Reportes ===
   ms-reportes:
     build:
       context: ./apps/ms-reportes
@@ -112,3 +120,25 @@ services:
       mysql:
         condition: service_healthy
     networks: [red-backend]
+
+  # === Nginx (sirve frontend y proxyea APIs) ===
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: nginx-joeycare
+    restart: unless-stopped
+    depends_on:
+      - frontend
+      - ms-usuarios
+      - ms-ecografias
+      - ms-visualizador
+      - ms-reportes
+    ports:
+      - "80:80"
+    volumes:
+      # 👉 Montamos la CARPETA para evitar el error (no montar archivo→archivo)
+      - ./infra/nginx:/etc/nginx/conf.d:ro
+      # Nginx servirá el build del frontend
+      - ./apps/frontend/dist:/usr/share/nginx/html:ro
+    networks:
+      - red-frontend
+      - red-backend

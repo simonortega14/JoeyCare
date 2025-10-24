@@ -1,0 +1,101 @@
+name: joeycare
+
+networks:
+  red-backend:
+  red-frontend:
+
+volumes:
+  mysql_data:
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql-joeycare
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: joeycare_db
+      MYSQL_USER: userapp
+      MYSQL_PASSWORD: secret123
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./infra/mysql/initdb.d:/docker-entrypoint-initdb.d:ro
+      - ./infra/mysql/my.cnf:/etc/mysql/conf.d/my.cnf:ro
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [red-backend]
+
+  frontend:
+    build:
+      context: ./apps/frontend
+    container_name: frontend
+    ports: ["8080:80"]
+    networks: [red-frontend]
+
+  ms-usuarios:
+    build:
+      context: ./apps/ms-usuarios
+    container_name: ms-usuarios
+    ports: ["3001:3001"]
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: userapp
+      DB_PASSWORD: secret123
+      DB_NAME: joeycare_db
+      SVC_NAME: ms-usuarios
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks: [red-backend]
+
+  ms-ecografias:
+    build:
+      context: ./apps/ms-ecografias
+    container_name: ms-ecografias
+    ports: ["3002:3002"]
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: userapp
+      DB_PASSWORD: secret123
+      DB_NAME: joeycare_db
+      SVC_NAME: ms-ecografias
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks: [red-backend]
+
+  ms-visualizador:
+    build:
+      context: ./apps/ms-visualizador
+    container_name: ms-visualizador
+    ports: ["3003:3003"]
+    environment:
+      SVC_NAME: ms-visualizador
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks: [red-backend]
+
+  ms-reportes:
+    build:
+      context: ./apps/ms-reportes
+    container_name: ms-reportes
+    ports: ["3004:3004"]
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: userapp
+      DB_PASSWORD: secret123
+      DB_NAME: joeycare_db
+      SVC_NAME: ms-reportes
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks: [red-backend]

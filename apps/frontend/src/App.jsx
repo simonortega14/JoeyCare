@@ -21,26 +21,20 @@ import "./App.css";
 
 /** ---------------- Helpers de sesión ---------------- **/
 
-// Normaliza la forma del usuario que devuelve el backend
 function normalizeUser(raw) {
   if (!raw) return null;
 
   const u = { ...raw, ...(raw.medico || {}), ...(raw.user || {}) };
 
-  const rol =
-    u.rol ?? u.role ?? u.tipo ?? u.perfil ?? "MEDICO";
+  const rol = u.rol ?? u.role ?? u.tipo ?? u.perfil ?? "MEDICO";
   const especialidad =
     u.especialidad ?? u.especialidad_medica ?? u.specialty ?? u.especialidadMedica ?? null;
-  const sede =
-    u.sede ?? u.sucursal ?? u.clinica ?? u.location ?? null;
+  const sede = u.sede ?? u.sucursal ?? u.clinica ?? u.location ?? null;
 
   const nombre =
     u.nombre ??
     u.nombres ??
-    ([u.primer_nombre, u.segundo_nombre, u.apellidos, u.apellido]
-      .filter(Boolean)
-      .join(" ")
-      .trim()) ??
+    ([u.primer_nombre, u.segundo_nombre, u.apellidos, u.apellido].filter(Boolean).join(" ").trim()) ??
     u.email ??
     "Usuario";
 
@@ -55,20 +49,16 @@ function normalizeUser(raw) {
   };
 }
 
-
-// Regla mínima para considerar la sesión válida
 function isValidUser(u) {
   return !!(u && u.rol && u.especialidad && u.sede);
 }
 
-// Guardia de rutas privadas
 function RequireAuth() {
   const stored = localStorage.getItem("user");
   if (!stored) return <Navigate to="/login" replace />;
   try {
     const parsed = JSON.parse(stored);
     const normalized = normalizeUser(parsed);
-    // Defaults por si el backend aún no envía estos campos
     if (!normalized.especialidad) normalized.especialidad = "General";
     if (!normalized.sede) normalized.sede = "Principal";
     if (!isValidUser(normalized)) return <Navigate to="/login" replace />;
@@ -78,7 +68,6 @@ function RequireAuth() {
   return <Outlet />;
 }
 
-// Layout de áreas privadas
 function PrivateLayout({ user, onLogout }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   return (
@@ -104,7 +93,6 @@ export default function App() {
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
 
-  // Hidrata sesión al montar
   useEffect(() => {
     const stored = localStorage.getItem("user");
     if (!stored) return;
@@ -125,46 +113,53 @@ export default function App() {
     }
   }, []);
 
-  // LOGIN → usa el proxy de Nginx (ruta relativa)
-  async function handleLogin(form) {
-    const payload = { email: form.username, password: form.password };
+  // LOGIN → intenta automáticamente diferentes rutas
+async function handleLogin(form) {
+  const email = (form?.email ?? form?.username ?? "").trim();
+  const password = (form?.password ?? "").trim();
+  if (!email || !password) throw new Error("Ingresa correo y contraseña");
 
-    const resp = await fetch("/api/usuarios/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+  const url = "/api/usuarios/auth/login"; // ← MISMA ruta que Postman
 
-    if (!resp.ok) {
-      let msg = "Credenciales inválidas";
-      try {
-        const err = await resp.json();
-        if (err?.message) msg = err.message;
-      } catch {
-        const txt = await resp.text().catch(() => "");
-        if (txt) msg = txt;
-      }
-      throw new Error(msg);
+  const resp = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({ email, password }),
+  });
+
+  if (!resp.ok) {
+    let serverMsg = "";
+    try {
+      const j = await resp.json();
+      serverMsg = j?.message || JSON.stringify(j);
+    } catch {
+      try { serverMsg = await resp.text(); } catch {}
     }
-
-    const data = await resp.json(); // { token, user } o similar
-    const normalized = normalizeUser(data.user ?? data);
-
-    // Defaults (puedes quitarlos cuando el backend ya envíe estos campos)
-    if (!normalized.especialidad) normalized.especialidad = "General";
-    if (!normalized.sede) normalized.sede = "Principal";
-
-    if (!isValidUser(normalized)) {
-      console.log("Login response raw:", data);
-      console.log("Normalized user:", normalized);
-      throw new Error("Perfil de usuario incompleto");
-    }
-
-    localStorage.setItem("token", data.token ?? data.accessToken ?? "");
-    localStorage.setItem("user", JSON.stringify(normalized));
-    setUser(normalized);
-    navigate("/visualizar-ecografias", { replace: true });
+    const det = serverMsg ? ` — ${serverMsg}` : "";
+    if (resp.status === 401) throw new Error("Credenciales inválidas");
+    throw new Error(`No se pudo iniciar sesión (${resp.status})${det}`);
   }
+
+  const data = await resp.json(); // { token, user } o similar
+  const normalized = normalizeUser(data.user ?? data);
+
+  if (!normalized.especialidad) normalized.especialidad = "General";
+  if (!normalized.sede) normalized.sede = "Principal";
+
+  if (!isValidUser(normalized)) {
+    console.log("Login response raw:", data);
+    console.log("Normalized user:", normalized);
+    throw new Error("Perfil de usuario incompleto. Falta rol/especialidad/sede.");
+  }
+
+  localStorage.setItem("token", data.token ?? data.accessToken ?? "");
+  localStorage.setItem("user", JSON.stringify(normalized));
+  setUser(normalized);
+  navigate("/visualizar-ecografias", { replace: true });
+}
 
   function handleLogout() {
     localStorage.removeItem("token");
@@ -175,11 +170,9 @@ export default function App() {
 
   return (
     <Routes>
-      {/* Públicas */}
       <Route path="/login" element={<LoginPage onSubmit={handleLogin} />} />
       <Route path="/register" element={<RegisterPage />} />
 
-      {/* Privadas */}
       <Route element={<RequireAuth />}>
         <Route element={<PrivateLayout user={user} onLogout={handleLogout} />}>
           <Route path="/" element={<Navigate to="/visualizar-ecografias" replace />} />
@@ -194,7 +187,6 @@ export default function App() {
         </Route>
       </Route>
 
-      {/* Catch-all */}
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );

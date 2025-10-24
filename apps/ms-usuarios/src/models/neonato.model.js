@@ -1,4 +1,6 @@
-export function mapPaciente(row) {
+// src/models/neonato.model.js
+
+export function mapNeonato(row) {
   return {
     id: row.id,
     nombre: row.nombre,
@@ -12,6 +14,6 @@ export function mapPaciente(row) {
     peso_actual_g: row.peso_actual_g,
     perimetro_cefalico: row.perimetro_cefalico,
     creado_en: row.creado_en,
-    actualizado_en: row.actualizado_en
+    actualizado_en: row.actualizado_en,
   };
 }

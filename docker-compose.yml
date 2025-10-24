@@ -6,6 +6,7 @@ networks:
 
 volumes:
   mysql_data:
+  ecografias_storage:   # almacenamiento compartido entre ms-ecografias y nginx
 
 services:
   # === Base de datos MySQL ===
@@ -31,15 +32,15 @@ services:
       retries: 20
     networks: [red-backend]
 
-  # === Frontend (build de Vite/React) ===
+  # === Frontend (Vite/React, build servido por Nginx) ===
   frontend:
     build:
       context: ./apps/frontend
     container_name: frontend
     restart: unless-stopped
-    # no es estrictamente necesario exponerlo si Nginx sirve /usr/share/nginx/html,
-    # pero lo dejamos por si quieres probarlo aparte en http://localhost:8080
-    ports: ["8080:80"]
+    # Opcional: exponer para pruebas directas si tu Dockerfile sirve en :80
+    ports:
+      - "8080:80"
     networks:
       - red-frontend
       - red-backend
@@ -50,7 +51,8 @@ services:
       context: ./apps/ms-usuarios
     container_name: ms-usuarios
     restart: unless-stopped
-    ports: ["3001:3001"]
+    ports:
+      - "3001:3001"
     environment:
       DB_HOST: mysql
       DB_PORT: 3306
@@ -71,7 +73,8 @@ services:
       context: ./apps/ms-ecografias
     container_name: ms-ecografias
     restart: unless-stopped
-    ports: ["3002:3002"]
+    ports:
+      - "3002:3002"
     environment:
       DB_HOST: mysql
       DB_PORT: 3306
@@ -79,10 +82,10 @@ services:
       DB_PASSWORD: secret123
       DB_NAME: joeycare_db
       JWT_SECRET: supersecret_cambia_esto
-      # ruta absoluta dentro del contenedor para persistir archivos
-      STORAGE_ROOT: /app/storage/ecografias
+      # Debe coincidir con el alias de Nginx en /files/
+      STORAGE_ROOT: /var/joeycare/storage/ecografias
     volumes:
-      - ./apps/ms-ecografias/storage/ecografias:/app/storage/ecografias
+      - ecografias_storage:/var/joeycare/storage/ecografias
     depends_on:
       mysql:
         condition: service_healthy
@@ -94,7 +97,8 @@ services:
       context: ./apps/ms-visualizador
     container_name: ms-visualizador
     restart: unless-stopped
-    ports: ["3003:3003"]
+    ports:
+      - "3003:3003"
     environment:
       SVC_NAME: ms-visualizador
     depends_on:
@@ -108,7 +112,8 @@ services:
       context: ./apps/ms-reportes
     container_name: ms-reportes
     restart: unless-stopped
-    ports: ["3004:3004"]
+    ports:
+      - "3004:3004"
     environment:
       DB_HOST: mysql
       DB_PORT: 3306
@@ -135,10 +140,12 @@ services:
     ports:
       - "80:80"
     volumes:
-      # 👉 Montamos la CARPETA para evitar el error (no montar archivo→archivo)
+      # Monta toda la carpeta con tus confs; dentro debe estar tu default.conf
       - ./infra/nginx:/etc/nginx/conf.d:ro
-      # Nginx servirá el build del frontend
+      # Sirve el build del frontend
       - ./apps/frontend/dist:/usr/share/nginx/html:ro
+      # Volumen compartido para /files/
+      - ecografias_storage:/var/joeycare/storage/ecografias:ro
     networks:
       - red-frontend
       - red-backend

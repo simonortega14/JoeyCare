@@ -9,7 +9,9 @@ app.use(express.json());
 // Rutas
 app.use('/api/usuarios/auth', authRoutes);
 app.use('/api/usuarios', usuarioRoutes);
-app.use('/api/pacientes', pacienteRoutes);
+
+// 👇 Mueve pacientes AQUÍ para que queden bajo /api/usuarios/...
+app.use('/api/usuarios', pacienteRoutes);
 
 // Health
 app.get('/health', (_req, res) => res.json({ ok: true, svc: 'ms-usuarios' }));

@@ -1,13 +1,20 @@
+// src/routes/paciente.routes.js (o como lo llames en tu proyecto)
 import { Router } from 'express';
-import { authRequired } from '../middlewares/auth.js';
-import { getPaciente, listPacientes } from '../controllers/paciente.controller.js';
+import {
+  listNeonatos,
+  listPacientes,
+  getPaciente,
+} from '../controllers/paciente.controller.js';
 
 const router = Router();
 
-// GET /api/pacientes/:id
-router.get('/:id', authRequired, getPaciente);
+// Lista neonatos específicos (lo que estás llamando desde el front)
+router.get('/neonatos', listNeonatos);
 
-// GET /api/pacientes?page=1&size=10&q=
-router.get('/', authRequired, listPacientes);
+// Lista genérica (si la usas en otras pantallas)
+router.get('/pacientes', listPacientes);
+
+// Detalle por id
+router.get('/pacientes/:id', getPaciente);
 
 export default router;

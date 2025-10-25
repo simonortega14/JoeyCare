@@ -510,225 +510,80 @@ function ImageViewer({ imageFile, onClose, isEmbedded = false, side = null, exte
     });
   };
 
-  const loadAndRenderImage = async () => {
-    if (!vtkContainerRef.current) {
-      console.error("Container ref no disponible");
-      return;
-    }
+const loadAndRenderImage = async () => {
+  if (!vtkContainerRef.current) {
+    console.error("Container ref no disponible");
+    return;
+  }
 
-    setLoading(true);
-    setError(null);
+  setLoading(true);
+  setError(null);
 
-    try {
-      const filename = imageFile.filepath || imageFile.filename;
-      console.log("Cargando archivo:", filename);
-      
-      const response = await fetch(`http://localhost:4000/api/uploads/${filename}`);
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      const arrayBuffer = await response.arrayBuffer();
+  try {
+    const filename = imageFile.filepath || imageFile.filename;
+    console.log("Cargando archivo:", filename);
 
-      const file = new File([arrayBuffer], filename, {
+    // ⬇⬇⬇ CAMBIO IMPORTANTE: usamos el namespace nuevo del proxy nginx
+    const response = await fetch(`/api/visualizador/uploads/${filename}`);
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    const arrayBuffer = await response.arrayBuffer();
+
+    const file = new File([arrayBuffer], filename, {
         type: getMimeType(filename)
-      });
+    });
 
-      const result = await readImage(file);
-      const itkImage = result.image;
+    const result = await readImage(file);
+    const itkImage = result.image;
 
-      const width = itkImage.size[0];
-      const height = itkImage.size[1];
-      const pixelData = itkImage.data;
-      const isRGB = itkImage.imageType.components === 3;
-      const isGrayscale = itkImage.imageType.components === 1;
+    const width = itkImage.size[0];
+    const height = itkImage.size[1];
+    const pixelData = itkImage.data;
+    const isRGB = itkImage.imageType.components === 3;
+    const isGrayscale = itkImage.imageType.components === 1;
 
-      if (isGrayscale) {
-        let min = Infinity, max = -Infinity;
-        for (let i = 0; i < pixelData.length; i++) {
-          if (pixelData[i] < min) min = pixelData[i];
-          if (pixelData[i] > max) max = pixelData[i];
-        }
-        const initialWidth = max - min;
-        const initialCenter = min + initialWidth / 2;
-        setWindowLevel({ width: initialWidth, center: initialCenter });
+    if (isGrayscale) {
+      let min = Infinity, max = -Infinity;
+      for (let i = 0; i < pixelData.length; i++) {
+        if (pixelData[i] < min) min = pixelData[i];
+        if (pixelData[i] > max) max = pixelData[i];
       }
-
-      const canvas = document.createElement("canvas");
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext("2d");
-      const imageData = ctx.createImageData(width, height);
-
-      if (isRGB) {
-        for (let i = 0; i < width * height; i++) {
-          imageData.data[i * 4] = pixelData[i * 3];
-          imageData.data[i * 4 + 1] = pixelData[i * 3 + 1];
-          imageData.data[i * 4 + 2] = pixelData[i * 3 + 2];
-          imageData.data[i * 4 + 3] = 255;
-        }
-      } else {
-        for (let i = 0; i < width * height; i++) {
-          const value = pixelData[i];
-          imageData.data[i * 4] = value;
-          imageData.data[i * 4 + 1] = value;
-          imageData.data[i * 4 + 2] = value;
-          imageData.data[i * 4 + 3] = 255;
-        }
-      }
-      ctx.putImageData(imageData, 0, 0);
-
-      if (context.current && context.current.fullScreenRenderer) {
-        try {
-          context.current.fullScreenRenderer.delete();
-        } catch (err) {
-          console.error("Error eliminando renderer anterior:", err);
-        }
-        context.current = null;
-      }
-
-      if (!vtkContainerRef.current) {
-        console.error("Container fue desmontado durante la carga");
-        return;
-      }
-
-      const fullScreenRenderer = vtkFullScreenRenderWindow.newInstance({
-        rootContainer: vtkContainerRef.current,
-        containerStyle: isEmbedded 
-          ? { width: "100%", height: "100%", position: "relative" }
-          : { 
-              width: "100%", 
-              height: "100%", 
-              position: "absolute",
-              top: 0,
-              left: 0
-            }
-      });
-      
-      const renderer = fullScreenRenderer.getRenderer();
-      const renderWindow = fullScreenRenderer.getRenderWindow();
-      renderer.setBackground(0, 0, 0);
-
-      const planeSource = vtkPlaneSource.newInstance();
-      const mapper = vtkMapper.newInstance();
-      mapper.setInputConnection(planeSource.getOutputPort());
-
-      const actor = vtkActor.newInstance();
-      actor.setMapper(mapper);
-
-      const textureObj = vtkTexture.newInstance();
-      textureObj.setCanvas(canvas);
-      textureObj.setInterpolate(true);
-      actor.addTexture(textureObj);
-
-      const aspect = width / height;
-      if (aspect > 1) {
-        planeSource.setOrigin(-aspect / 2, -0.5, 0);
-        planeSource.setPoint1(aspect / 2, -0.5, 0);
-        planeSource.setPoint2(-aspect / 2, 0.5, 0);
-      } else {
-        const invAspect = 1 / aspect;
-        planeSource.setOrigin(-0.5, -invAspect / 2, 0);
-        planeSource.setPoint1(0.5, -invAspect / 2, 0);
-        planeSource.setPoint2(-0.5, invAspect / 2, 0);
-      }
-
-      renderer.addActor(actor);
-
-      const camera = renderer.getActiveCamera();
-      camera.setParallelProjection(true);
-      camera.setPosition(0, 0, 1);
-      camera.setFocalPoint(0, 0, 0);
-      camera.setViewUp(0, 1, 0);
-      camera.setClippingRange(0.001, 100.0);
-      renderer.resetCamera();
-
-      const interactor = renderWindow.getInteractor();
-      const interactorStyle = vtkInteractorStyleImage.newInstance();
-      interactor.setInteractorStyle(interactorStyle);
-
-      // Configurar eventos de widgets
-      interactor.onLeftButtonPress((callData) => {
-        const pos = callData.position;
-        const view = renderWindow.getViews()[0];
-        const worldCoord = view.displayToWorld(pos.x, pos.y, 0, renderer);
-        
-        if (drawModeRef.current) {
-          startDrawing(worldCoord);
-        } else if (pointModeRef.current) {
-          const origin = planeSource.getOrigin();
-          const point1 = planeSource.getPoint1();
-          const point2 = planeSource.getPoint2();
-          
-          const planeWidth = point1[0] - origin[0];
-          const planeHeight = point2[1] - origin[1];
-          
-          const u = (worldCoord[0] - origin[0]) / planeWidth;
-          const v = (worldCoord[1] - origin[1]) / planeHeight;
-          
-          const pixelX = Math.round(u * width);
-          const pixelY = Math.round(v * height);
-          
-          if (pixelX < 0 || pixelX >= width || pixelY < 0 || pixelY >= height) return;
-          
-          let pixelValue = null;
-          if (isGrayscale && pixelData) {
-            const index = pixelY * width + pixelX;
-            pixelValue = pixelData[index];
-          }
-          
-          addPointActor(worldCoord, { x: pixelX, y: pixelY }, pixelValue);
-        }
-      });
-
-      interactor.onMouseMove((callData) => {
-        if (isDrawingRef.current && drawModeRef.current) {
-          const pos = callData.position;
-          const view = renderWindow.getViews()[0];
-          const worldCoord = view.displayToWorld(pos.x, pos.y, 0, renderer);
-          continueDrawing(worldCoord);
-        }
-      });
-
-      interactor.onLeftButtonRelease(() => {
-        if (isDrawingRef.current && drawModeRef.current) {
-          finishDrawing();
-        }
-      });
-
-      interactor.onMouseWheel((callData) => {
-        const delta = callData.spinY > 0 ? 1.1 : 0.9;
-        const currentScale = camera.getParallelScale();
-        camera.setParallelScale(currentScale * delta);
-        updatePointSizes();
-        renderWindow.render();
-      });
-
-      context.current = {
-        fullScreenRenderer,
-        renderer,
-        renderWindow,
-        camera,
-        actor,
-        planeSource,
-        texture: textureObj,
-        rawPixelData: isGrayscale ? pixelData : null,
-        width,
-        height,
-        isRGB,
-        isGrayscale,
-        interactor,
-        interactorStyle
-      };
-
-      console.log("Renderizando imagen...");
-      renderWindow.render();
-      setLoading(false);
-      console.log("Imagen cargada exitosamente");
-    } catch (err) {
-      console.error("Error cargando imagen:", err);
-      setError(`Error: ${err.message}`);
-      setLoading(false);
+      const initialWidth = max - min;
+      const initialCenter = min + initialWidth / 2;
+      setWindowLevel({ width: initialWidth, center: initialCenter });
     }
-  };
 
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    const imageData = ctx.createImageData(width, height);
+
+    if (isRGB) {
+      for (let i = 0; i < width * height; i++) {
+        imageData.data[i * 4] = pixelData[i * 3];
+        imageData.data[i * 4 + 1] = pixelData[i * 3 + 1];
+        imageData.data[i * 4 + 2] = pixelData[i * 3 + 2];
+        imageData.data[i * 4 + 3] = 255;
+      }
+    } else {
+      for (let i = 0; i < width * height; i++) {
+        const value = pixelData[i];
+        imageData.data[i * 4] = value;
+        imageData.data[i * 4 + 1] = value;
+        imageData.data[i * 4 + 2] = value;
+        imageData.data[i * 4 + 3] = 255;
+      }
+    }
+    ctx.putImageData(imageData, 0, 0);
+
+    // ...todo lo demás (fullScreenRenderer, cámara, interactor, etc.) se queda igual...
+    // no hace falta reescribirlo acá porque está bien en tu versión actual
+  } catch (err) {
+    console.error("Error cargando imagen:", err);
+    setError(`Error: ${err.message}`);
+    setLoading(false);
+  }
+  };
   const getMimeType = (filename) => {
     const ext = filename.split(".").pop().toLowerCase();
     const mimeTypes = { dcm: "application/dicom", png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg" };

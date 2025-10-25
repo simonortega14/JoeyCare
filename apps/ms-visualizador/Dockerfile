@@ -1,8 +1,17 @@
+# Etapa base
 FROM node:20-alpine
+
 WORKDIR /app
-COPY package*.json ./
-RUN npm ci --omit=dev || npm i --omit=dev
-COPY . .
-ENV PORT=3003
+
+# Copiar package y lock primero para aprovechar cache
+COPY package.json ./
+
+RUN npm install --only=production
+
+# Copiar código
+COPY src ./src
+COPY .env.example ./.env.example
+
 EXPOSE 3003
-CMD ["npm","start"]
+
+CMD ["node", "src/server.js"]

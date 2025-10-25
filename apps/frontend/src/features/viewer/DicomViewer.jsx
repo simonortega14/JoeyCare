@@ -7,14 +7,15 @@ import vtkImageMapper from "@kitware/vtk.js/Rendering/Core/ImageMapper";
 import vtkDataArray from "@kitware/vtk.js/Common/Core/DataArray";
 import dicomParser from "dicom-parser";
 
-function DicomViewer() {
+function DicomViewer({ filename = "100002A3.dcm" }) {
   const vtkContainerRef = useRef(null);
   const context = useRef(null);
 
   useEffect(() => {
     async function loadDicom() {
       try {
-        const response = await fetch("/100002A3.dcm");
+        // 🔁 cambio importante:
+        const response = await fetch(`/api/visualizador/uploads/${filename}`);
         const buffer = await response.arrayBuffer();
         const byteArray = new Uint8Array(buffer);
 
@@ -25,7 +26,7 @@ function DicomViewer() {
         const pixelData = dataSet.elements.x7fe00010;
         const bitsAllocated = dataSet.uint16("x00280100");
 
-        // Valores Window/Level
+        // Window / Level
         const windowCenter = dataSet.floatString("x00281050") || 127;
         const windowWidth = dataSet.floatString("x00281051") || 255;
 
@@ -44,6 +45,7 @@ function DicomViewer() {
           );
         }
 
+        // Construir vtkImageData con ese buffer de píxeles
         const imageData = vtkImageData.newInstance();
         imageData.setDimensions(cols, rows, 1);
         imageData.getPointData().setScalars(
@@ -53,6 +55,7 @@ function DicomViewer() {
           })
         );
 
+        // Mapper Slice 2D (modo Z)
         const mapper = vtkImageMapper.newInstance();
         mapper.setInputData(imageData);
         mapper.setSlicingMode(vtkImageMapper.SlicingMode.Z);
@@ -62,6 +65,7 @@ function DicomViewer() {
         actor.getProperty().setColorWindow(windowWidth);
         actor.getProperty().setColorLevel(windowCenter);
 
+        // Render window full-screen style dentro de tu div
         const fullScreenRenderer = vtkFullScreenRenderWindow.newInstance({
           rootContainer: vtkContainerRef.current,
           containerStyle: { width: "100%", height: "100%", position: "relative" },
@@ -88,7 +92,7 @@ function DicomViewer() {
         context.current = null;
       }
     };
-  }, []);
+  }, [filename]);
 
   return (
     <div

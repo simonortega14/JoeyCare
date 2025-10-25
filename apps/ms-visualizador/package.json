@@ -1,7 +1,19 @@
 {
   "name": "ms-visualizador",
-  "private": true,
+  "version": "1.0.0",
+  "description": "Microservicio de análisis y anotaciones del visor clínico JoeyCare",
+  "main": "src/server.js",
   "type": "module",
-  "scripts": { "start": "node server.js" },
-  "dependencies": { "express": "^4.19.2" }
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js",
+    "health": "curl http://localhost:3003/health"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "cors": "^2.8.5",
+    "morgan": "^1.10.0",
+    "uuid": "^9.0.1"
+  }
 }

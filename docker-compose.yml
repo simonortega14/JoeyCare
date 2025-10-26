@@ -32,18 +32,16 @@ services:
       retries: 20
     networks: [red-backend]
 
-  # === Frontend (Vite/React, build servido por Nginx) ===
+  # === Frontend build (Vite/React) ===
   frontend:
     build:
       context: ./apps/frontend
     container_name: frontend
     restart: unless-stopped
-    # Opcional: exponer para pruebas directas si tu Dockerfile sirve en :80
-    ports:
-      - "8080:80"
     networks:
       - red-frontend
       - red-backend
+    # no public port aquí; el público es nginx
 
   # === Microservicio: Usuarios ===
   ms-usuarios:
@@ -82,7 +80,6 @@ services:
       DB_PASSWORD: secret123
       DB_NAME: joeycare_db
       JWT_SECRET: supersecret_cambia_esto
-      # Debe coincidir con el alias de Nginx en /files/
       STORAGE_ROOT: /var/joeycare/storage/ecografias
     volumes:
       - ./apps/ms-ecografias/storage/ecografias:/var/joeycare/storage/ecografias
@@ -140,9 +137,9 @@ services:
     ports:
       - "80:80"
     volumes:
-      # Monta toda la carpeta con tus confs; dentro debe estar tu default.conf
+      # Montamos TODA la carpeta con la conf final de nginx
       - ./infra/nginx:/etc/nginx/conf.d:ro
-      # Sirve el build del frontend
+      # Servimos el build del frontend
       - ./apps/frontend/dist:/usr/share/nginx/html:ro
       # Volumen compartido para /files/
       - ./apps/ms-ecografias/storage/ecografias:/var/joeycare/storage/ecografias:ro

@@ -2,15 +2,17 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./viewer.css";
 
-// ======================
-// util que ya usas en CargarEcografiaPage
-// ======================
+// ===== helpers =====
+function getToken() {
+  return localStorage.getItem("token") || "";
+}
+
 function getAuthHeader() {
-  const token = localStorage.getItem("token");
+  const token = getToken();
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-// misma normalización de neonato que usas en CargarEcografiaPage
+// normaliza un neonato para el dropdown
 function normalizeNeonato(raw) {
   return {
     id: raw.id || raw.id_neonato || raw.uuid || raw.ID || "",
@@ -25,41 +27,46 @@ function normalizeNeonato(raw) {
   };
 }
 
-// normalización muy básica de ecografía
-function normalizeEcografia(raw) {
+// normaliza una ecografía que viene de /api/visor/neonatos/:id/ecografias
+function normalizeEcografia(raw, neonatoId) {
   return {
-    id: raw.id || raw.id_ecografia || raw.uuid || "",
-    filepath: raw.filepath || raw.filename || raw.file_url || "",
-    fecha_hora: raw.fecha_hora || raw.fecha || raw.created_at || null,
-    size_bytes: raw.size_bytes || raw.tamano || null,
+    id: raw.id,
+    neonato_id: neonatoId,
+    fecha_hora: raw.fecha_hora || null,
+    file_url: raw.file_url || null, // <- /files/... público
   };
 }
+
+// endpoints detrás de nginx
+const NEONATOS_PATH = "/api/usuarios/neonatos";
+
+// NUEVO flujo visor:
+// lista ecografías de un neonato
+const VISOR_LIST_ECOS = (neonatoId) =>
+  `/api/visor/neonatos/${encodeURIComponent(neonatoId)}/ecografias`;
 
 function ImageSelector({ onImageSelected }) {
   const navigate = useNavigate();
 
-  // estado
+  // --- pacientes / neonatos ---
   const [pacientes, setPacientes] = useState([]);
   const [loadingPacientes, setLoadingPacientes] = useState(true);
   const [errorPacientes, setErrorPacientes] = useState(null);
-
   const [selectedPaciente, setSelectedPaciente] = useState(null);
 
+  // --- ecografías de ese neonato ---
   const [ecografias, setEcografias] = useState([]);
   const [loadingEcos, setLoadingEcos] = useState(false);
   const [selectedEcografia, setSelectedEcografia] = useState(null);
 
+  // --- modo comparación longitudinal ---
   const [isLongitudinalMode, setIsLongitudinalMode] = useState(false);
   const [selectedEcografiaA, setSelectedEcografiaA] = useState(null);
   const [selectedEcografiaB, setSelectedEcografiaB] = useState(null);
 
-  // ======================
-  // ENDPOINTS REALES que ya funcionan en tu app
-  // ======================
-  const NEONATOS_PATH = "/api/usuarios/neonatos";
-  const ECO_LIST_URL = "/api/ecografias"; // GET ?neonato_id=...&page=1&size=50
-
-  // 1. cargar lista de pacientes/neonatos al inicio (igual que CargarEcografiaPage)
+  // -------------------------------------------------
+  // 1. cargar neonatos al montar
+  // -------------------------------------------------
   useEffect(() => {
     const fetchPacientes = async () => {
       try {
@@ -74,31 +81,33 @@ function ImageSelector({ onImageSelected }) {
         });
 
         if (resp.status === 401) {
-          // sesión expirada
-          localStorage.removeItem("token");
-          localStorage.removeItem("user");
-          throw new Error("Sesión expirada. Ingresa de nuevo.");
+          console.warn(
+            "[VISOR] 401 cargando neonatos. Dejo sesión viva. (token caducado / mismatch JWT)"
+          );
+          setPacientes([]);
+          setErrorPacientes("No se pudieron cargar los neonatos (401).");
+          return;
         }
 
         if (!resp.ok) {
-          throw new Error(`Error ${resp.status} al obtener neonatos`);
+          throw new Error(`Error ${resp.status} cargando neonatos`);
         }
 
         const data = await resp.json();
 
-        // en tu código original haces:
-        // const list = Array.isArray(data) ? data : Array.isArray(data.items) ? data.items : [];
-        const list = Array.isArray(data)
+        // puede venir como [ ... ] o { items:[ ... ] }
+        const listaBruta = Array.isArray(data)
           ? data
           : Array.isArray(data.items)
           ? data.items
           : [];
 
-        // normalizamos
-        const normalizados = list.map(normalizeNeonato);
+        const normalizados = listaBruta.map(normalizeNeonato);
+        console.log("[VISOR] neonatos normalizados:", normalizados);
+
         setPacientes(normalizados);
       } catch (err) {
-        console.error("Error cargando neonatos:", err);
+        console.error("[VISOR] Error cargando neonatos:", err);
         setErrorPacientes(
           "No se pudieron cargar los neonatos, usando datos de prueba."
         );
@@ -116,12 +125,6 @@ function ImageSelector({ onImageSelected }) {
               apellidos: "Rodríguez",
               documento: "—",
             },
-            {
-              id: "789",
-              nombres: "Bebé",
-              apellidos: "López",
-              documento: "—",
-            },
           ].map(normalizeNeonato)
         );
       } finally {
@@ -132,9 +135,12 @@ function ImageSelector({ onImageSelected }) {
     fetchPacientes();
   }, []);
 
-  // 2. cuando seleccionamos un paciente, traemos sus ecografías
+  // -------------------------------------------------
+  // 2. cuando cambia el paciente seleccionado -> cargar ecografías
+  // -------------------------------------------------
   useEffect(() => {
     if (!selectedPaciente || !selectedPaciente.id) {
+      console.log("[VISOR] No hay paciente seleccionado, limpio ecografias");
       setEcografias([]);
       setSelectedEcografia(null);
       setSelectedEcografiaA(null);
@@ -146,20 +152,49 @@ function ImageSelector({ onImageSelected }) {
       try {
         setLoadingEcos(true);
 
-        const url = `${ECO_LIST_URL}?neonato_id=${encodeURIComponent(
-          selectedPaciente.id
-        )}&page=1&size=50`;
+        const token = getToken();
+        if (!token) {
+          console.warn(
+            "[VISOR] No hay token en localStorage. No pido ecografías."
+          );
+          setEcografias([]);
+          return;
+        }
 
-        const resp = await fetch(url, {
-          headers: {
-            Accept: "application/json",
-            ...getAuthHeader(),
-          },
-        });
+const url = VISOR_LIST_ECOS(selectedPaciente.id);
+
+console.log("[VISOR] === CARGAR ECOGRAFIAS (nuevo flujo) ===");
+console.log("[VISOR] Paciente seleccionado:", selectedPaciente);
+console.log("[VISOR] URL que voy a pedir:", url);
+
+const resp = await fetch(url, {
+  headers: {
+    Accept: "application/json",
+    Authorization: `Bearer ${token}`,
+  },
+});
+
+        console.log(
+          "[VISOR] Status respuesta ecos:",
+          resp.status,
+          resp.statusText
+        );
+
+        const rawText = await resp.text();
+        console.log("[VISOR] Body ecos:", rawText);
+
+        // si el backend responde 401 aquí, NO borramos sesión
+        if (resp.status === 401) {
+          console.warn(
+            "[VISOR] 401 al pedir ecografías (nuevo flujo). Sesión sigue viva."
+          );
+          setEcografias([]);
+          return;
+        }
 
         if (!resp.ok) {
           console.error(
-            "Error cargando ecografías:",
+            "[VISOR] backend error ecos (no ok):",
             resp.status,
             resp.statusText
           );
@@ -167,14 +202,29 @@ function ImageSelector({ onImageSelected }) {
           return;
         }
 
-        const data = await resp.json();
-        // en tu otra pantalla asumís { items: [...] }
-        const items = Array.isArray(data.items) ? data.items : [];
+        let listaBruta;
+        try {
+          listaBruta = JSON.parse(rawText);
+        } catch (e) {
+          console.error("[VISOR] JSON.parse falló ecos:", e);
+          setEcografias([]);
+          return;
+        }
 
-        const ecosNormalizadas = items.map(normalizeEcografia);
-        setEcografias(ecosNormalizadas);
+        // ahora el backend devuelve un ARRAY PLANO, no {items:[]}
+        // ej: [ {id, fecha_hora, file_url}, ... ]
+        const normalizadas = Array.isArray(listaBruta)
+          ? listaBruta.map((ec) => normalizeEcografia(ec, selectedPaciente.id))
+          : [];
+
+        console.log(
+          "[VISOR] normalizadas para setEcografias (nuevo flujo):",
+          normalizadas
+        );
+
+        setEcografias(normalizadas);
       } catch (err) {
-        console.error("Excepción cargando ecografías:", err);
+        console.error("[VISOR] Excepción cargando ecografías:", err);
         setEcografias([]);
       } finally {
         setLoadingEcos(false);
@@ -184,10 +234,15 @@ function ImageSelector({ onImageSelected }) {
     fetchEcografias();
   }, [selectedPaciente]);
 
-  // abrir visor simple
+  // -------------------------------------------------
+  // Acciones UI
+  // -------------------------------------------------
+
+  // abrir visor con la eco seleccionada
   const handleVisualize = () => {
     if (selectedEcografia) {
-      // pasamos el objeto ecografía tal cual al visor vtk
+      // le pasamos al viewer toda la info de la eco seleccionada
+      // incluye file_url => /files/... que el visor puede pedir
       onImageSelected(selectedEcografia);
     }
   };
@@ -215,16 +270,15 @@ function ImageSelector({ onImageSelected }) {
     setSelectedEcografia(null);
   };
 
-  // ======================
+  // -------------------------------------------------
   // RENDER
-  // ======================
+  // -------------------------------------------------
 
   return (
     <div className="vtk-page-container">
       <div className="vtk-selection-wrapper">
         <h2 className="vtk-main-title">Visualizar Ecografías</h2>
 
-        {/* mostrar si hubo error al cargar pacientes */}
         {errorPacientes && (
           <p
             style={{
@@ -238,7 +292,7 @@ function ImageSelector({ onImageSelected }) {
           </p>
         )}
 
-        {/* === Seleccionar Paciente === */}
+        {/* PACIENTE */}
         <div className="vtk-form-section">
           <label className="vtk-form-label">Seleccionar Paciente:</label>
 
@@ -248,15 +302,11 @@ function ImageSelector({ onImageSelected }) {
             value={selectedPaciente?.id || ""}
             onChange={(e) => {
               const value = e.target.value;
-
-              // buscamos ese paciente ya normalizado
               const pac = pacientes.find(
                 (p) => String(p.id) === String(value)
               );
 
               setSelectedPaciente(pac || null);
-
-              // reseteamos selección de ecos
               setSelectedEcografia(null);
               setSelectedEcografiaA(null);
               setSelectedEcografiaB(null);
@@ -271,7 +321,6 @@ function ImageSelector({ onImageSelected }) {
 
             {pacientes.map((p) => (
               <option key={p.id} value={p.id}>
-                {/* Documento + nombre tal como te gusta en la otra pantalla */}
                 {p.documento ? `[${p.documento}] ` : ""}
                 {p.nombres} {p.apellidos} (ID: {p.id})
               </option>
@@ -279,7 +328,7 @@ function ImageSelector({ onImageSelected }) {
           </select>
         </div>
 
-        {/* === Seleccionar Ecografía (modo normal) === */}
+        {/* MODO NORMAL (una eco) */}
         {selectedPaciente && !isLongitudinalMode && (
           <>
             <div className="vtk-form-section">
@@ -305,9 +354,9 @@ function ImageSelector({ onImageSelected }) {
 
                 {ecografias.map((ec) => (
                   <option key={ec.id} value={ec.id}>
-                    {ec.filepath || "sin nombre"}{" "}
+                    {ec.file_url || "sin archivo"}
                     {ec.fecha_hora
-                      ? `- ${new Date(ec.fecha_hora).toLocaleString()}`
+                      ? ` - ${new Date(ec.fecha_hora).toLocaleString()}`
                       : ""}
                   </option>
                 ))}
@@ -315,7 +364,7 @@ function ImageSelector({ onImageSelected }) {
 
               {!loadingEcos && ecografias.length === 0 && (
                 <p className="vtk-empty-text">
-                  No hay ecografías disponibles para este paciente
+                  No hay ecografías disponibles o no se pudieron cargar.
                 </p>
               )}
             </div>
@@ -346,7 +395,7 @@ function ImageSelector({ onImageSelected }) {
           </>
         )}
 
-        {/* === Modo Longitudinal (comparar A vs B) === */}
+        {/* MODO LONGITUDINAL (comparar A vs B) */}
         {selectedPaciente && isLongitudinalMode && (
           <>
             <div className="vtk-form-section">
@@ -370,6 +419,7 @@ function ImageSelector({ onImageSelected }) {
 
             <div className="vtk-form-section">
               <label className="vtk-form-label">Ecografía A:</label>
+
               <select
                 className="vtk-form-select"
                 value={selectedEcografiaA?.id || ""}
@@ -382,11 +432,12 @@ function ImageSelector({ onImageSelected }) {
                 }}
               >
                 <option value="">-- Selecciona ecografía A --</option>
+
                 {ecografias.map((ec) => (
                   <option key={ec.id} value={ec.id}>
-                    {ec.filepath || "sin nombre"}{" "}
+                    {ec.file_url || "sin archivo"}
                     {ec.fecha_hora
-                      ? `- ${new Date(ec.fecha_hora).toLocaleString()}`
+                      ? ` - ${new Date(ec.fecha_hora).toLocaleString()}`
                       : ""}
                   </option>
                 ))}
@@ -395,6 +446,7 @@ function ImageSelector({ onImageSelected }) {
 
             <div className="vtk-form-section">
               <label className="vtk-form-label">Ecografía B:</label>
+
               <select
                 className="vtk-form-select"
                 value={selectedEcografiaB?.id || ""}
@@ -407,11 +459,12 @@ function ImageSelector({ onImageSelected }) {
                 }}
               >
                 <option value="">-- Selecciona ecografía B --</option>
+
                 {ecografias.map((ec) => (
                   <option key={ec.id} value={ec.id}>
-                    {ec.filepath || "sin nombre"}{" "}
+                    {ec.file_url || "sin archivo"}
                     {ec.fecha_hora
-                      ? `- ${new Date(ec.fecha_hora).toLocaleString()}`
+                      ? ` - ${new Date(ec.fecha_hora).toLocaleString()}`
                       : ""}
                   </option>
                 ))}

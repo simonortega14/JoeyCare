@@ -33,15 +33,14 @@ function normalizeEcografia(raw, neonatoId) {
     id: raw.id,
     neonato_id: neonatoId,
     fecha_hora: raw.fecha_hora || null,
-    file_url: raw.file_url || null, // <- /files/... público
+    file_url: raw.file_url || null, // <- ej "/files/carpeta/imagen-abc.dcm"
   };
 }
 
 // endpoints detrás de nginx
 const NEONATOS_PATH = "/api/usuarios/neonatos";
 
-// NUEVO flujo visor:
-// lista ecografías de un neonato
+// nueva ruta REST que lista ecografías de un neonato
 const VISOR_LIST_ECOS = (neonatoId) =>
   `/api/visor/neonatos/${encodeURIComponent(neonatoId)}/ecografias`;
 
@@ -81,9 +80,7 @@ function ImageSelector({ onImageSelected }) {
         });
 
         if (resp.status === 401) {
-          console.warn(
-            "[VISOR] 401 cargando neonatos. Dejo sesión viva. (token caducado / mismatch JWT)"
-          );
+          console.warn("[VISOR] 401 cargando neonatos.");
           setPacientes([]);
           setErrorPacientes("No se pudieron cargar los neonatos (401).");
           return;
@@ -103,8 +100,6 @@ function ImageSelector({ onImageSelected }) {
           : [];
 
         const normalizados = listaBruta.map(normalizeNeonato);
-        console.log("[VISOR] neonatos normalizados:", normalizados);
-
         setPacientes(normalizados);
       } catch (err) {
         console.error("[VISOR] Error cargando neonatos:", err);
@@ -140,7 +135,6 @@ function ImageSelector({ onImageSelected }) {
   // -------------------------------------------------
   useEffect(() => {
     if (!selectedPaciente || !selectedPaciente.id) {
-      console.log("[VISOR] No hay paciente seleccionado, limpio ecografias");
       setEcografias([]);
       setSelectedEcografia(null);
       setSelectedEcografiaA(null);
@@ -154,47 +148,32 @@ function ImageSelector({ onImageSelected }) {
 
         const token = getToken();
         if (!token) {
-          console.warn(
-            "[VISOR] No hay token en localStorage. No pido ecografías."
-          );
+          console.warn("[VISOR] No hay token en localStorage.");
           setEcografias([]);
           return;
         }
 
-const url = VISOR_LIST_ECOS(selectedPaciente.id);
+        const url = VISOR_LIST_ECOS(selectedPaciente.id);
 
-console.log("[VISOR] === CARGAR ECOGRAFIAS (nuevo flujo) ===");
-console.log("[VISOR] Paciente seleccionado:", selectedPaciente);
-console.log("[VISOR] URL que voy a pedir:", url);
-
-const resp = await fetch(url, {
-  headers: {
-    Accept: "application/json",
-    Authorization: `Bearer ${token}`,
-  },
-});
-
-        console.log(
-          "[VISOR] Status respuesta ecos:",
-          resp.status,
-          resp.statusText
-        );
+        const resp = await fetch(url, {
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
         const rawText = await resp.text();
-        console.log("[VISOR] Body ecos:", rawText);
 
-        // si el backend responde 401 aquí, NO borramos sesión
+        // si 401 acá, NO tumbamos sesión
         if (resp.status === 401) {
-          console.warn(
-            "[VISOR] 401 al pedir ecografías (nuevo flujo). Sesión sigue viva."
-          );
+          console.warn("[VISOR] 401 al pedir ecografías (nuevo flujo).");
           setEcografias([]);
           return;
         }
 
         if (!resp.ok) {
           console.error(
-            "[VISOR] backend error ecos (no ok):",
+            "[VISOR] backend error ecos:",
             resp.status,
             resp.statusText
           );
@@ -211,16 +190,13 @@ const resp = await fetch(url, {
           return;
         }
 
-        // ahora el backend devuelve un ARRAY PLANO, no {items:[]}
+        // backend devuelve ARRAY PLANO
         // ej: [ {id, fecha_hora, file_url}, ... ]
         const normalizadas = Array.isArray(listaBruta)
-          ? listaBruta.map((ec) => normalizeEcografia(ec, selectedPaciente.id))
+          ? listaBruta.map((ec) =>
+              normalizeEcografia(ec, selectedPaciente.id)
+            )
           : [];
-
-        console.log(
-          "[VISOR] normalizadas para setEcografias (nuevo flujo):",
-          normalizadas
-        );
 
         setEcografias(normalizadas);
       } catch (err) {
@@ -235,23 +211,39 @@ const resp = await fetch(url, {
   }, [selectedPaciente]);
 
   // -------------------------------------------------
-  // Acciones UI
+  // acciones de UI
   // -------------------------------------------------
 
-  // abrir visor con la eco seleccionada
+  // abre el viewer normal con UNA ecografía
   const handleVisualize = () => {
-    if (selectedEcografia) {
-      // le pasamos al viewer toda la info de la eco seleccionada
-      // incluye file_url => /files/... que el visor puede pedir
-      onImageSelected(selectedEcografia);
+    if (!selectedEcografia) return;
+
+    const fullUrl = selectedEcografia.file_url || "";
+
+    // agarramos sólo el último segmento -> "imagen-abc.dcm"
+    let filename = "";
+    if (fullUrl) {
+      const parts = fullUrl.split("/");
+      filename = parts[parts.length - 1] || "";
     }
+
+    // le avisamos al padre (VisualizadorPage)
+    onImageSelected({
+      filename, // usado por ImageViewer -> /api/visualizador/uploads/:filename
+      fullUrl,
+      fecha_hora: selectedEcografia.fecha_hora,
+      neonato_id: selectedEcografia.neonato_id,
+      id: selectedEcografia.id,
+    });
   };
 
+  // entra en modo longitudinal (comparar A vs B)
   const handleLongitudinalAnalysis = () => {
     setIsLongitudinalMode(true);
     setSelectedEcografia(null);
   };
 
+  // abre la pantalla de comparación lado a lado
   const handleVisualizeComparison = () => {
     if (selectedEcografiaA && selectedEcografiaB) {
       navigate("/comparar-ecografias", {
@@ -271,7 +263,7 @@ const resp = await fetch(url, {
   };
 
   // -------------------------------------------------
-  // RENDER
+  // render
   // -------------------------------------------------
 
   return (
@@ -292,7 +284,7 @@ const resp = await fetch(url, {
           </p>
         )}
 
-        {/* PACIENTE */}
+        {/* === PACIENTE === */}
         <div className="vtk-form-section">
           <label className="vtk-form-label">Seleccionar Paciente:</label>
 
@@ -328,7 +320,7 @@ const resp = await fetch(url, {
           </select>
         </div>
 
-        {/* MODO NORMAL (una eco) */}
+        {/* === MODO NORMAL (una eco) === */}
         {selectedPaciente && !isLongitudinalMode && (
           <>
             <div className="vtk-form-section">
@@ -395,7 +387,7 @@ const resp = await fetch(url, {
           </>
         )}
 
-        {/* MODO LONGITUDINAL (comparar A vs B) */}
+        {/* === MODO LONGITUDINAL (comparar 2 ecos) === */}
         {selectedPaciente && isLongitudinalMode && (
           <>
             <div className="vtk-form-section">

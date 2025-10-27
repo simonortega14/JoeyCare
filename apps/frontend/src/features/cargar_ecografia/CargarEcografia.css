@@ -15,7 +15,7 @@
   padding: 2.5rem;
   max-width: 600px;
   width: 100%;
-  box-shadow: 
+  box-shadow:
     0 20px 40px rgba(0, 0, 0, 0.1),
     0 10px 25px rgba(0, 0, 0, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -43,6 +43,16 @@
   -webkit-text-fill-color: transparent;
   background-clip: text;
   margin: 0 0 2rem 0;
+}
+
+/* ===== SUBTÍTULO DE SECCIÓN (ej. "Ecografías previas") ===== */
+.cargar-subtitle {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #1976d2;
+  margin-bottom: 0.5rem;
+  border-left: 5px solid #42a5f5;
+  padding-left: 0.75rem;
 }
 
 /* ===== CAMPO/SECCIÓN ===== */
@@ -105,6 +115,27 @@
   cursor: not-allowed;
 }
 
+/* ===== INPUT FILE CUSTOM ===== */
+.cargar-input[type="file"] {
+  padding: 0.75rem;
+  cursor: pointer;
+}
+
+.cargar-input[type="file"]::-webkit-file-upload-button {
+  padding: 0.5rem 1rem;
+  background: #1976d2;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-right: 1rem;
+  font-weight: 500;
+}
+
+.cargar-input[type="file"]::-webkit-file-upload-button:hover {
+  background: #1565c0;
+}
+
 /* ===== CONTENEDOR SELECTOR DE PACIENTES ===== */
 .patient-picker {
   position: relative;
@@ -113,7 +144,7 @@
   align-items: center;
 }
 
-/* ===== BOTÓN MINI ===== */
+/* ===== BOTÓN MINI (Cambiar paciente) ===== */
 .mini-btn {
   padding: 0.5rem 1rem;
   background: #dc3545;
@@ -132,7 +163,7 @@
   transform: translateY(-1px);
 }
 
-/* ===== LISTA DE PACIENTES ===== */
+/* ===== LISTA DE PACIENTES (autosuggest) ===== */
 .patient-list {
   position: absolute;
   top: 100%;
@@ -183,11 +214,11 @@
 .cargar-hint {
   margin-top: 0.5rem;
   font-size: 0.9rem;
-  color: #6c757d;
+  color: #5f6368; /* más oscurito para contraste */
   font-style: italic;
 }
 
-/* ===== PILL DE CONFIRMACIÓN ===== */
+/* ===== PILL DE CONFIRMACIÓN PACIENTE ===== */
 .pill-ok {
   margin-top: 0.75rem;
   padding: 0.75rem 1rem;
@@ -198,7 +229,7 @@
   font-size: 0.9rem;
 }
 
-/* ===== BOTÓN PRINCIPAL ===== */
+/* ===== BOTÓN PRINCIPAL SUBIR ===== */
 .cargar-btn {
   width: 100%;
   padding: 1.25rem 2rem;
@@ -231,7 +262,7 @@
   transform: none;
 }
 
-/* ===== NOMBRE DEL ARCHIVO ===== */
+/* ===== NOMBRE DEL ARCHIVO SELECCIONADO ===== */
 .cargar-filename {
   margin-top: 1rem;
   padding: 0.75rem 1rem;
@@ -251,7 +282,7 @@
   font-size: 1.1rem;
 }
 
-/* ===== MENSAJE DE ERROR ===== */
+/* ===== MENSAJE DE ERROR (alerta amarilla) ===== */
 .error-message {
   padding: 1rem;
   background: rgba(255, 193, 7, 0.1);
@@ -262,10 +293,84 @@
   font-size: 0.95rem;
 }
 
-/* ===== FORMULARIO ===== */
+/* ===== FORMULARIO ANIMADO ===== */
 form {
   animation: slideInFromLeft 0.4s ease-out;
   animation-delay: 0.4s;
+}
+
+/* ====== TABLA DE ECOGRAFÍAS PREVIAS ====== */
+
+/* Wrapper opcional alrededor de la tabla para dar bloque visual */
+.tabla-wrapper {
+  background: white;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 4px 15px rgba(25, 118, 210, 0.1);
+  margin-top: 1rem;
+  overflow-x: auto; /* responsive safe para pantallas chicas */
+}
+
+/* Tabla en sí */
+.tabla-ecos {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.5rem;
+  font-size: 0.95rem;
+  border-radius: 12px;
+  overflow: hidden;
+  min-width: 480px;
+  box-shadow: 0 4px 15px rgba(25, 118, 210, 0.15);
+  animation: fadeInUp 0.5s ease-out;
+}
+
+/* Encabezado */
+.tabla-ecos thead {
+  background: linear-gradient(135deg, #1976d2 0%, #42a5f5 100%);
+  color: white;
+}
+
+.tabla-ecos th {
+  text-align: left;
+  padding: 0.9rem 1rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+  white-space: nowrap;
+}
+
+/* Filas */
+.tabla-ecos tbody tr {
+  background: white;
+  transition: background 0.2s ease;
+}
+
+.tabla-ecos tbody tr:nth-child(even) {
+  background: #f7f9fc;
+}
+
+.tabla-ecos td {
+  padding: 0.85rem 1rem;
+  color: #343a40;
+  border-bottom: 1px solid #e9ecef;
+  vertical-align: top;
+  word-break: break-word;
+}
+
+/* Hover fila */
+.tabla-ecos tbody tr:hover {
+  background: #e3f2fd;
+}
+
+/* Links dentro de la tabla */
+.tabla-ecos a {
+  color: #1976d2;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.tabla-ecos a:hover {
+  text-decoration: underline;
 }
 
 /* ===== RESPONSIVE ===== */
@@ -275,43 +380,26 @@ form {
     align-items: flex-start;
     padding-top: 2rem;
   }
-  
+
   .cargar-card {
     padding: 1.5rem;
   }
-  
+
   .cargar-title {
     font-size: 1.8rem;
   }
-  
+
   .patient-picker {
     flex-direction: column;
     align-items: stretch;
     gap: 0.75rem;
   }
-  
+
   .mini-btn {
     align-self: flex-start;
   }
-}
 
-/* ===== ESTILOS ADICIONALES PARA INPUT FILE ===== */
-.cargar-input[type="file"] {
-  padding: 0.75rem;
-  cursor: pointer;
-}
-
-.cargar-input[type="file"]::-webkit-file-upload-button {
-  padding: 0.5rem 1rem;
-  background: #1976d2;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  margin-right: 1rem;
-  font-weight: 500;
-}
-
-.cargar-input[type="file"]::-webkit-file-upload-button:hover {
-  background: #1565c0;
+  .tabla-ecos {
+    font-size: 0.85rem;
+  }
 }

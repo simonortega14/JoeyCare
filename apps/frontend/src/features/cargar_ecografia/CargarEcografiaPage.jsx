@@ -36,23 +36,29 @@ const CargarEcografiaPage = () => {
   const [examList, setExamList] = useState([]);
   const [examLoading, setExamLoading] = useState(false);
 
-  // obtener info del usuario actual (médico que sube)
-  let currentUserId = null;
-  try {
-    const rawUser = localStorage.getItem("user");
-    if (rawUser) {
-      const parsed = JSON.parse(rawUser);
-      currentUserId =
-        parsed.id ||
-        parsed.id_medico ||
-        parsed.medico_id ||
-        parsed.user_id ||
-        null;
-    }
-  } catch (e) {
-    console.warn("No pude parsear localStorage.user:", e);
-  }
 
+// obtener info del usuario actual (médico que sube)
+let currentUserId = null;
+try {
+  const rawUser = localStorage.getItem("user");
+  if (rawUser) {
+    const parsed = JSON.parse(rawUser);
+
+    // mira en consola qué trae el user guardado
+    console.log("[CargarEcografia] user localStorage:", parsed);
+
+    currentUserId =
+      parsed.id ||
+      parsed.id_medico ||
+      parsed.medico_id ||
+      parsed.user_id ||
+      parsed.usuario_id ||
+      null;
+  }
+} catch (e) {
+  console.warn("No pude parsear localStorage.user:", e);
+}
+console.log("[CargarEcografia] currentUserId detectado:", currentUserId);
   // Tipos permitidos
   const allowedTypes = [".png", ".jpg", ".jpeg", ".dcm"];
 
@@ -189,83 +195,124 @@ const CargarEcografiaPage = () => {
   };
 
   // Subir archivo al ms-ecografias
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!patient) return alert("Selecciona primero un neonato");
-    if (!file) return alert("Por favor selecciona un archivo válido");
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    if (!currentUserId) {
-      return alert("No se detectó el usuario médico actual. Inicia sesión de nuevo.");
+  if (!patient) {
+    alert("Selecciona primero un neonato");
+    return;
+  }
+  if (!file) {
+    alert("Por favor selecciona un archivo válido");
+    return;
+  }
+
+  if (!currentUserId) {
+    alert(
+      "No se detectó el usuario médico actual (uploader). Vuelve a iniciar sesión."
+    );
+    return;
+  }
+
+  try {
+    setIsSubmitting(true);
+
+    // armamos el formData EXACTAMENTE como espera el backend
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("neonato_id", patient.id);
+    formData.append("uploader_medico_id", currentUserId);
+
+    console.log("[CargarEcografia] Subiendo con payload:");
+    console.log(" neonato_id =", patient.id);
+    console.log(" uploader_medico_id =", currentUserId);
+    console.log(" file.name =", file.name);
+
+    const resp = await fetch(ECO_UPLOAD_URL, {
+      method: "POST",
+      headers: {
+        // NO pongas Content-Type aquí porque fetch con FormData
+        // lo setea solo con el boundary. Sólo auth:
+        ...getAuthHeader(),
+      },
+      body: formData,
+    });
+
+    const contentType = resp.headers.get("content-type") || "";
+    let data;
+    if (contentType.includes("application/json")) {
+      data = await resp.json();
+    } else {
+      data = await resp.text();
     }
 
-    try {
-      setIsSubmitting(true);
+    console.log("[CargarEcografia] upload status:", resp.status);
+    console.log("[CargarEcografia] upload body:", data);
 
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("neonato_id", patient.id);
-      formData.append("uploader_medico_id", currentUserId);
-
-      const resp = await fetch(ECO_UPLOAD_URL, {
-        method: "POST",
-        headers: {
-          ...getAuthHeader(), // Authorization: Bearer <token>
-        },
-        body: formData,
-      });
-
-      const contentType = resp.headers.get("content-type") || "";
-      let data = null;
-      if (contentType.includes("application/json")) {
-        data = await resp.json();
-      } else {
-        data = await resp.text();
-      }
-
-      console.log("Upload response status:", resp.status);
-      console.log("Upload response body:", data);
-
-      if (!resp.ok) {
-        throw new Error(
-          `Error al subir ecografía (${resp.status}) - ${
-            typeof data === "string" ? data : data?.error || "sin detalle"
-          }`
-        );
-      }
+    if (!resp.ok) {
+      // mensaje amigable
+      let backendMsg =
+        typeof data === "string"
+          ? data
+          : data?.error ||
+            data?.message ||
+            JSON.stringify(data, null, 2);
 
       alert(
-        `Ecografía subida correctamente para ${patient.nombres} ${patient.apellidos}` +
-          (data?.file_url ? `\nURL pública: ${data.file_url}` : "")
+        `Error al subir (${resp.status}).\n` +
+          `Detalle servidor:\n${backendMsg}`
       );
-
-      // Limpieza UI
-      setFile(null);
-
-      // 👇 NUEVO: refrescamos la lista de estudios del bebé automáticamente
-      // sin esperar que el usuario recargue la página
-      try {
-        if (patient?.id) {
-          const url = `${ECO_LIST_URL}?neonato_id=${encodeURIComponent(
-            patient.id
-          )}&page=1&size=50`;
-          const r2 = await fetch(url, {
-            headers: { Accept: "application/json", ...getAuthHeader() },
-          });
-          if (r2.ok) {
-            const d2 = await r2.json();
-            setExamList(Array.isArray(d2.items) ? d2.items : []);
-          }
-        }
-      } catch (refreshErr) {
-        console.warn("No se pudo refrescar lista post-upload:", refreshErr);
-      }
-    } catch (err) {
-      console.error("Error al subir:", err);
-      alert(err.message || "Error al subir ecografía");
-    } finally {
-      setIsSubmitting(false);
+      return;
     }
-  };
+
+    alert(
+      `Ecografía subida correctamente para ${patient.nombres} ${patient.apellidos}` +
+        (data?.file_url ? `\nURL pública: ${data.file_url}` : "")
+    );
+
+    // limpiamos file input visualmente
+    setFile(null);
+
+    // refrescar lista de estudios del bebé
+    try {
+      if (patient?.id) {
+        const url = `${ECO_LIST_URL}?neonato_id=${encodeURIComponent(
+          patient.id
+        )}&page=1&size=50`;
+
+        const r2 = await fetch(url, {
+          headers: { Accept: "application/json", ...getAuthHeader() },
+        });
+
+        if (r2.ok) {
+          const d2 = await r2.json();
+          console.log("[CargarEcografia] Lista actualizada:", d2);
+          setExamList(Array.isArray(d2.items) ? d2.items : []);
+        } else {
+          console.warn(
+            "[CargarEcografia] No pude refrescar la lista, status:",
+            r2.status
+          );
+        }
+      }
+    } catch (refreshErr) {
+      console.warn(
+        "[CargarEcografia] Error refrescando lista post-upload:",
+        refreshErr
+      );
+    }
+  } catch (err) {
+    console.error("[CargarEcografia] Error en submit:", err);
+    alert(
+      err.message
+        ? `Error inesperado:\n${err.message}`
+        : "Error inesperado al subir la ecografía"
+    );
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
 
   const handlePick = (p) => {
     setPatient(p);
@@ -291,170 +338,180 @@ const CargarEcografiaPage = () => {
   }
 
   return (
-    <div className="cargar-page">
-      <div className="cargar-card">
-        <h2 className="cargar-title">Cargar Ecografía</h2>
+  <div className="cargar-page">
+    <div className="cargar-card">
+      <h2 className="cargar-title">Cargar Ecografía</h2>
 
-        {error && (
-          <div
-            className="error-message"
-            style={{ color: "orange", marginBottom: "1rem" }}
-          >
-            {error}
-          </div>
-        )}
+      {error && (
+        <div
+          className="error-message"
+          style={{ color: "orange", marginBottom: "1rem" }}
+        >
+          {error}
+        </div>
+      )}
 
-        {/* Picker de neonato */}
-        <div className="campo">
-          <label className="cargar-label">Neonato</label>
-          <div className="patient-picker" ref={listRef}>
-            <input
-              className="cargar-input"
-              placeholder="Buscar por documento o nombre"
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
-                setPatient(null);
-                setExamList([]);
-                setOpenList(true);
-              }}
-              onFocus={() => setOpenList(true)}
-              disabled={!!patient}
-            />
-            {patient && (
-              <button
-                type="button"
-                className="mini-btn"
-                onClick={resetPatient}
-                title="Cambiar paciente"
-              >
-                Cambiar
-              </button>
-            )}
-
-            {openList && suggestions.length > 0 && !patient && (
-              <ul className="patient-list">
-                {suggestions.map((p) => (
-                  <li
-                    key={p.id}
-                    className="patient-item"
-                    onClick={() => handlePick(p)}
-                  >
-                    <span className="patient-id">{p.documento || "—"}</span>
-                    <span className="patient-name">
-                      {p.nombres} {p.apellidos}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-
-          {!patient && (
-            <div className="cargar-hint">
-              Selecciona un neonato para habilitar la carga.
-              {pacientes.length === 0 && " (No hay neonatos disponibles)"}
-            </div>
+      {/* Picker de neonato */}
+      <div className="campo">
+        <label className="cargar-label">Neonato</label>
+        <div className="patient-picker" ref={listRef}>
+          <input
+            className="cargar-input"
+            placeholder="Buscar por documento o nombre"
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setPatient(null);
+              setExamList([]);
+              setOpenList(true);
+            }}
+            onFocus={() => setOpenList(true)}
+            disabled={!!patient}
+          />
+          {patient && (
+            <button
+              type="button"
+              className="mini-btn"
+              onClick={resetPatient}
+              title="Cambiar paciente"
+            >
+              Cambiar
+            </button>
           )}
 
-          {patient && (
-            <div className="pill-ok">
-              Neonato seleccionado:{" "}
-              <strong>{patient.documento || "—"}</strong> — {patient.nombres}{" "}
-              {patient.apellidos}
-            </div>
+          {openList && suggestions.length > 0 && !patient && (
+            <ul className="patient-list">
+              {suggestions.map((p) => (
+                <li
+                  key={p.id}
+                  className="patient-item"
+                  onClick={() => handlePick(p)}
+                >
+                  <span className="patient-id">{p.documento || "—"}</span>
+                  <span className="patient-name">
+                    {p.nombres} {p.apellidos}
+                  </span>
+                </li>
+              ))}
+            </ul>
           )}
         </div>
 
-        {/* Formulario de carga */}
-        <form onSubmit={handleSubmit}>
-          <label className="cargar-label">
-            Archivo (.png, .jpg, .jpeg, .dcm)
-          </label>
-          <input
-            className="cargar-input"
-            type="file"
-            accept=".png,.jpg,.jpeg,.dcm"
-            onChange={handleChangeFile}
-            disabled={!patient}
-          />
+        {!patient && (
           <div className="cargar-hint">
-            Tamaño recomendado &lt; 10 MB.
-          </div>
-
-          <button
-            type="submit"
-            className="cargar-btn"
-            disabled={!patient || !file || isSubmitting}
-          >
-            {isSubmitting ? "Subiendo..." : "Subir"}
-          </button>
-        </form>
-
-        {file && (
-          <div className="cargar-filename">
-            Seleccionado: {file.name}
+            Selecciona un neonato para habilitar la carga.
+            {pacientes.length === 0 && " (No hay neonatos disponibles)"}
           </div>
         )}
 
-        {/* 👇 NUEVO: Historial del neonato */}
         {patient && (
-          <div style={{ marginTop: "2rem" }}>
+          <div className="pill-ok">
+            Neonato seleccionado:{" "}
+            <strong>{patient.documento || "—"}</strong> — {patient.nombres}{" "}
+            {patient.apellidos}
+          </div>
+        )}
+      </div>
+
+      {/* Formulario de carga */}
+      <form onSubmit={handleSubmit}>
+        <label className="cargar-label">
+          Archivo (.png, .jpg, .jpeg, .dcm)
+        </label>
+        <input
+          className="cargar-input"
+          type="file"
+          accept=".png,.jpg,.jpeg,.dcm"
+          onChange={handleChangeFile}
+          disabled={!patient}
+        />
+        <div className="cargar-hint">Tamaño recomendado &lt; 10 MB.</div>
+
+        <button
+          type="submit"
+          className="cargar-btn"
+          disabled={!patient || !file || isSubmitting}
+        >
+          {isSubmitting ? "Subiendo..." : "Subir"}
+        </button>
+      </form>
+
+      {file && (
+        <div className="cargar-filename">Seleccionado: {file.name}</div>
+      )}
+
+      {/* Historial del neonato */}
+      {patient && (
+        <div className="exam-section-card">
+          <div className="exam-section-header">
             <h3 className="cargar-subtitle">
               Ecografías previas de {patient.nombres} {patient.apellidos}
             </h3>
 
-            {examLoading && <div className="cargar-hint">Cargando estudios...</div>}
-
-            {!examLoading && examList.length === 0 && (
-              <div className="cargar-hint">
-                No hay ecografías registradas para este neonato.
-              </div>
-            )}
-
-            {!examLoading && examList.length > 0 && (
-              <table className="tabla-ecos">
-                <thead>
-                  <tr>
-                    <th>Fecha / Hora</th>
-                    <th>Tamaño</th>
-                    <th>Médico</th>
-                    <th>Ver archivo</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {examList.map((eco) => (
-                    <tr key={eco.id}>
-                      <td>{eco.fecha_hora || "—"}</td>
-                      <td>
-                        {eco.size_bytes
-                          ? `${(eco.size_bytes / (1024 * 1024)).toFixed(2)} MB`
-                          : "—"}
-                      </td>
-                      <td>{eco.uploader_medico_id ?? "—"}</td>
-                      <td>
-                        {eco.file_url ? (
-                          <a
-                            href={eco.file_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            Abrir
-                          </a>
-                        ) : (
-                          "—"
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            {examLoading && (
+              <div className="exam-loading">Cargando estudios...</div>
             )}
           </div>
-        )}
-      </div>
+
+          {!examLoading && examList.length === 0 && (
+            <div className="cargar-hint exam-empty">
+              No hay ecografías registradas para este neonato.
+            </div>
+          )}
+
+          {!examLoading && examList.length > 0 && (
+            <div className="exam-table-wrapper">
+              {/* Encabezado tipo tabla */}
+              <div className="exam-header-row">
+                <div>Fecha / Hora</div>
+                <div>Tamaño</div>
+                <div>Médico</div>
+                <div>Ver archivo</div>
+              </div>
+
+              {/* Filas */}
+              {examList.map((eco) => (
+                <div key={eco.id} className="exam-row">
+                  <div className="exam-col exam-date">
+                    <div className="exam-date-main">
+                      {eco.fecha_hora || "—"}
+                    </div>
+                    {/* si quieres puedes partir fecha y hora con más formato luego */}
+                  </div>
+
+                  <div className="exam-col exam-size">
+                    {eco.size_bytes
+                      ? `${(eco.size_bytes / (1024 * 1024)).toFixed(2)} MB`
+                      : "—"}
+                  </div>
+
+                  <div className="exam-col exam-doctor">
+                    {eco.uploader_medico_id ?? "—"}
+                  </div>
+
+                  <div className="exam-col exam-link">
+                    {eco.file_url ? (
+                      <a
+                        className="exam-file-link"
+                        href={eco.file_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Abrir →
+                      </a>
+                    ) : (
+                      <span className="exam-file-missing">—</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
-  );
+  </div>
+);
 };
 
 export default CargarEcografiaPage;

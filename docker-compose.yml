@@ -6,7 +6,7 @@ networks:
 
 volumes:
   mysql_data:
-  ecografias_storage:   # almacenamiento compartido entre ms-ecografias y nginx
+  ecografias_storage:   # volumen persistente para los archivos DICOM / ecografías
 
 services:
   # === Base de datos MySQL ===
@@ -20,17 +20,21 @@ services:
       MYSQL_USER: userapp
       MYSQL_PASSWORD: secret123
     ports:
-      - "3307:3306"
+      - "3307:3306" # host:container
     volumes:
+      # scripts iniciales (creación de tablas, seed, etc.)
       - ./infra/mysql/initdb.d:/docker-entrypoint-initdb.d:ro
+      # config mysql personalizada
       - ./infra/mysql/my.cnf:/etc/mysql/conf.d/my.cnf:ro
+      # volumen nombrado para que la data NO se borre entre reinicios
       - mysql_data:/var/lib/mysql
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h localhost -p$${MYSQL_ROOT_PASSWORD} --silent"]
       interval: 10s
       timeout: 5s
       retries: 20
-    networks: [red-backend]
+    networks:
+      - red-backend
 
   # === Frontend build (Vite/React) ===
   frontend:
@@ -38,10 +42,10 @@ services:
       context: ./apps/frontend
     container_name: frontend
     restart: unless-stopped
+    # No exponer puerto directo: Nginx es la puerta de entrada pública
     networks:
       - red-frontend
       - red-backend
-    # no public port aquí; el público es nginx
 
   # === Microservicio: Usuarios ===
   ms-usuarios:
@@ -53,7 +57,7 @@ services:
       - "3001:3001"
     environment:
       DB_HOST: mysql
-      DB_PORT: 3306
+      DB_PORT: "3306"
       DB_USER: userapp
       DB_PASSWORD: secret123
       DB_NAME: joeycare_db
@@ -63,7 +67,8 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
-    networks: [red-backend]
+    networks:
+      - red-backend
 
   # === Microservicio: Ecografías ===
   ms-ecografias:
@@ -75,18 +80,20 @@ services:
       - "3002:3002"
     environment:
       DB_HOST: mysql
-      DB_PORT: 3306
+      DB_PORT: "3306"
       DB_USER: userapp
       DB_PASSWORD: secret123
       DB_NAME: joeycare_db
       JWT_SECRET: supersecret_cambia_esto
       STORAGE_ROOT: /var/joeycare/storage/ecografias
-    volumes:
-      - ./apps/ms-ecografias/storage/ecografias:/var/joeycare/storage/ecografias
+      PORT: "3002"
     depends_on:
       mysql:
         condition: service_healthy
-    networks: [red-backend]
+    volumes:
+      - ecografias_storage:/var/joeycare/storage/ecografias
+    networks:
+      - red-backend
 
   # === Microservicio: Visualizador ===
   ms-visualizador:
@@ -101,7 +108,8 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
-    networks: [red-backend]
+    networks:
+      - red-backend
 
   # === Microservicio: Reportes ===
   ms-reportes:
@@ -113,7 +121,7 @@ services:
       - "3004:3004"
     environment:
       DB_HOST: mysql
-      DB_PORT: 3306
+      DB_PORT: "3306"
       DB_USER: userapp
       DB_PASSWORD: secret123
       DB_NAME: joeycare_db
@@ -121,7 +129,8 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
-    networks: [red-backend]
+    networks:
+      - red-backend
 
   # === Nginx (sirve frontend y proxyea APIs) ===
   nginx:
@@ -137,12 +146,15 @@ services:
     ports:
       - "80:80"
     volumes:
-      # Montamos TODA la carpeta con la conf final de nginx
+      # Config completa de nginx (rutas /api/* etc)
       - ./infra/nginx:/etc/nginx/conf.d:ro
-      # Servimos el build del frontend
+
+      # Build estático del frontend (asegúrate de haber hecho el build de vite: npm run build)
       - ./apps/frontend/dist:/usr/share/nginx/html:ro
-      # Volumen compartido para /files/
-      - ./apps/ms-ecografias/storage/ecografias:/var/joeycare/storage/ecografias:ro
+
+      # 👇 Mismo volumen nombrado que usa ms-ecografias, pero de solo lectura.
+      # Así nginx puede servir /files/... sin depender de una ruta local del host.
+      - ecografias_storage:/var/joeycare/storage/ecografias:ro
     networks:
       - red-frontend
       - red-backend

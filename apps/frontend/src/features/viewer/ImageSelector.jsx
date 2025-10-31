@@ -2,20 +2,19 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./viewer.css";
 
-// ===== helpers =====
 function getToken() {
   return localStorage.getItem("token") || "";
 }
 
-function getAuthHeader() {
-  const token = getToken();
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
-// normaliza un neonato para el dropdown
+// Normaliza neonato como lo devuelve ms-usuarios
 function normalizeNeonato(raw) {
   return {
-    id: raw.id || raw.id_neonato || raw.uuid || raw.ID || "",
+    id:
+      raw.id ||
+      raw.id_neonato ||
+      raw.uuid ||
+      raw.ID ||
+      "",
     nombres: raw.nombres || raw.nombre || "",
     apellidos: raw.apellidos || raw.apellido || "",
     documento:
@@ -27,180 +26,121 @@ function normalizeNeonato(raw) {
   };
 }
 
-// normaliza una ecografía que viene de /api/visor/neonatos/:id/ecografias
-function normalizeEcografia(raw, neonatoId) {
+// Normaliza ecografía como la devuelve ms-ecografias
+function normalizeEcografia(raw) {
   return {
     id: raw.id,
-    neonato_id: neonatoId,
-    fecha_hora: raw.fecha_hora || null,
-    file_url: raw.file_url || null, // <- ej "/files/carpeta/imagen-abc.dcm"
+    neonato_id: raw.neonato_id,
+    timestamp: raw.timestamp || raw.fecha_hora || null,
+    descripcion: raw.descripcion || raw.detalle || "",
   };
 }
 
-// endpoints detrás de nginx
-const NEONATOS_PATH = "/api/usuarios/neonatos";
-
-// nueva ruta REST que lista ecografías de un neonato
-const VISOR_LIST_ECOS = (neonatoId) =>
-  `/api/visor/neonatos/${encodeURIComponent(neonatoId)}/ecografias`;
+// ENDPOINTS detrás del gateway Nginx
+const LIST_NEONATOS_URL = "/api/usuarios/neonatos";
+const LIST_ECOGRAFIAS_URL = (neonatoId) =>
+  `/api/ecografias/neonatos/${encodeURIComponent(
+    neonatoId
+  )}`;
 
 function ImageSelector({ onImageSelected }) {
   const navigate = useNavigate();
 
-  // --- pacientes / neonatos ---
+  // Estado pacientes
   const [pacientes, setPacientes] = useState([]);
   const [loadingPacientes, setLoadingPacientes] = useState(true);
   const [errorPacientes, setErrorPacientes] = useState(null);
   const [selectedPaciente, setSelectedPaciente] = useState(null);
 
-  // --- ecografías de ese neonato ---
+  // Estado ecografías
   const [ecografias, setEcografias] = useState([]);
   const [loadingEcos, setLoadingEcos] = useState(false);
   const [selectedEcografia, setSelectedEcografia] = useState(null);
 
-  // --- modo comparación longitudinal ---
+  // Modo comparación
   const [isLongitudinalMode, setIsLongitudinalMode] = useState(false);
   const [selectedEcografiaA, setSelectedEcografiaA] = useState(null);
   const [selectedEcografiaB, setSelectedEcografiaB] = useState(null);
 
-  // -------------------------------------------------
-  // 1. cargar neonatos al montar
-  // -------------------------------------------------
+  // 1. cargar neonatos al inicio
   useEffect(() => {
-    const fetchPacientes = async () => {
+    const fetchNeonatos = async () => {
       try {
         setLoadingPacientes(true);
         setErrorPacientes(null);
 
-        const resp = await fetch(NEONATOS_PATH, {
+        const resp = await fetch(LIST_NEONATOS_URL, {
           headers: {
             Accept: "application/json",
-            ...getAuthHeader(),
+            Authorization: `Bearer ${getToken()}`,
           },
         });
-
-        if (resp.status === 401) {
-          console.warn("[VISOR] 401 cargando neonatos.");
-          setPacientes([]);
-          setErrorPacientes("No se pudieron cargar los neonatos (401).");
-          return;
-        }
 
         if (!resp.ok) {
           throw new Error(`Error ${resp.status} cargando neonatos`);
         }
 
         const data = await resp.json();
-
-        // puede venir como [ ... ] o { items:[ ... ] }
-        const listaBruta = Array.isArray(data)
+        const lista = Array.isArray(data)
           ? data
           : Array.isArray(data.items)
           ? data.items
           : [];
-
-        const normalizados = listaBruta.map(normalizeNeonato);
+        const normalizados = lista.map(normalizeNeonato);
         setPacientes(normalizados);
       } catch (err) {
-        console.error("[VISOR] Error cargando neonatos:", err);
-        setErrorPacientes(
-          "No se pudieron cargar los neonatos, usando datos de prueba."
-        );
-        setPacientes(
-          [
-            {
-              id: "123",
-              nombres: "Bebé",
-              apellidos: "García",
-              documento: "—",
-            },
-            {
-              id: "456",
-              nombres: "Bebé",
-              apellidos: "Rodríguez",
-              documento: "—",
-            },
-          ].map(normalizeNeonato)
-        );
+        console.error("[ImageSelector] neonatos error:", err);
+        setErrorPacientes("No se pudieron cargar los neonatos.");
+        setPacientes([]);
       } finally {
         setLoadingPacientes(false);
       }
     };
 
-    fetchPacientes();
+    fetchNeonatos();
   }, []);
 
-  // -------------------------------------------------
-  // 2. cuando cambia el paciente seleccionado -> cargar ecografías
-  // -------------------------------------------------
+  // 2. cargar ecografías cuando cambia el paciente seleccionado
   useEffect(() => {
-    if (!selectedPaciente || !selectedPaciente.id) {
-      setEcografias([]);
-      setSelectedEcografia(null);
-      setSelectedEcografiaA(null);
-      setSelectedEcografiaB(null);
-      return;
-    }
-
     const fetchEcografias = async () => {
+      if (!selectedPaciente?.id) {
+        setEcografias([]);
+        setSelectedEcografia(null);
+        setSelectedEcografiaA(null);
+        setSelectedEcografiaB(null);
+        setIsLongitudinalMode(false);
+        return;
+      }
+
       try {
         setLoadingEcos(true);
 
-        const token = getToken();
-        if (!token) {
-          console.warn("[VISOR] No hay token en localStorage.");
-          setEcografias([]);
-          return;
-        }
-
-        const url = VISOR_LIST_ECOS(selectedPaciente.id);
-
-        const resp = await fetch(url, {
-          headers: {
-            Accept: "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        const rawText = await resp.text();
-
-        // si 401 acá, NO tumbamos sesión
-        if (resp.status === 401) {
-          console.warn("[VISOR] 401 al pedir ecografías (nuevo flujo).");
-          setEcografias([]);
-          return;
-        }
+        const resp = await fetch(
+          LIST_ECOGRAFIAS_URL(selectedPaciente.id),
+          {
+            headers: {
+              Accept: "application/json",
+              Authorization: `Bearer ${getToken()}`,
+            },
+          }
+        );
 
         if (!resp.ok) {
           console.error(
-            "[VISOR] backend error ecos:",
-            resp.status,
-            resp.statusText
+            "[ImageSelector] ecografias status:",
+            resp.status
           );
           setEcografias([]);
           return;
         }
 
-        let listaBruta;
-        try {
-          listaBruta = JSON.parse(rawText);
-        } catch (e) {
-          console.error("[VISOR] JSON.parse falló ecos:", e);
-          setEcografias([]);
-          return;
-        }
-
-        // backend devuelve ARRAY PLANO
-        // ej: [ {id, fecha_hora, file_url}, ... ]
-        const normalizadas = Array.isArray(listaBruta)
-          ? listaBruta.map((ec) =>
-              normalizeEcografia(ec, selectedPaciente.id)
-            )
+        const raw = await resp.json();
+        const normalizadas = Array.isArray(raw)
+          ? raw.map(normalizeEcografia)
           : [];
-
         setEcografias(normalizadas);
       } catch (err) {
-        console.error("[VISOR] Excepción cargando ecografías:", err);
+        console.error("[ImageSelector] ecografias error:", err);
         setEcografias([]);
       } finally {
         setLoadingEcos(false);
@@ -210,46 +150,41 @@ function ImageSelector({ onImageSelected }) {
     fetchEcografias();
   }, [selectedPaciente]);
 
-  // -------------------------------------------------
-  // acciones de UI
-  // -------------------------------------------------
-
-  // abre el viewer normal con UNA ecografía
+  // 3. Ver UNA sola eco
   const handleVisualize = () => {
     if (!selectedEcografia) return;
 
-    const fullUrl = selectedEcografia.file_url || "";
-
-    // agarramos sólo el último segmento -> "imagen-abc.dcm"
-    let filename = "";
-    if (fullUrl) {
-      const parts = fullUrl.split("/");
-      filename = parts[parts.length - 1] || "";
-    }
-
-    // le avisamos al padre (VisualizadorPage)
     onImageSelected({
-      filename, // usado por ImageViewer -> /api/visualizador/uploads/:filename
-      fullUrl,
-      fecha_hora: selectedEcografia.fecha_hora,
-      neonato_id: selectedEcografia.neonato_id,
-      id: selectedEcografia.id,
+      neonatoId: selectedEcografia.neonato_id,
+      ecografiaId: selectedEcografia.id,
+      descripcion: selectedEcografia.descripcion,
+      timestamp: selectedEcografia.timestamp,
     });
   };
 
-  // entra en modo longitudinal (comparar A vs B)
+  // 4. Activar modo longitudinal
   const handleLongitudinalAnalysis = () => {
     setIsLongitudinalMode(true);
     setSelectedEcografia(null);
   };
 
-  // abre la pantalla de comparación lado a lado
+  // 5. Ir a la pantalla de comparación lado a lado
   const handleVisualizeComparison = () => {
     if (selectedEcografiaA && selectedEcografiaB) {
       navigate("/comparar-ecografias", {
         state: {
-          imagenIzquierda: selectedEcografiaA,
-          imagenDerecha: selectedEcografiaB,
+          imagenIzquierda: {
+            neonatoId: selectedEcografiaA.neonato_id,
+            ecografiaId: selectedEcografiaA.id,
+            descripcion: selectedEcografiaA.descripcion,
+            timestamp: selectedEcografiaA.timestamp,
+          },
+          imagenDerecha: {
+            neonatoId: selectedEcografiaB.neonato_id,
+            ecografiaId: selectedEcografiaB.id,
+            descripcion: selectedEcografiaB.descripcion,
+            timestamp: selectedEcografiaB.timestamp,
+          },
         },
       });
     }
@@ -261,10 +196,6 @@ function ImageSelector({ onImageSelected }) {
     setSelectedEcografiaB(null);
     setSelectedEcografia(null);
   };
-
-  // -------------------------------------------------
-  // render
-  // -------------------------------------------------
 
   return (
     <div className="vtk-page-container">
@@ -284,7 +215,7 @@ function ImageSelector({ onImageSelected }) {
           </p>
         )}
 
-        {/* === PACIENTE === */}
+        {/* Selección de paciente */}
         <div className="vtk-form-section">
           <label className="vtk-form-label">Seleccionar Paciente:</label>
 
@@ -320,7 +251,7 @@ function ImageSelector({ onImageSelected }) {
           </select>
         </div>
 
-        {/* === MODO NORMAL (una eco) === */}
+        {/* --- Modo normal (una ecografía) --- */}
         {selectedPaciente && !isLongitudinalMode && (
           <>
             <div className="vtk-form-section">
@@ -346,9 +277,9 @@ function ImageSelector({ onImageSelected }) {
 
                 {ecografias.map((ec) => (
                   <option key={ec.id} value={ec.id}>
-                    {ec.file_url || "sin archivo"}
-                    {ec.fecha_hora
-                      ? ` - ${new Date(ec.fecha_hora).toLocaleString()}`
+                    {ec.descripcion || "Sin descripción"}
+                    {ec.timestamp
+                      ? ` - ${new Date(ec.timestamp).toLocaleString()}`
                       : ""}
                   </option>
                 ))}
@@ -356,7 +287,7 @@ function ImageSelector({ onImageSelected }) {
 
               {!loadingEcos && ecografias.length === 0 && (
                 <p className="vtk-empty-text">
-                  No hay ecografías disponibles o no se pudieron cargar.
+                  No hay ecografías disponibles para este paciente.
                 </p>
               )}
             </div>
@@ -387,7 +318,7 @@ function ImageSelector({ onImageSelected }) {
           </>
         )}
 
-        {/* === MODO LONGITUDINAL (comparar 2 ecos) === */}
+        {/* --- Modo longitudinal (comparar 2 ecos) --- */}
         {selectedPaciente && isLongitudinalMode && (
           <>
             <div className="vtk-form-section">
@@ -427,9 +358,9 @@ function ImageSelector({ onImageSelected }) {
 
                 {ecografias.map((ec) => (
                   <option key={ec.id} value={ec.id}>
-                    {ec.file_url || "sin archivo"}
-                    {ec.fecha_hora
-                      ? ` - ${new Date(ec.fecha_hora).toLocaleString()}`
+                    {ec.descripcion || "Sin descripción"}
+                    {ec.timestamp
+                      ? ` - ${new Date(ec.timestamp).toLocaleString()}`
                       : ""}
                   </option>
                 ))}
@@ -454,9 +385,9 @@ function ImageSelector({ onImageSelected }) {
 
                 {ecografias.map((ec) => (
                   <option key={ec.id} value={ec.id}>
-                    {ec.file_url || "sin archivo"}
-                    {ec.fecha_hora
-                      ? ` - ${new Date(ec.fecha_hora).toLocaleString()}`
+                    {ec.descripcion || "Sin descripción"}
+                    {ec.timestamp
+                      ? ` - ${new Date(ec.timestamp).toLocaleString()}`
                       : ""}
                   </option>
                 ))}

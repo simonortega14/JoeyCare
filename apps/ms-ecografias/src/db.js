@@ -8,6 +8,7 @@ const pool = mysql.createPool({
   database: process.env.DB_NAME,
   waitForConnections: true,
   connectionLimit: 10,
+  charset: "utf8mb4_general_ci", // arregla acentos tipo “López”
 });
 
 module.exports = pool;

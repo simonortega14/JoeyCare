@@ -142,7 +142,7 @@ async function resumenPorNeonato(neonatoId) {
       e.id AS ecografia_id,
       e.neonato_id AS neonato_id,
       e.fecha_hora AS fecha_hora,
-      CONCAT('Dr(a). ', m.nombre, ' ', m.apellido) AS descripcion,
+      CONCAT('Dr(a). ', m.nombre, ' ', m.apellido) AS medico_responsable,
       CASE
         WHEN f.cant_frames > 0 THEN 1
         ELSE 0
@@ -162,14 +162,37 @@ async function resumenPorNeonato(neonatoId) {
     [neonatoId]
   );
 
-  return rows.map(r => ({
-    id: r.ecografia_id,
-    neonato_id: r.neonato_id,
-    timestamp: r.fecha_hora,
-    descripcion: r.descripcion || "",
-    has_frames: r.has_frames === 1,
-  }));
+  return rows.map(r => {
+    // Formateamos la fecha a algo corto y entendible.
+    // Ej: "2025-11-03 01:18"
+    let fechaBonita = "sin fecha";
+    if (r.fecha_hora) {
+      const d = new Date(r.fecha_hora);
+      // yyyy-mm-dd hh:mm
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const dd = String(d.getDate()).padStart(2, "0");
+      const hh = String(d.getHours()).padStart(2, "0");
+      const min = String(d.getMinutes()).padStart(2, "0");
+      fechaBonita = `${yyyy}-${mm}-${dd} ${hh}:${min}`;
+    }
+
+    const medico = r.medico_responsable || "Médico desconocido";
+
+    // label final que verá el usuario en el combo
+    const label = `${fechaBonita} – ${medico}`;
+
+    return {
+      id: r.ecografia_id,
+      neonato_id: r.neonato_id,
+      timestamp: r.fecha_hora,
+      medico: medico,
+      has_frames: r.has_frames === 1,
+      label: label,
+    };
+  });
 }
+
 
 async function getFirstInstanceFile(ecografiaId) {
   const [rows] = await pool.query(
@@ -184,8 +207,9 @@ async function getFirstInstanceFile(ecografiaId) {
   );
 
   if (!rows.length) return null;
+
   return {
-    filepath: rows[0].filepath,
+    filepath: rows[0].filepath,   // ej: /var/joeycare/storage/ecografias/26/scan-001.dcm
     mime_type: rows[0].mime_type || "application/octet-stream",
   };
 }

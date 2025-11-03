@@ -7,6 +7,7 @@ const {
   getFirstInstanceFile,
 } = require("../repos/ecografias.repo");
 
+// === SUBIR ECOGRAFÍA ===
 async function subirEcografia({
   neonato_id,
   uploader_medico_id,
@@ -21,20 +22,18 @@ async function subirEcografia({
     .update(fileInfo.path + ":" + fileInfo.size)
     .digest("hex");
 
-  // 1) ecografias
   const ecografiaId = await crearEcografia({
     neonato_id,
     uploader_medico_id,
     sede_id,
     fecha_hora: now,
-    filepath: fileInfo.path,       // ruta FINAL (ej /var/joeycare/.../1/...)
+    filepath: fileInfo.path,
     mime_type: fileInfo.mimetype,
     size_bytes: fileInfo.size,
     thumbnail_path: null,
     dicom_metadata: dicomParsedMetadata,
   });
 
-  // 2) instancias
   const sopUID =
     dicomParsedMetadata?.sop_instance_uid ||
     `local-${ecografiaId}-${Date.now()}`;
@@ -53,7 +52,6 @@ async function subirEcografia({
     uploaded_by: uploader_medico_id,
   });
 
-  // 3) metadatos_dicom
   await crearMetadatosDicom({
     instancia_id: instanciaId,
     dicom_core_json: dicomParsedMetadata || {},
@@ -77,12 +75,26 @@ async function subirEcografia({
   };
 }
 
+// === LISTAR POR NEONATO ===
 async function listarEcografiasDeNeonato(neonatoId) {
-  return resumenPorNeonato(neonatoId);
+  const lista = await resumenPorNeonato(neonatoId);
+  return {
+    items: lista,
+    total: lista.length,
+    page: 1,
+    size: lista.length,
+  };
 }
 
+// === OBTENER ARCHIVO ===
 async function obtenerArchivoEcografia(ecografiaId) {
-  return getFirstInstanceFile(ecografiaId);
+  // busca en DB la primera instancia asociada a esa ecografía
+  const fileInfo = await getFirstInstanceFile(ecografiaId);
+  if (!fileInfo) {
+    return null;
+  }
+
+  return fileInfo; // { filepath: "...", mime_type: "..."}
 }
 
 module.exports = {

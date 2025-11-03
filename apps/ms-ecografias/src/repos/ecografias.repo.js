@@ -1,95 +1,199 @@
-const db = require("../db/db");
+const pool = require("../db");
 
-// Lista ecografías detalladas de un neonato
-async function findByNeonato(neonatoId) {
-  const [rows] = await db.query(
-    `SELECT
-        e.id,
-        e.neonato_id,
-        e.fecha_hora,
-        e.uploader_medico_id,
-        e.filepath,
-        e.mime_type,
-        e.size_bytes
-     FROM ecografias e
-     WHERE e.neonato_id = ?
-     ORDER BY e.fecha_hora DESC`,
-    [neonatoId]
-  );
-  return rows;
-}
-
-// Inserta una nueva ecografía
-async function insertEcografia({
+async function crearEcografia({
   neonato_id,
   uploader_medico_id,
-  relPath,
-  mimeType,
-  sizeBytes,
+  sede_id,
+  fecha_hora,
+  filepath,
+  mime_type,
+  size_bytes,
+  thumbnail_path,
+  dicom_metadata,
 }) {
-  const [result] = await db.query(
-    `INSERT INTO ecografias
-       (neonato_id, fecha_hora, uploader_medico_id,
-        filepath, mime_type, size_bytes)
-     VALUES (?, NOW(), ?, ?, ?, ?)`,
-    [neonato_id, uploader_medico_id, relPath, mimeType, sizeBytes]
+  const [result] = await pool.query(
+    `
+    INSERT INTO ecografias (
+      neonato_id,
+      fecha_hora,
+      uploader_medico_id,
+      sede_id,
+      filepath,
+      mime_type,
+      size_bytes,
+      thumbnail_path,
+      dicom_metadata,
+      creado_en
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+    `,
+    [
+      neonato_id,
+      fecha_hora,
+      uploader_medico_id,
+      sede_id,
+      filepath,
+      mime_type,
+      size_bytes,
+      thumbnail_path,
+      JSON.stringify(dicom_metadata || {}),
+    ]
   );
+
   return result.insertId;
 }
 
-// Inserta la primera instancia asociada
-async function insertInstancia({
+async function crearInstancia({
   ecografia_id,
-  relPath,
-  mimeType,
-  sizeBytes,
-  uploader_medico_id,
+  sop_instance_uid,
+  filepath,
+  mime_type,
+  size_bytes,
+  width,
+  height,
+  bit_depth,
+  duration_ms,
+  checksum_sha256,
+  uploaded_by,
 }) {
-  const sopUID = `1.2.840.${Date.now()}`; // dummy uid
-  await db.query(
-    `INSERT INTO instancias
-       (ecografia_id, sop_instance_uid, filepath,
-        mime_type, size_bytes, uploaded_by)
-     VALUES (?, ?, ?, ?, ?, ?)`,
+  const [result] = await pool.query(
+    `
+    INSERT INTO instancias (
+      ecografia_id,
+      sop_instance_uid,
+      filepath,
+      mime_type,
+      size_bytes,
+      width,
+      height,
+      bit_depth,
+      duration_ms,
+      checksum_sha256,
+      uploaded_by,
+      uploaded_at
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+    `,
     [
       ecografia_id,
-      sopUID,
-      relPath,
-      mimeType,
-      sizeBytes,
-      uploader_medico_id,
+      sop_instance_uid,
+      filepath,
+      mime_type,
+      size_bytes,
+      width,
+      height,
+      bit_depth,
+      duration_ms,
+      checksum_sha256,
+      uploaded_by,
+    ]
+  );
+
+  return result.insertId;
+}
+
+async function crearMetadatosDicom({
+  instancia_id,
+  dicom_core_json,
+  manufacturer,
+  model_name,
+  software_versions,
+  pixel_spacing_mm,
+  transducer_freq_mhz,
+  study_instance_uid,
+  series_instance_uid,
+  sop_instance_uid,
+}) {
+  await pool.query(
+    `
+    INSERT INTO metadatos_dicom (
+      instancia_id,
+      dicom_core_json,
+      manufacturer,
+      model_name,
+      software_versions,
+      pixel_spacing_mm,
+      transducer_freq_mhz,
+      study_instance_uid,
+      series_instance_uid,
+      sop_instance_uid
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `,
+    [
+      instancia_id,
+      JSON.stringify(dicom_core_json || {}),
+      manufacturer || null,
+      model_name || null,
+      software_versions || null,
+      pixel_spacing_mm || null,
+      transducer_freq_mhz || null,
+      study_instance_uid || null,
+      series_instance_uid || null,
+      sop_instance_uid || null,
     ]
   );
 }
 
-// Resumen estilo visor (has_frames, descripción médico)
 async function resumenPorNeonato(neonatoId) {
-  const [rows] = await db.query(
-    `SELECT
-        e.id            AS ecografia_id,
-        e.neonato_id    AS neonato_id,
-        e.fecha_hora    AS fecha_hora,
-        CONCAT('Dr(a). ', m.nombre, ' ', m.apellido) AS descripcion,
-        CASE
-          WHEN i.id IS NULL THEN 0
-          ELSE 1
-        END AS has_frames
-     FROM ecografias e
-     LEFT JOIN instancias i
-       ON i.ecografia_id = e.id
-     LEFT JOIN medicos m
-       ON m.id = e.uploader_medico_id
-     WHERE e.neonato_id = ?
-     GROUP BY e.id
-     ORDER BY e.fecha_hora DESC`,
+  const [rows] = await pool.query(
+    `
+    SELECT
+      e.id AS ecografia_id,
+      e.neonato_id AS neonato_id,
+      e.fecha_hora AS fecha_hora,
+      CONCAT('Dr(a). ', m.nombre, ' ', m.apellido) AS descripcion,
+      CASE
+        WHEN f.cant_frames > 0 THEN 1
+        ELSE 0
+      END AS has_frames
+    FROM ecografias e
+    LEFT JOIN medicos m
+      ON m.id = e.uploader_medico_id
+    LEFT JOIN (
+      SELECT ecografia_id, COUNT(*) AS cant_frames
+      FROM instancias
+      GROUP BY ecografia_id
+    ) f
+      ON f.ecografia_id = e.id
+    WHERE e.neonato_id = ?
+    ORDER BY e.fecha_hora DESC
+    `,
     [neonatoId]
   );
-  return rows;
+
+  return rows.map(r => ({
+    id: r.ecografia_id,
+    neonato_id: r.neonato_id,
+    timestamp: r.fecha_hora,
+    descripcion: r.descripcion || "",
+    has_frames: r.has_frames === 1,
+  }));
+}
+
+async function getFirstInstanceFile(ecografiaId) {
+  const [rows] = await pool.query(
+    `
+    SELECT filepath, mime_type
+    FROM instancias
+    WHERE ecografia_id = ?
+    ORDER BY id ASC
+    LIMIT 1
+    `,
+    [ecografiaId]
+  );
+
+  if (!rows.length) return null;
+  return {
+    filepath: rows[0].filepath,
+    mime_type: rows[0].mime_type || "application/octet-stream",
+  };
 }
 
 module.exports = {
-  findByNeonato,
-  insertEcografia,
-  insertInstancia,
+  crearEcografia,
+  crearInstancia,
+  crearMetadatosDicom,
   resumenPorNeonato,
+  getFirstInstanceFile,
 };

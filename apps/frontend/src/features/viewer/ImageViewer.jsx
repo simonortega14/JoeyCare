@@ -6,12 +6,8 @@ function getToken() {
 }
 
 // Endpoint que devuelve la imagen procesada lista para ver
-function RENDER_ECOGRAFIA_URL(neonatoId, ecoId) {
-  return `/api/ecografias/neonatos/${encodeURIComponent(
-    neonatoId
-  )}/ecografias/${encodeURIComponent(
-    ecoId
-  )}/render`;
+function RENDER_ECOGRAFIA_URL(ecoId) {
+  return `/api/ecografias/${encodeURIComponent(ecoId)}/render`;
 }
 
 function ImageViewer({ imageRef, onClose }) {

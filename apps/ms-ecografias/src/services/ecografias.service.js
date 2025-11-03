@@ -1,101 +1,92 @@
-const path = require("path");
-const repo = require("../repos/ecografias.repo");
+const crypto = require("crypto");
+const {
+  crearEcografia,
+  crearInstancia,
+  crearMetadatosDicom,
+  resumenPorNeonato,
+  getFirstInstanceFile,
+} = require("../repos/ecografias.repo");
 
-function buildPublicURL(relativePath) {
-  // nginx expone /files/* apuntando al volumen compartido
-  return `/files/${relativePath}`.replace(/\\/g, "/");
-}
-
-// GET /api/ecografias?neonato_id=13
-async function listEcografiasDeNeonato(neonatoId) {
-  if (!neonatoId) {
-    const err = new Error("Falta neonato_id");
-    err.statusCode = 400;
-    throw err;
-  }
-
-  const rows = await repo.findByNeonato(neonatoId);
-
-  const items = rows.map((row) => ({
-    id: row.id,
-    neonato_id: row.neonato_id,
-    fecha_hora: row.fecha_hora,
-    uploader_medico_id: row.uploader_medico_id,
-    size_bytes: row.size_bytes,
-    mime_type: row.mime_type,
-    file_url: buildPublicURL(row.filepath),
-  }));
-
-  return {
-    items,
-    total: items.length,
-  };
-}
-
-// GET /api/ecografias/neonatos/:neonatoId
-async function listResumenPorNeonato(neonatoId) {
-  if (!neonatoId) {
-    const err = new Error("Falta neonatoId");
-    err.statusCode = 400;
-    throw err;
-  }
-  const resumen = await repo.resumenPorNeonato(neonatoId);
-  return resumen;
-}
-
-// POST /api/ecografias/upload
-async function registrarUpload({
+async function subirEcografia({
   neonato_id,
   uploader_medico_id,
-  storedFile,
-  storageRoot,
+  sede_id,
+  fileInfo,
+  dicomParsedMetadata = {},
 }) {
-  if (!neonato_id || !uploader_medico_id) {
-    const err = new Error(
-      "neonato_id y uploader_medico_id son obligatorios"
-    );
-    err.statusCode = 400;
-    throw err;
-  }
-  if (!storedFile) {
-    const err = new Error("No se recibió archivo");
-    err.statusCode = 400;
-    throw err;
-  }
+  const now = new Date();
 
-  // filepath relativo que guardamos en DB
-  // ej: "2025/10/31/eco-1761880.dcm"
-  const relPath = path
-    .relative(storageRoot, storedFile.path)
-    .replace(/\\/g, "/");
+  const checksum_sha256 = crypto
+    .createHash("sha256")
+    .update(fileInfo.path + ":" + fileInfo.size)
+    .digest("hex");
 
-  const ecografia_id = await repo.insertEcografia({
+  // 1) ecografias
+  const ecografiaId = await crearEcografia({
     neonato_id,
     uploader_medico_id,
-    relPath,
-    mimeType: storedFile.mimetype,
-    sizeBytes: storedFile.size,
+    sede_id,
+    fecha_hora: now,
+    filepath: fileInfo.path,       // ruta FINAL (ej /var/joeycare/.../1/...)
+    mime_type: fileInfo.mimetype,
+    size_bytes: fileInfo.size,
+    thumbnail_path: null,
+    dicom_metadata: dicomParsedMetadata,
   });
 
-  await repo.insertInstancia({
-    ecografia_id,
-    relPath,
-    mimeType: storedFile.mimetype,
-    sizeBytes: storedFile.size,
-    uploader_medico_id,
+  // 2) instancias
+  const sopUID =
+    dicomParsedMetadata?.sop_instance_uid ||
+    `local-${ecografiaId}-${Date.now()}`;
+
+  const instanciaId = await crearInstancia({
+    ecografia_id: ecografiaId,
+    sop_instance_uid: sopUID,
+    filepath: fileInfo.path,
+    mime_type: fileInfo.mimetype,
+    size_bytes: fileInfo.size,
+    width: null,
+    height: null,
+    bit_depth: null,
+    duration_ms: null,
+    checksum_sha256,
+    uploaded_by: uploader_medico_id,
+  });
+
+  // 3) metadatos_dicom
+  await crearMetadatosDicom({
+    instancia_id: instanciaId,
+    dicom_core_json: dicomParsedMetadata || {},
+    manufacturer: dicomParsedMetadata.manufacturer || null,
+    model_name: dicomParsedMetadata.model_name || null,
+    software_versions: dicomParsedMetadata.software_versions || null,
+    pixel_spacing_mm: dicomParsedMetadata.pixel_spacing_mm || null,
+    transducer_freq_mhz: dicomParsedMetadata.transducer_freq_mhz || null,
+    study_instance_uid: dicomParsedMetadata.study_instance_uid || null,
+    series_instance_uid: dicomParsedMetadata.series_instance_uid || null,
+    sop_instance_uid: sopUID,
   });
 
   return {
-    message: "Ecografía subida correctamente",
-    ecografia_id,
+    id: ecografiaId,
     neonato_id,
-    relative_path: relPath,
-    file_url: buildPublicURL(relPath),
+    timestamp: now,
+    descripcion: `Subido por médico ${uploader_medico_id}`,
+    has_frames: true,
+    file_path: fileInfo.path,
   };
+}
+
+async function listarEcografiasDeNeonato(neonatoId) {
+  return resumenPorNeonato(neonatoId);
+}
+
+async function obtenerArchivoEcografia(ecografiaId) {
+  return getFirstInstanceFile(ecografiaId);
 }
 
 module.exports = {
-  listEcografiasDeNeonato,
-  listResumenPorNeonato,
-  registrarUpload,
+  subirEcografia,
+  listarEcografiasDeNeonato,
+  obtenerArchivoEcografia,
 };

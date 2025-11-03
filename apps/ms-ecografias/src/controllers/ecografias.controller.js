@@ -1,55 +1,102 @@
-const service = require("../services/ecografias.service");
+const path = require("path");
+const fs = require("fs");
+const {
+  subirEcografia,
+  listarEcografiasDeNeonato,
+  obtenerArchivoEcografia,
+} = require("../services/ecografias.service");
+const { STORAGE_ROOT } = require("../storageConfig");
 
-function sendError(res, err) {
-  console.error("[ms-ecografias] Controller error:", err);
-  const status = err.statusCode || 500;
-  res.status(status).json({
-    error: err.message || "Error interno",
-  });
-}
-
-// GET /api/ecografias?neonato_id=13
-async function listPorQuery(req, res) {
+async function uploadHandler(req, res, next) {
   try {
-    const { neonato_id } = req.query;
-    const data = await service.listEcografiasDeNeonato(neonato_id);
-    res.json(data);
-  } catch (err) {
-    sendError(res, err);
-  }
-}
+    if (!req.file) {
+      return res.status(400).json({ error: "Falta campo 'file' en form-data" });
+    }
 
-// GET /api/ecografias/neonatos/:neonatoId
-async function listPorNeonato(req, res) {
-  try {
-    const { neonatoId } = req.params;
-    const data = await service.listResumenPorNeonato(neonatoId);
-    res.json(data);
-  } catch (err) {
-    sendError(res, err);
-  }
-}
+    const { neonato_id, uploader_medico_id, sede_id } = req.body;
 
-// POST /api/ecografias/upload
-async function uploadEcografia(req, res) {
-  try {
-    const { neonato_id, uploader_medico_id } = req.body;
+    if (!neonato_id) {
+      return res
+        .status(400)
+        .json({ error: "neonato_id es obligatorio en form-data" });
+    }
 
-    const resultado = await service.registrarUpload({
+    // 1. Asegurar carpeta final del neonato
+    const targetDir = path.join(
+      STORAGE_ROOT,
+      neonato_id.toString() // ej: /var/joeycare/storage/ecografias/1
+    );
+    fs.mkdirSync(targetDir, { recursive: true });
+
+    // 2. Construir nueva ruta final del archivo
+    const finalPath = path.join(targetDir, path.basename(req.file.path));
+
+    // 3. Mover archivo desde /tmp/... → /<neonato_id>/...
+    fs.renameSync(req.file.path, finalPath);
+
+    // 4. Llamar la capa de negocio con la ruta FINAL
+    const created = await subirEcografia({
       neonato_id,
       uploader_medico_id,
-      storedFile: req.file,
-      storageRoot: req.app.get("STORAGE_ROOT"),
+      sede_id: sede_id || null,
+      fileInfo: {
+        path: finalPath,                 // OJO: ya no es req.file.path original
+        mimetype: req.file.mimetype,
+        size: req.file.size,
+        originalname: req.file.originalname,
+        filename: path.basename(finalPath),
+      },
+      dicomParsedMetadata: {}, // luego lo llenamos con tags DICOM si quieres
     });
 
-    res.status(201).json(resultado);
+    return res.status(201).json(created);
   } catch (err) {
-    sendError(res, err);
+    next(err);
+  }
+}
+
+async function listByNeonatoHandler(req, res, next) {
+  try {
+    const { neonatoId } = req.params;
+    const data = await listarEcografiasDeNeonato(neonatoId);
+
+    return res.json({
+      items: data,
+      total: data.length,
+      page: 1,
+      size: data.length,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function getFileHandler(req, res, next) {
+  try {
+    const { ecografiaId } = req.params;
+    const fileInfo = await obtenerArchivoEcografia(ecografiaId);
+
+    if (!fileInfo) {
+      return res
+        .status(404)
+        .json({ error: "No hay instancias para esta ecografía" });
+    }
+
+    if (!fs.existsSync(fileInfo.filepath)) {
+      return res
+        .status(410)
+        .json({ error: "Archivo faltante en disco" });
+    }
+
+    res.setHeader("Content-Type", fileInfo.mime_type);
+    return res.sendFile(path.resolve(fileInfo.filepath));
+  } catch (err) {
+    next(err);
   }
 }
 
 module.exports = {
-  listPorQuery,
-  listPorNeonato,
-  uploadEcografia,
+  uploadHandler,
+  listByNeonatoHandler,
+  getFileHandler,
 };

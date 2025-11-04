@@ -39,6 +39,9 @@ function getMedicoIdFromToken() {
   }
 }
 
+// Log al cargar el módulo (para confirmar que este archivo es el que corre)
+console.log("[ImageViewer] módulo cargado");
+
 // =====================
 // COMPONENTE
 // =====================
@@ -129,8 +132,12 @@ export default function ImageViewer({
 
   // lifecycle inicial
   useEffect(() => {
+    console.log("[ImageViewer] MONTADO", { ts: Date.now() });
     setIsMounted(true);
-    return () => setIsMounted(false);
+    return () => {
+      console.log("[ImageViewer] DESMONTADO");
+      setIsMounted(false);
+    };
   }, []);
 
   // persistimos ids para recuperar al volver
@@ -298,12 +305,21 @@ export default function ImageViewer({
       const isSave = (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s";
       if (isSave) {
         e.preventDefault();
+        console.log("[ImageViewer] Abriendo modal (Ctrl/Cmd+S)");
         setShowSaveModal(true);
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
+
+  // Deshabilitar/rehabilitar interactor VTK cuando el modal está abierto
+  useEffect(() => {
+    const i = context.current?.renderWindow?.getInteractor?.();
+    if (!i) return;
+    if (showSaveModal) i.disable?.();
+    else i.enable?.();
+  }, [showSaveModal]);
 
   // =====================
   // utilidades
@@ -856,29 +872,54 @@ export default function ImageViewer({
   }
 
   async function handleIrAReportar() {
+    console.log("[ImageViewer] CLICK IrAReportar");
     setSaving(true);
     setSaveError(null);
     try {
-      if (!ecografiaId || !neonatoId) {
-        throw new Error("Faltan IDs para reportar (neonato/ecografía).");
-      }
-      if (!context.current?.renderWindow) {
-        throw new Error("RenderWindow no disponible");
-      }
-      // 1) medidas
+      // 1) medidas (aunque no haya render listo)
       const medidas = extractMedidasSafe({ pointsState: points, drawingActors });
-      // 2) captura PNG (dataURL)
-      const imageDataUrl = captureAnnotatedFrameDataURL(context.current.renderWindow);
-      // 3) medico_id desde JWT
+
+      // 2) intentar captura; si falla, seguimos sin imagen
+      let imageDataUrl = null;
+      try {
+        if (context.current?.renderWindow) {
+          imageDataUrl = captureAnnotatedFrameDataURL(context.current.renderWindow);
+        }
+      } catch (capErr) {
+        console.error("[ImageViewer] Fallo captura, sigo sin imagen:", capErr);
+      }
+
+      // 3) medico_id (si hay token)
       const medicoId = getMedicoIdFromToken();
-      // 4) payload y respaldo
-      const payload = { ecografiaId, neonatoId, medicoId, medidas, imageDataUrl };
+
+      // 4) payload (aunque falten IDs, Reporte mostrará el aviso)
+      const payload = {
+        ecografiaId: ecografiaId ?? null,
+        neonatoId: neonatoId ?? null,
+        medicoId,
+        medidas,
+        imageDataUrl,
+      };
+
       sessionStorage.setItem("report:payload", JSON.stringify(payload));
       setShowSaveModal(false);
-      // 5) navegar
-      navigate("/reporte/nuevo", { state: payload });
+
+      console.log("[ImageViewer] Navegando a /reporte/nuevo con payload:", payload);
+
+      // 5) navegar (ruta absoluta)
+      navigate("/reporte/nuevo", { state: payload, replace: false });
     } catch (e) {
+      console.error("[ImageViewer] Error preparando reporte:", e);
       setSaveError(e.message || "No se pudo preparar el reporte");
+      // AÚN ASÍ intenta navegar para ver el error desde Reporte
+      const fallback = {
+        ecografiaId,
+        neonatoId,
+        medicoId: getMedicoIdFromToken(),
+        medidas: { puntos: [], trazos: [] },
+        imageDataUrl: null,
+      };
+      navigate("/reporte/nuevo", { state: fallback, replace: false });
     } finally {
       setSaving(false);
     }
@@ -1090,7 +1131,7 @@ export default function ImageViewer({
           {/* abrir modal desde toolbar */}
           <button
             style={{ ...buttonStyle, backgroundColor: "#1976d2" }}
-            onClick={() => setShowSaveModal(true)}
+            onClick={() => { console.log("[ImageViewer] Abriendo modal (toolbar)"); setShowSaveModal(true); }}
           >
             💾 Reportar
           </button>
@@ -1231,30 +1272,69 @@ export default function ImageViewer({
         </div>
       )}
 
-      {/* contenedor VTK */}
+      {/* contenedor VTK - siempre por debajo del overlay/modal */}
       <div
         ref={vtkContainerRef}
         style={
           isEmbedded
-            ? { flex: 1, width: "100%", height: "100%", position: "relative", minHeight: "400px" }
-            : { width: "100%", height: "100%", position: "absolute", top: 0, left: 0 }
+            ? {
+                flex: 1,
+                width: "100%",
+                height: "100%",
+                position: "relative",
+                minHeight: "400px",
+                zIndex: 1,
+                pointerEvents: showSaveModal ? "none" : "auto",
+              }
+            : {
+                width: "100%",
+                height: "100%",
+                position: "absolute",
+                top: 0,
+                left: 0,
+                zIndex: 1,
+                pointerEvents: showSaveModal ? "none" : "auto",
+              }
         }
       />
 
       {/* FAB Reportar (siempre visible) */}
       <button
         className="iv-fab-save"
-        onClick={() => setShowSaveModal(true)}
+        onClick={() => { console.log("[ImageViewer] Abriendo modal (FAB)"); setShowSaveModal(true); }}
         title="Ir a Reporte con anotaciones"
-        disabled={!neonatoId || !ecografiaId}
       >
         💾
       </button>
 
-      {/* Modal Reportar */}
+      {/* Modal Reportar - por encima del canvas (z-index alto) */}
       {showSaveModal && (
-        <div className="iv-modal-overlay">
-          <div className="iv-modal iv-modal-wide">
+        <div
+          className="iv-modal-overlay"
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.6)",
+            zIndex: 99999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            pointerEvents: "auto",
+          }}
+        >
+          <div
+            className="iv-modal iv-modal-wide"
+            style={{
+              background: "#111",
+              color: "#fff",
+              borderRadius: 8,
+              padding: 16,
+              minWidth: 420,
+              maxWidth: "90vw",
+              zIndex: 100000,
+              position: "relative",
+            }}
+          >
             <h3>Enviar a Reporte</h3>
 
             <div className="iv-grid">
@@ -1263,7 +1343,7 @@ export default function ImageViewer({
                 <div className="iv-field">
                   <div className="iv-report-meta">
                     <div>
-                      <strong>Ecografía ID:</strong> {ecografiaId}
+                      <strong>Ecografía ID:</strong> {ecografiaId ?? "—"}
                     </div>
                     <div>
                       <strong>Neonato ID:</strong> {neonatoId ?? "—"}
@@ -1272,8 +1352,7 @@ export default function ImageViewer({
                       <strong>Médico ID (JWT):</strong> {getMedicoIdFromToken() ?? "—"}
                     </div>
                     <div>
-                      <strong>Puntos:</strong> {points.length} &nbsp;|&nbsp; <strong>Trazos:</strong>{" "}
-                      {drawings.length}
+                      <strong>Puntos:</strong> {points.length} &nbsp;|&nbsp; <strong>Trazos:</strong> {drawings.length}
                     </div>
                   </div>
                 </div>
@@ -1287,7 +1366,7 @@ export default function ImageViewer({
                   <button
                     className="iv-btn iv-btn-primary"
                     onClick={handleIrAReportar}
-                    disabled={saving || !neonatoId || !ecografiaId}
+                    disabled={saving}
                   >
                     {saving ? "Preparando…" : "Ir a Reporte"}
                   </button>

@@ -1,7 +1,7 @@
 /* eslint-disable */
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-/*import "./Reporte.css";*/
+import "./Reporte.css";
 
 const API_BASE = import.meta.env.VITE_API_URL || ""; // ej. http://localhost
 

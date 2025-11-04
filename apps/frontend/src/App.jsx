@@ -3,7 +3,7 @@ import { Routes, Route, Navigate, useNavigate, Outlet, useLocation } from "react
 
 import LoginPage from "./features/auth/LoginPage";
 import RegisterPage from "./features/auth/RegisterPage";
-
+import Reporte from "./features/reporte/Reporte"; 
 import ImageSelector from "./features/viewer/ImageSelector";
 import ImageViewer from "./features/viewer/ImageViewer";
 
@@ -231,7 +231,7 @@ export default function App() {
           {/* Herramientas de prueba/debug */}
           <Route path="/vtk-test" element={<VtkViewer />} />
           <Route path="/dicom-test" element={<DicomViewer />} />
-
+          <Route path="/reporte/nuevo" element={<Reporte />} />
           {/* Otras pantallas */}
           <Route path="/cargar-ecografias" element={<CargarEcografia />} />
           <Route path="/dashboard" element={<DashboardPage />} />

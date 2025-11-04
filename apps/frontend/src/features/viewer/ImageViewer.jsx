@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { useRef, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -16,17 +17,35 @@ import { readImage } from "@itk-wasm/image-io";
 
 import "./viewer.css";
 
-// Helper para auth
+// =====================
+// helpers auth / api
+// =====================
+const API_BASE = import.meta.env.VITE_API_URL || ""; // Nginx proxy en /
 function getToken() {
   return localStorage.getItem("token") || "";
+}
+function authHeader() {
+  const t = getToken();
+  return t ? { Authorization: `Bearer ${t}` } : {};
+}
+function getMedicoIdFromToken() {
+  try {
+    const t = localStorage.getItem("token");
+    if (!t) return null;
+    const payload = JSON.parse(atob(t.split(".")[1]));
+    return payload?.medico_id || payload?.id || null;
+  } catch {
+    return null;
+  }
 }
 
 // =====================
 // COMPONENTE
 // =====================
 export default function ImageViewer({
- imageFile = null,
-ecografiaId: ecografiaIdProp = null,
+  imageFile = null,
+  ecografiaId: ecografiaIdProp = null,
+  neonatoId: neonatoIdProp = null,
   isEmbedded = false,
   side = null,
   externalPointMode = false,
@@ -38,23 +57,24 @@ ecografiaId: ecografiaIdProp = null,
   const navigate = useNavigate();
   const { state } = useLocation() || {};
 
-  // Esto es lo que viene del ImageSelector:
-  // {
-  //   ecografiaId,
-  //   medico,
-  //   timestamp
-  // }
-// Soporta 3 orígenes: prop directa, objeto imageFile, o state (selector simple)
- const ecografiaId =
-   ecografiaIdProp ??
-  imageFile?.id ??
-   state?.ecografiaId ??
-   null;
-    
+  // Orígenes: prop, imageFile, state, sessionStorage
+  const ecografiaId =
+    ecografiaIdProp ??
+    imageFile?.id ??
+    state?.ecografiaId ??
+    JSON.parse(sessionStorage.getItem("viewer:last") || "{}")?.ecografiaId ??
+    null;
+
+  const neonatoId =
+    neonatoIdProp ??
+    imageFile?.neonato_id ??
+    state?.neonatoId ??
+    JSON.parse(sessionStorage.getItem("viewer:last") || "{}")?.neonatoId ??
+    null;
+
   const medico = state?.medico || "—";
   const timestamp = state?.timestamp || null;
 
-  // si no vino ecografiaId -> volvemos al selector (vista fallback)
   const hasValidState = !!ecografiaId;
 
   // refs / estado interno del visor
@@ -65,29 +85,27 @@ ecografiaId: ecografiaIdProp = null,
   const [error, setError] = useState(null);
 
   // window/level
-  const [windowLevel, setWindowLevel] = useState({
-    width: 256,
-    center: 128,
-  });
+  const [windowLevel, setWindowLevel] = useState({ width: 256, center: 128 });
 
-  // flags para saber si el componente ya montó
+  // flags
   const [isMounted, setIsMounted] = useState(false);
 
-  // ===== Herramientas de anotación =====
+  // ===== anotación: puntos =====
   const [pointMode, setPointMode] = useState(false);
   const pointModeRef = useRef(false);
 
-  const [points, setPoints] = useState([]);
-  const pointActors = useRef([]);
+  const [points, setPoints] = useState([]); // [{id, pixel:{x,y}, value}]
+  const pointActors = useRef([]); // [{actor, sphereSource, ...}]
 
+  // ===== anotación: trazos =====
   const [drawMode, setDrawMode] = useState(false);
   const drawModeRef = useRef(false);
 
   const [isDrawing, setIsDrawing] = useState(false);
   const isDrawingRef = useRef(false);
 
-  const [drawings, setDrawings] = useState([]);
-  const drawingActors = useRef([]);
+  const [drawings, setDrawings] = useState([]); // [{id, numPoints}]
+  const drawingActors = useRef([]); // [{id, actor, points, color, width}]
   const currentDrawing = useRef({
     worldPoints: [],
     actor: null,
@@ -104,31 +122,35 @@ ecografiaId: ecografiaIdProp = null,
   const [pointColor, setPointColor] = useState([1, 0, 0]);
   const pointColorRef = useRef([1, 0, 0]);
 
-  // =====================
+  // ===== modal "Reportar" =====
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
+
   // lifecycle inicial
-  // =====================
   useEffect(() => {
     setIsMounted(true);
-    return () => {
-      setIsMounted(false);
-    };
+    return () => setIsMounted(false);
   }, []);
 
-  // sincronizar modos externos si estamos embebidos en comparación
+  // persistimos ids para recuperar al volver
+  useEffect(() => {
+    if (ecografiaId || neonatoId) {
+      sessionStorage.setItem("viewer:last", JSON.stringify({ ecografiaId, neonatoId }));
+    }
+  }, [ecografiaId, neonatoId]);
+
+  // sincronizar modos externos si estamos embebidos
   useEffect(() => {
     if (isEmbedded) {
       setPointMode(externalPointMode);
       pointModeRef.current = externalPointMode;
-
       setDrawMode(externalDrawMode);
       drawModeRef.current = externalDrawMode;
-
       setPointColor(externalPointColor);
       pointColorRef.current = externalPointColor;
-
       setDrawColor(externalDrawColor);
       drawColorRef.current = externalDrawColor;
-
       setLineWidth(externalLineWidth);
       lineWidthRef.current = externalLineWidth;
     }
@@ -141,7 +163,7 @@ ecografiaId: ecografiaIdProp = null,
     externalLineWidth,
   ]);
 
-  // eventos globales SOLO en modo embebido (comparación lado a lado)
+  // eventos globales solo embebido
   useEffect(() => {
     if (!isEmbedded || !side) return;
 
@@ -154,11 +176,7 @@ ecografiaId: ecografiaIdProp = null,
     };
 
     const handleAutoWL = () => {
-      if (
-        context.current &&
-        context.current.isGrayscale &&
-        context.current.rawPixelData
-      ) {
+      if (context.current && context.current.isGrayscale && context.current.rawPixelData) {
         const pixelData = context.current.rawPixelData;
         let min = Infinity,
           max = -Infinity;
@@ -166,27 +184,18 @@ ecografiaId: ecografiaIdProp = null,
           if (pixelData[i] < min) min = pixelData[i];
           if (pixelData[i] > max) max = pixelData[i];
         }
-        setWindowLevel({
-          width: max - min,
-          center: min + (max - min) / 2,
-        });
+        setWindowLevel({ width: max - min, center: min + (max - min) / 2 });
       }
     };
 
     const handleClearPoints = (e) => {
       const targetSide = e.detail.side;
-      if (targetSide === "both" || targetSide === side) {
-        clearAllPoints();
-      }
+      if (targetSide === "both" || targetSide === side) clearAllPoints();
     };
-
     const handleClearDrawings = (e) => {
       const targetSide = e.detail.side;
-      if (targetSide === "both" || targetSide === side) {
-        clearAllDrawings();
-      }
+      if (targetSide === "both" || targetSide === side) clearAllDrawings();
     };
-
     const handleSetPointMode = (e) => {
       const enabled = e.detail.enabled;
       setPointMode(enabled);
@@ -196,7 +205,6 @@ ecografiaId: ecografiaIdProp = null,
         drawModeRef.current = false;
       }
     };
-
     const handleSetDrawMode = (e) => {
       const enabled = e.detail.enabled;
       setDrawMode(enabled);
@@ -206,19 +214,16 @@ ecografiaId: ecografiaIdProp = null,
         pointModeRef.current = false;
       }
     };
-
     const handleSetPointColor = (e) => {
       const color = e.detail.color;
       setPointColor(color);
       pointColorRef.current = color;
     };
-
     const handleSetDrawColor = (e) => {
       const color = e.detail.color;
       setDrawColor(color);
       drawColorRef.current = color;
     };
-
     const handleSetLineWidth = (e) => {
       const width = e.detail.width;
       setLineWidth(width);
@@ -234,7 +239,6 @@ ecografiaId: ecografiaIdProp = null,
     window.addEventListener("setPointColor", handleSetPointColor);
     window.addEventListener("setDrawColor", handleSetDrawColor);
     window.addEventListener("setLineWidth", handleSetLineWidth);
-
     return () => {
       window.removeEventListener("resetView", handleResetView);
       window.removeEventListener("autoWindowLevel", handleAutoWL);
@@ -248,29 +252,22 @@ ecografiaId: ecografiaIdProp = null,
     };
   }, [isEmbedded, side]);
 
-  // =====================
-  // cargar la ecografía real del backend
-  // =====================
+  // cargar imagen
   useEffect(() => {
-    if (!hasValidState) return; // si no hay ecografiaId no intentes
+    if (!hasValidState) return;
     if (!vtkContainerRef.current) return;
 
-    // limpiar HTML previo
     vtkContainerRef.current.innerHTML = "";
 
-    // lanzamos la carga
     const timer = setTimeout(() => {
-      if (isMounted) {
-        loadAndRenderImage();
-      }
+      if (isMounted) loadAndRenderImage();
     }, isEmbedded ? 100 : 0);
 
-    // cleanup al desmontar o al cambiar de eco
     return () => {
       clearTimeout(timer);
       cleanupPoints();
       cleanupDrawings();
-       cleanupVTK();
+      cleanupVTK();
       if (context.current) {
         try {
           const { fullScreenRenderer, renderWindow } = context.current;
@@ -278,9 +275,7 @@ ecografiaId: ecografiaIdProp = null,
             const interactor = renderWindow.getInteractor();
             if (interactor) interactor.unbindEvents();
           }
-          if (fullScreenRenderer) {
-            fullScreenRenderer.delete();
-          }
+          if (fullScreenRenderer) fullScreenRenderer.delete();
         } catch (err) {
           console.error("Error durante cleanup:", err);
         }
@@ -290,21 +285,29 @@ ecografiaId: ecografiaIdProp = null,
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasValidState, isMounted, ecografiaId, isEmbedded]);
 
-  // aplicar W/L cuando cambie la ventana
+  // aplicar W/L
   useEffect(() => {
-    if (
-      context.current &&
-      context.current.isGrayscale &&
-      context.current.rawPixelData
-    ) {
+    if (context.current && context.current.isGrayscale && context.current.rawPixelData) {
       updateWindowLevel();
     }
   }, [windowLevel]);
 
+  // atajo Ctrl/Cmd + S para abrir modal
+  useEffect(() => {
+    const onKey = (e) => {
+      const isSave = (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s";
+      if (isSave) {
+        e.preventDefault();
+        setShowSaveModal(true);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   // =====================
   // utilidades
   // =====================
-
   const getMimeTypeFromExt = (filenameGuess) => {
     const ext = filenameGuess?.split(".").pop()?.toLowerCase();
     const map = {
@@ -320,34 +323,15 @@ ecografiaId: ecografiaIdProp = null,
   async function loadAndRenderImage() {
     setLoading(true);
     setError(null);
-
     try {
-      // 1. pedirle el archivo bruto al backend MS-ECOGRAFIAS
-      //    Nginx ya lo expone así:
-      //    GET /api/ecografias/:ecografiaId/archivo
-      //    con Authorization: Bearer <token>
-      const resp = await fetch(
-        `/api/ecografias/${encodeURIComponent(ecografiaId)}/archivo`,
-        {
-          headers: {
-            Authorization: `Bearer ${getToken()}`,
-          },
-        }
-      );
+      // 1) archivo desde ms-ecografias (via Nginx)
+      const resp = await fetch(`/api/ecografias/${encodeURIComponent(ecografiaId)}/archivo`, {
+        headers: { ...authHeader() },
+      });
+      if (!resp.ok) throw new Error(`Error ${resp.status} descargando archivo de la ecografía`);
 
-      if (!resp.ok) {
-        throw new Error(
-          `Error ${resp.status} descargando archivo de la ecografía`
-        );
-      }
-
-      // tipo MIME que devolvió el backend (ej. application/dicom o image/png)
-      const contentType =
-        resp.headers.get("Content-Type") || "application/octet-stream";
-
+      const contentType = resp.headers.get("Content-Type") || "application/octet-stream";
       const arrayBuffer = await resp.arrayBuffer();
-
-      // Creamos un File "virtual" para pasárselo a itk-wasm/readImage
       const fakeFileName =
         contentType.includes("dicom") || contentType.includes("dcm")
           ? `${ecografiaId}.dcm`
@@ -361,7 +345,7 @@ ecografiaId: ecografiaIdProp = null,
         type: getMimeTypeFromExt(fakeFileName),
       });
 
-      // 2. parsear con itk-wasm
+      // 2) parsear con itk
       const result = await readImage(file);
       const itkImage = result.image;
 
@@ -371,10 +355,9 @@ ecografiaId: ecografiaIdProp = null,
       const isRGB = itkImage.imageType.components === 3;
       const isGrayscale = itkImage.imageType.components === 1;
 
-      // calcular ventana inicial si es grayscale
       if (isGrayscale) {
-        let min = Infinity;
-        let max = -Infinity;
+        let min = Infinity,
+          max = -Infinity;
         for (let i = 0; i < pixelData.length; i++) {
           if (pixelData[i] < min) min = pixelData[i];
           if (pixelData[i] > max) max = pixelData[i];
@@ -384,7 +367,7 @@ ecografiaId: ecografiaIdProp = null,
         setWindowLevel({ width: initialWidth, center: initialCenter });
       }
 
-      // 3. poner los píxeles en un canvas 2D
+      // 3) canvas 2D
       const canvas = document.createElement("canvas");
       canvas.width = width;
       canvas.height = height;
@@ -392,7 +375,6 @@ ecografiaId: ecografiaIdProp = null,
       const imageData = ctx.createImageData(width, height);
 
       if (isRGB) {
-        // RGB → copiar tal cual
         for (let i = 0; i < width * height; i++) {
           imageData.data[i * 4] = pixelData[i * 3];
           imageData.data[i * 4 + 1] = pixelData[i * 3 + 1];
@@ -400,7 +382,6 @@ ecografiaId: ecografiaIdProp = null,
           imageData.data[i * 4 + 3] = 255;
         }
       } else {
-        // escala de grises → mismo valor en R,G,B
         for (let i = 0; i < width * height; i++) {
           const v = pixelData[i];
           imageData.data[i * 4] = v;
@@ -409,11 +390,10 @@ ecografiaId: ecografiaIdProp = null,
           imageData.data[i * 4 + 3] = 255;
         }
       }
-
       ctx.putImageData(imageData, 0, 0);
 
-      // 4. limpiar un render viejo si había
-      if (context.current && context.current.fullScreenRenderer) {
+      // 4) limpiar si había
+      if (context.current?.fullScreenRenderer) {
         try {
           context.current.fullScreenRenderer.delete();
         } catch (err) {
@@ -422,36 +402,20 @@ ecografiaId: ecografiaIdProp = null,
         context.current = null;
       }
 
-      // 5. montar VTK en el contenedor
-      if (!vtkContainerRef.current) {
-        console.error(
-          "El contenedor del visor desapareció antes de terminar"
-        );
-        return;
-      }
+      // 5) montar VTK
+      if (!vtkContainerRef.current) return;
 
       const fullScreenRenderer = vtkFullScreenRenderWindow.newInstance({
         rootContainer: vtkContainerRef.current,
         containerStyle: isEmbedded
-          ? {
-              width: "100%",
-              height: "100%",
-              position: "relative",
-            }
-          : {
-              width: "100%",
-              height: "100%",
-              position: "absolute",
-              top: 0,
-              left: 0,
-            },
+          ? { width: "100%", height: "100%", position: "relative" }
+          : { width: "100%", height: "100%", position: "absolute", top: 0, left: 0 },
       });
 
       const renderer = fullScreenRenderer.getRenderer();
       const renderWindow = fullScreenRenderer.getRenderWindow();
       renderer.setBackground(0, 0, 0);
 
-      // Plano donde "pegamos" la textura
       const planeSource = vtkPlaneSource.newInstance();
       const mapper = vtkMapper.newInstance();
       mapper.setInputConnection(planeSource.getOutputPort());
@@ -464,15 +428,13 @@ ecografiaId: ecografiaIdProp = null,
       textureObj.setInterpolate(true);
       actor.addTexture(textureObj);
 
-      // mantener la imagen completa visible respetando aspect ratio
+      // aspect fit
       const aspect = width / height;
       if (aspect > 1) {
-        // horizontal
         planeSource.setOrigin(-aspect / 2, -0.5, 0);
         planeSource.setPoint1(aspect / 2, -0.5, 0);
         planeSource.setPoint2(-aspect / 2, 0.5, 0);
       } else {
-        // vertical
         const invAspect = 1 / aspect;
         planeSource.setOrigin(-0.5, -invAspect / 2, 0);
         planeSource.setPoint1(0.5, -invAspect / 2, 0);
@@ -481,7 +443,6 @@ ecografiaId: ecografiaIdProp = null,
 
       renderer.addActor(actor);
 
-      // cámara ortográfica tipo visor médico
       const camera = renderer.getActiveCamera();
       camera.setParallelProjection(true);
       camera.setPosition(0, 0, 1);
@@ -490,12 +451,11 @@ ecografiaId: ecografiaIdProp = null,
       camera.setClippingRange(0.001, 100.0);
       renderer.resetCamera();
 
-      // interacción tipo imagen médica
       const interactor = renderWindow.getInteractor();
       const interactorStyle = vtkInteractorStyleImage.newInstance();
       interactor.setInteractorStyle(interactorStyle);
 
-      // ====== Eventos de interacción (click = punto, arrastrar = trazo) ======
+      // eventos
       interactor.onLeftButtonPress((callData) => {
         const pos = callData.position;
         const view = renderWindow.getViews()[0];
@@ -504,7 +464,6 @@ ecografiaId: ecografiaIdProp = null,
         if (drawModeRef.current) {
           startDrawing(worldCoord);
         } else if (pointModeRef.current) {
-          // mapear coordenadas a pixel
           const origin = planeSource.getOrigin();
           const p1 = planeSource.getPoint1();
           const p2 = planeSource.getPoint2();
@@ -517,7 +476,6 @@ ecografiaId: ecografiaIdProp = null,
 
           const px = Math.round(u * width);
           const py = Math.round(v * height);
-
           if (px < 0 || px >= width || py < 0 || py >= height) return;
 
           let pixelValue = null;
@@ -525,7 +483,6 @@ ecografiaId: ecografiaIdProp = null,
             const idx = py * width + px;
             pixelValue = pixelData[idx];
           }
-
           addPointActor(worldCoord, { x: px, y: py }, pixelValue);
         }
       });
@@ -540,9 +497,7 @@ ecografiaId: ecografiaIdProp = null,
       });
 
       interactor.onLeftButtonRelease(() => {
-        if (isDrawingRef.current && drawModeRef.current) {
-          finishDrawing();
-        }
+        if (isDrawingRef.current && drawModeRef.current) finishDrawing();
       });
 
       interactor.onMouseWheel((callData) => {
@@ -553,7 +508,6 @@ ecografiaId: ecografiaIdProp = null,
         renderWindow.render();
       });
 
-      // Guardamos todo en context para reutilizar
       context.current = {
         fullScreenRenderer,
         renderer,
@@ -580,20 +534,10 @@ ecografiaId: ecografiaIdProp = null,
     }
   }
 
-  // =====================
-  // helpers de anotaciones
-  // =====================
-
   function updateWindowLevel() {
-    if (
-      !context.current?.rawPixelData ||
-      !context.current?.texture ||
-      !context.current?.renderWindow
-    )
-      return;
+    if (!context.current?.rawPixelData || !context.current?.texture || !context.current?.renderWindow) return;
 
-    const { rawPixelData, width, height, texture, renderWindow } =
-      context.current;
+    const { rawPixelData, width, height, texture, renderWindow } = context.current;
 
     const canvas = document.createElement("canvas");
     canvas.width = width;
@@ -673,16 +617,7 @@ ecografiaId: ecografiaIdProp = null,
     };
 
     pointActors.current.push(pointData);
-
-    setPoints((prev) => [
-      ...prev,
-      {
-        id: pointData.id,
-        pixel: pixelPos,
-        value: pixelValue,
-      },
-    ]);
-
+    setPoints((prev) => [...prev, { id: pointData.id, pixel: pixelPos, value: pixelValue }]);
     renderWindow.render();
   }
 
@@ -690,8 +625,6 @@ ecografiaId: ecografiaIdProp = null,
     if (!context.current) return;
 
     const currentColor = drawColorRef.current;
-    theLineWidth: {
-    }
     const currentWidth = lineWidthRef.current;
     const { renderer } = context.current;
 
@@ -731,22 +664,14 @@ ecografiaId: ecografiaIdProp = null,
 
     isDrawingRef.current = true;
     setIsDrawing(true);
-
-    if (context.current) {
-      context.current.renderWindow.render();
-    }
+    context.current?.renderWindow.render();
   }
 
   function continueDrawing(worldPos) {
     if (!isDrawingRef.current || !currentDrawing.current) return;
-    if (
-      !currentDrawing.current.polyData ||
-      !currentDrawing.current.worldPoints
-    )
-      return;
+    if (!currentDrawing.current.polyData || !currentDrawing.current.worldPoints) return;
 
-    const { worldPoints, vtkPoints, lines, polyData } =
-      currentDrawing.current;
+    const { worldPoints, vtkPoints, lines, polyData } = currentDrawing.current;
 
     worldPoints.push(worldPos);
 
@@ -756,12 +681,9 @@ ecografiaId: ecografiaIdProp = null,
     }
 
     lines.initialize();
-
     if (worldPoints.length >= 2) {
       const polylineCell = [worldPoints.length];
-      for (let i = 0; i < worldPoints.length; i++) {
-        polylineCell.push(i);
-      }
+      for (let i = 0; i < worldPoints.length; i++) polylineCell.push(i);
       lines.insertNextCell(polylineCell);
     }
 
@@ -769,15 +691,12 @@ ecografiaId: ecografiaIdProp = null,
     polyData.setLines(lines);
     polyData.modified();
 
-    if (context.current) {
-      context.current.renderWindow.render();
-    }
+    context.current?.renderWindow.render();
   }
 
   function finishDrawing() {
     if (!isDrawingRef.current || !currentDrawing.current) return;
-    if (!currentDrawing.current.actor || !currentDrawing.current.worldPoints)
-      return;
+    if (!currentDrawing.current.actor || !currentDrawing.current.worldPoints) return;
 
     if (currentDrawing.current.worldPoints.length > 1) {
       const drawingData = {
@@ -789,31 +708,16 @@ ecografiaId: ecografiaIdProp = null,
         color: currentDrawing.current.color,
         width: currentDrawing.current.width,
       };
-
       drawingActors.current.push(drawingData);
-
-      setDrawings((prev) => [
-        ...prev,
-        {
-          id: drawingData.id,
-          numPoints: drawingData.points.length,
-        },
-      ]);
+      setDrawings((prev) => [...prev, { id: drawingData.id, numPoints: drawingData.points.length }]);
     } else {
       if (context.current) {
-        context.current.renderer.removeActor(
-          currentDrawing.current.actor
-        );
+        context.current.renderer.removeActor(currentDrawing.current.actor);
         currentDrawing.current.actor.delete();
       }
     }
 
-    currentDrawing.current = {
-      worldPoints: [],
-      actor: null,
-      mapper: null,
-      polyData: null,
-    };
+    currentDrawing.current = { worldPoints: [], actor: null, mapper: null, polyData: null };
     isDrawingRef.current = false;
     setIsDrawing(false);
   }
@@ -871,91 +775,119 @@ ecografiaId: ecografiaIdProp = null,
   }
 
   function handleAutoWindowLevel() {
-    if (
-      context.current &&
-      context.current.isGrayscale &&
-      context.current.rawPixelData
-    ) {
+    if (context.current && context.current.isGrayscale && context.current.rawPixelData) {
       const pixelData = context.current.rawPixelData;
-      let min = Infinity;
-      let max = -Infinity;
+      let min = Infinity,
+        max = -Infinity;
       for (let i = 0; i < pixelData.length; i++) {
         if (pixelData[i] < min) min = pixelData[i];
         if (pixelData[i] > max) max = pixelData[i];
       }
-      setWindowLevel({
-        width: max - min,
-        center: min + (max - min) / 2,
-      });
+      setWindowLevel({ width: max - min, center: min + (max - min) / 2 });
     }
   }
 
-  // <-- ESTE ES EL NUEVO "VOLVER" ESTABLE -->
+  function cleanupVTK() {
+    if (context.current) {
+      try {
+        const { fullScreenRenderer, renderWindow } = context.current;
+        if (renderWindow) {
+          const interactor = renderWindow.getInteractor?.();
+          if (interactor) interactor.unbindEvents?.();
+        }
+        if (fullScreenRenderer) fullScreenRenderer.delete?.();
+      } catch (e) {
+        console.warn("cleanup VTK error:", e);
+      }
+      context.current = null;
+    }
+    if (vtkContainerRef.current) {
+      try {
+        vtkContainerRef.current.innerHTML = "";
+        vtkContainerRef.current.removeAttribute("style");
+      } catch {}
+    }
+    try {
+      document.body.style.overflow = "";
+      document.body.style.margin = "";
+      document.body.style.background = "";
+    } catch {}
+    document
+      .querySelectorAll(".vtk-js-fullscreen-render-window, .vtk-container, canvas.vtkglCanvas")
+      .forEach((el) => {
+        if (!vtkContainerRef.current || !vtkContainerRef.current.contains(el)) el.remove();
+      });
+  }
+
+  function cleanupPoints() {
+    try {
+      clearAllPoints();
+    } catch {}
+  }
+  function cleanupDrawings() {
+    try {
+      clearAllDrawings();
+    } catch {}
+  }
+
   function handleVolver() {
     cleanupVTK();
-    // cleanup del renderer para que no quede enganchado el canvas al cambiar de ruta
-    if (context.current?.fullScreenRenderer) {
-      try {
-        context.current.fullScreenRenderer.delete();
-      } catch (e) {
-        console.warn("cleanup VTK falló al volver (ok igual):", e);
-      }
-    }
-    context.current = null;
-
-    // volvemos SIEMPRE al selector estable
     navigate("/visualizar-ecografias", { replace: true });
   }
 
-function cleanupVTK() {
-  // 1) Eliminar interactor/renderer de VTK
-  if (context.current) {
+  // =====================
+  // Medidas + captura + navegación a Reporte
+  // =====================
+  function extractMedidasSafe({ pointsState, drawingActors }) {
+    const puntos = pointsState.map((p) => [p.pixel.x, p.pixel.y]);
+    const trazos = drawingActors.current.map((d) => ({
+      numPoints: d.points?.length || 0,
+      color: d.color || [1, 0, 0],
+      width: d.width || 2,
+    }));
+    return { puntos, trazos };
+  }
+
+  // Captura la imagen actual del render VTK (con anotaciones) como dataURL
+  function captureAnnotatedFrameDataURL(renderWindow) {
+    const images = renderWindow.captureImages([{ format: "image/png" }]);
+    if (!images || !images.length) throw new Error("No se pudo capturar el canvas");
+    return images[0]; // dataURL
+  }
+
+  async function handleIrAReportar() {
+    setSaving(true);
+    setSaveError(null);
     try {
-      const { fullScreenRenderer, renderWindow } = context.current;
-      if (renderWindow) {
-        const interactor = renderWindow.getInteractor?.();
-        if (interactor) interactor.unbindEvents?.();
+      if (!ecografiaId || !neonatoId) {
+        throw new Error("Faltan IDs para reportar (neonato/ecografía).");
       }
-      if (fullScreenRenderer) fullScreenRenderer.delete?.();
+      if (!context.current?.renderWindow) {
+        throw new Error("RenderWindow no disponible");
+      }
+      // 1) medidas
+      const medidas = extractMedidasSafe({ pointsState: points, drawingActors });
+      // 2) captura PNG (dataURL)
+      const imageDataUrl = captureAnnotatedFrameDataURL(context.current.renderWindow);
+      // 3) medico_id desde JWT
+      const medicoId = getMedicoIdFromToken();
+      // 4) payload y respaldo
+      const payload = { ecografiaId, neonatoId, medicoId, medidas, imageDataUrl };
+      sessionStorage.setItem("report:payload", JSON.stringify(payload));
+      setShowSaveModal(false);
+      // 5) navegar
+      navigate("/reporte/nuevo", { state: payload });
     } catch (e) {
-      console.warn("cleanup VTK error:", e);
+      setSaveError(e.message || "No se pudo preparar el reporte");
+    } finally {
+      setSaving(false);
     }
-    context.current = null;
   }
 
-  // 2) Limpiar contenedor DOM (por si VTK dejó algo dentro)
-  if (vtkContainerRef.current) {
-    try {
-      vtkContainerRef.current.innerHTML = "";
-      // resetear estilos por si quedaron “absolutos”
-      vtkContainerRef.current.removeAttribute("style");
-    } catch {/* no-op */}
-  }
-
-  // 3) Restaurar estilos globales del body que VTK suele tocar
-  try {
-    document.body.style.overflow = "";
-    document.body.style.margin = "";
-    document.body.style.background = ""; // por si quedó negro
-  } catch {/* no-op */}
-
-  // 4) Quitar overlays “huérfanos” (defensivo)
-  // VTK a veces crea wrappers con clase conocida; barrido preventivo
-  document
-    .querySelectorAll(".vtk-js-fullscreen-render-window, .vtk-container, canvas.vtkglCanvas")
-    .forEach((el) => {
-      if (!vtkContainerRef.current || !vtkContainerRef.current.contains(el)) {
-        el.remove();
-      }
-    });
-}
-
-
   // =====================
-  // Render JSX
+  // Render
   // =====================
 
-  // Caso: alguien entró directo sin seleccionar nada
   if (!hasValidState || !isMounted) {
     return (
       <div
@@ -974,11 +906,7 @@ function cleanupVTK() {
         <div style={{ fontSize: "1rem", color: "#ccc", textAlign: "center" }}>
           No hay ecografía seleccionada.
         </div>
-
-        <button
-          onClick={handleVolver}
-          style={buttonStyle}
-        >
+        <button onClick={handleVolver} style={buttonStyle}>
           ← Volver
         </button>
       </div>
@@ -990,19 +918,8 @@ function cleanupVTK() {
       className={isEmbedded ? "vtk-embedded" : "vtk-fullscreen"}
       style={
         isEmbedded
-          ? {
-              height: "100%",
-              display: "flex",
-              flexDirection: "column",
-              position: "relative",
-            }
-          : {
-              width: "100%",
-              height: "100vh",
-              position: "relative",
-              background: "#000",
-              overflow: "hidden",
-            }
+          ? { height: "100%", display: "flex", flexDirection: "column", position: "relative" }
+          : { width: "100%", height: "100vh", position: "relative", background: "#000", overflow: "hidden" }
       }
     >
       {/* TOOLBAR SUPERIOR */}
@@ -1010,7 +927,7 @@ function cleanupVTK() {
         <div
           style={{
             position: "absolute",
-            top: 0,
+            top: 70,
             left: 0,
             right: 0,
             height: "60px",
@@ -1019,7 +936,7 @@ function cleanupVTK() {
             alignItems: "center",
             padding: "0 10px",
             gap: "10px",
-            zIndex: 100,
+            zIndex: 2500,
             flexWrap: "wrap",
             fontSize: "13px",
             color: "#fff",
@@ -1034,11 +951,13 @@ function cleanupVTK() {
               <strong>Ecografía ID:</strong> {ecografiaId}
             </div>
             <div>
+              <strong>Neonato ID:</strong> {neonatoId ?? "—"}
+            </div>
+            <div>
               <strong>Médico:</strong> {medico}
             </div>
             <div>
-              <strong>Fecha:</strong>{" "}
-              {timestamp ? new Date(timestamp).toLocaleString() : "—"}
+              <strong>Fecha:</strong> {timestamp ? new Date(timestamp).toLocaleString() : "—"}
             </div>
           </div>
 
@@ -1052,18 +971,14 @@ function cleanupVTK() {
                 Auto W/L
               </button>
               <span>
-                W: {Math.round(windowLevel.width)} | L:{" "}
-                {Math.round(windowLevel.center)}
+                W: {Math.round(windowLevel.width)} | L: {Math.round(windowLevel.center)}
               </span>
             </>
           )}
 
-          {/* modo punto */}
+          {/* punto */}
           <button
-            style={{
-              ...buttonStyle,
-              backgroundColor: pointMode ? "#2196f3" : "#333",
-            }}
+            style={{ ...buttonStyle, backgroundColor: pointMode ? "#2196f3" : "#333" }}
             onClick={() => {
               const newPointMode = !pointMode;
               setPointMode(newPointMode);
@@ -1097,12 +1012,9 @@ function cleanupVTK() {
             </select>
           )}
 
-          {/* modo lápiz */}
+          {/* lápiz */}
           <button
-            style={{
-              ...buttonStyle,
-              backgroundColor: drawMode ? "#4caf50" : "#333",
-            }}
+            style={{ ...buttonStyle, backgroundColor: drawMode ? "#4caf50" : "#333" }}
             onClick={() => {
               const newDrawMode = !drawMode;
               setDrawMode(newDrawMode);
@@ -1174,22 +1086,30 @@ function cleanupVTK() {
               </button>
             </>
           )}
+
+          {/* abrir modal desde toolbar */}
+          <button
+            style={{ ...buttonStyle, backgroundColor: "#1976d2" }}
+            onClick={() => setShowSaveModal(true)}
+          >
+            💾 Reportar
+          </button>
         </div>
       )}
 
-      {/* Panel lateral con anotaciones */}
+      {/* Panel lateral (resumen) */}
       {!isEmbedded && (points.length > 0 || drawings.length > 0) && (
         <div
           style={{
             position: "absolute",
-            top: "70px",
+            top: "140px",
             right: "10px",
             background: "rgba(0,0,0,0.85)",
             padding: "10px",
             borderRadius: "5px",
             color: "#fff",
             fontSize: "12px",
-            maxHeight: "calc(100vh - 150px)",
+            maxHeight: "calc(100vh - 200px)",
             overflowY: "auto",
             minWidth: "200px",
             zIndex: 100,
@@ -1197,13 +1117,7 @@ function cleanupVTK() {
         >
           {points.length > 0 && (
             <>
-              <div
-                style={{
-                  fontWeight: "bold",
-                  marginBottom: "8px",
-                  fontSize: "14px",
-                }}
-              >
+              <div style={{ fontWeight: "bold", marginBottom: "8px", fontSize: "14px" }}>
                 Puntos ({points.length})
               </div>
               {points.map((pt, idx) => (
@@ -1217,33 +1131,18 @@ function cleanupVTK() {
                     borderLeft: "3px solid #2196f3",
                   }}
                 >
-                  <div
-                    style={{
-                      fontWeight: "bold",
-                      color: "#2196f3",
-                    }}
-                  >
-                    Punto {idx + 1}
-                  </div>
+                  <div style={{ fontWeight: "bold", color: "#2196f3" }}>Punto {idx + 1}</div>
                   <div>X: {pt.pixel.x} px</div>
                   <div>Y: {pt.pixel.y} px</div>
-                  {pt.value !== null && (
-                    <div>Valor: {Math.round(pt.value)}</div>
-                  )}
+                  {pt.value !== null && <div>Valor: {Math.round(pt.value)}</div>}
                 </div>
               ))}
             </>
           )}
-
           {drawings.length > 0 && (
             <>
               <div
-                style={{
-                  fontWeight: "bold",
-                  marginTop: "12px",
-                  marginBottom: "8px",
-                  fontSize: "14px",
-                }}
+                style={{ fontWeight: "bold", marginTop: "12px", marginBottom: "8px", fontSize: "14px" }}
               >
                 Trazos ({drawings.length})
               </div>
@@ -1258,14 +1157,7 @@ function cleanupVTK() {
                     borderLeft: "3px solid #4caf50",
                   }}
                 >
-                  <div
-                    style={{
-                      fontWeight: "bold",
-                      color: "#4caf50",
-                    }}
-                  >
-                    Trazo {idx + 1}
-                  </div>
+                  <div style={{ fontWeight: "bold", color: "#4caf50" }}>Trazo {idx + 1}</div>
                   <div>Puntos: {d.numPoints}</div>
                 </div>
               ))}
@@ -1274,7 +1166,7 @@ function cleanupVTK() {
         </div>
       )}
 
-      {/* Hint de ayuda en esquina inferior izquierda */}
+      {/* Hints */}
       {!isEmbedded && (
         <div
           style={{
@@ -1290,20 +1182,16 @@ function cleanupVTK() {
           }}
         >
           {drawMode ? (
-            <span style={{ color: "#4caf50", fontWeight: "bold" }}>
-              🖱️ Click izq + arrastrar: Dibujar
-            </span>
+            <span style={{ color: "#4caf50", fontWeight: "bold" }}>🖱️ Click izq + arrastrar: Dibujar</span>
           ) : pointMode ? (
-            <span style={{ color: "#2196f3", fontWeight: "bold" }}>
-              🖱️ Click izq: Colocar punto
-            </span>
+            <span style={{ color: "#2196f3", fontWeight: "bold" }}>🖱️ Click izq: Colocar punto</span>
           ) : (
-            <>🖱️ Rueda: Zoom | Click der: Pan</>
+            <>🖱️ Rueda: Zoom | Click der: Pan • Ctrl/Cmd + S: Reportar</>
           )}
         </div>
       )}
 
-      {/* overlays de estado */}
+      {/* overlays */}
       {loading && (
         <div
           style={{
@@ -1322,7 +1210,6 @@ function cleanupVTK() {
           Cargando imagen...
         </div>
       )}
-
       {error && (
         <div
           style={{
@@ -1344,32 +1231,97 @@ function cleanupVTK() {
         </div>
       )}
 
-      {/* contenedor donde VTK mete el canvas */}
+      {/* contenedor VTK */}
       <div
         ref={vtkContainerRef}
         style={
           isEmbedded
-            ? {
-                flex: 1,
-                width: "100%",
-                height: "100%",
-                position: "relative",
-                minHeight: "400px",
-              }
-            : {
-                width: "100%",
-                height: "100%",
-                position: "absolute",
-                top: 0,
-                left: 0,
-              }
+            ? { flex: 1, width: "100%", height: "100%", position: "relative", minHeight: "400px" }
+            : { width: "100%", height: "100%", position: "absolute", top: 0, left: 0 }
         }
       />
+
+      {/* FAB Reportar (siempre visible) */}
+      <button
+        className="iv-fab-save"
+        onClick={() => setShowSaveModal(true)}
+        title="Ir a Reporte con anotaciones"
+        disabled={!neonatoId || !ecografiaId}
+      >
+        💾
+      </button>
+
+      {/* Modal Reportar */}
+      {showSaveModal && (
+        <div className="iv-modal-overlay">
+          <div className="iv-modal iv-modal-wide">
+            <h3>Enviar a Reporte</h3>
+
+            <div className="iv-grid">
+              {/* Lado izquierdo: resumen */}
+              <div className="iv-col">
+                <div className="iv-field">
+                  <div className="iv-report-meta">
+                    <div>
+                      <strong>Ecografía ID:</strong> {ecografiaId}
+                    </div>
+                    <div>
+                      <strong>Neonato ID:</strong> {neonatoId ?? "—"}
+                    </div>
+                    <div>
+                      <strong>Médico ID (JWT):</strong> {getMedicoIdFromToken() ?? "—"}
+                    </div>
+                    <div>
+                      <strong>Puntos:</strong> {points.length} &nbsp;|&nbsp; <strong>Trazos:</strong>{" "}
+                      {drawings.length}
+                    </div>
+                  </div>
+                </div>
+
+                {saveError && <div className="iv-error">⚠ {saveError}</div>}
+
+                <div className="iv-actions">
+                  <button className="iv-btn" onClick={() => setShowSaveModal(false)} disabled={saving}>
+                    Cancelar
+                  </button>
+                  <button
+                    className="iv-btn iv-btn-primary"
+                    onClick={handleIrAReportar}
+                    disabled={saving || !neonatoId || !ecografiaId}
+                  >
+                    {saving ? "Preparando…" : "Ir a Reporte"}
+                  </button>
+                </div>
+
+                <div className="iv-report-footnote">
+                  * Al continuar se captura la imagen del visor con las anotaciones actuales y pasarás a “Reporte”.
+                </div>
+              </div>
+
+              {/* Lado derecho: hint visual */}
+              <div className="iv-col">
+                <div className="iv-report-card">
+                  <div className="iv-report-header">
+                    <div>
+                      <div className="iv-report-title">Reporte de Ecografía</div>
+                      <div className="iv-report-sub">Vista previa se genera en Reporte</div>
+                    </div>
+                    <span className={`iv-badge borrador`}>borrador</span>
+                  </div>
+                  <div className="iv-report-text iv-muted">
+                    Aquí solo confirmas que enviarás la captura y las anotaciones. La edición completa (diagnóstico,
+                    conclusión, estado) se hace en la pantalla “Reporte”.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-// estilo compacto reutilizable
 const buttonStyle = {
   background: "#333",
   color: "#fff",

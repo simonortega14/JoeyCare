@@ -25,6 +25,8 @@ function getToken() {
 // COMPONENTE
 // =====================
 export default function ImageViewer({
+ imageFile = null,
+ecografiaId: ecografiaIdProp = null,
   isEmbedded = false,
   side = null,
   externalPointMode = false,
@@ -42,7 +44,13 @@ export default function ImageViewer({
   //   medico,
   //   timestamp
   // }
-  const ecografiaId = state?.ecografiaId;
+// Soporta 3 orígenes: prop directa, objeto imageFile, o state (selector simple)
+ const ecografiaId =
+   ecografiaIdProp ??
+  imageFile?.id ??
+   state?.ecografiaId ??
+   null;
+    
   const medico = state?.medico || "—";
   const timestamp = state?.timestamp || null;
 
@@ -262,6 +270,7 @@ export default function ImageViewer({
       clearTimeout(timer);
       cleanupPoints();
       cleanupDrawings();
+       cleanupVTK();
       if (context.current) {
         try {
           const { fullScreenRenderer, renderWindow } = context.current;
@@ -883,6 +892,7 @@ export default function ImageViewer({
 
   // <-- ESTE ES EL NUEVO "VOLVER" ESTABLE -->
   function handleVolver() {
+    cleanupVTK();
     // cleanup del renderer para que no quede enganchado el canvas al cambiar de ruta
     if (context.current?.fullScreenRenderer) {
       try {
@@ -896,6 +906,50 @@ export default function ImageViewer({
     // volvemos SIEMPRE al selector estable
     navigate("/visualizar-ecografias", { replace: true });
   }
+
+function cleanupVTK() {
+  // 1) Eliminar interactor/renderer de VTK
+  if (context.current) {
+    try {
+      const { fullScreenRenderer, renderWindow } = context.current;
+      if (renderWindow) {
+        const interactor = renderWindow.getInteractor?.();
+        if (interactor) interactor.unbindEvents?.();
+      }
+      if (fullScreenRenderer) fullScreenRenderer.delete?.();
+    } catch (e) {
+      console.warn("cleanup VTK error:", e);
+    }
+    context.current = null;
+  }
+
+  // 2) Limpiar contenedor DOM (por si VTK dejó algo dentro)
+  if (vtkContainerRef.current) {
+    try {
+      vtkContainerRef.current.innerHTML = "";
+      // resetear estilos por si quedaron “absolutos”
+      vtkContainerRef.current.removeAttribute("style");
+    } catch {/* no-op */}
+  }
+
+  // 3) Restaurar estilos globales del body que VTK suele tocar
+  try {
+    document.body.style.overflow = "";
+    document.body.style.margin = "";
+    document.body.style.background = ""; // por si quedó negro
+  } catch {/* no-op */}
+
+  // 4) Quitar overlays “huérfanos” (defensivo)
+  // VTK a veces crea wrappers con clase conocida; barrido preventivo
+  document
+    .querySelectorAll(".vtk-js-fullscreen-render-window, .vtk-container, canvas.vtkglCanvas")
+    .forEach((el) => {
+      if (!vtkContainerRef.current || !vtkContainerRef.current.contains(el)) {
+        el.remove();
+      }
+    });
+}
+
 
   // =====================
   // Render JSX

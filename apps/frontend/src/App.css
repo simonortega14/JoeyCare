@@ -34,9 +34,13 @@ html, body, #root {
   flex: 1;
   min-height: 100vh;
   margin-left: 249px; /* Ancho del sidebar */
-  padding-top: 70px; /* Altura del header */
+  padding-top: 70px;  /* Altura del header */
   background-color: #F5FFFF;
   overflow-y: auto;
+
+  /* --- FIXES CLAVE --- */
+  position: relative;     /* ancla hijos absolutos (visor) */
+  overflow: hidden;       /* evita “fugas” de canvas al cambiar de ruta */
 }
 
 /* Asegurar que todas las páginas ocupen el espacio completo */
@@ -46,7 +50,7 @@ html, body, #root {
   padding: 20px;
 }
 
-/* Estilos específicos para el visor VTK (mantener estos) */
+/* Estilos específicos para el visor VTK */
 .viewer-container {
   flex: 1;
   display: flex;
@@ -56,9 +60,22 @@ html, body, #root {
   height: calc(100vh - 70px);
 }
 
-.vtk-container {
-  flex: 1;
-  background-color: #222 !important;
+/* Forzar a VTK a ocupar el contenedor, no el viewport */
+.vtk-js-fullscreen-render-window,
+.vtk-container,
+canvas.vtkglCanvas {
+  position: absolute !important;
+  inset: 0 !important;  /* top/right/bottom/left = 0 */
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+  background: #000;
+}
+
+/* Si VTK dejó el body bloqueado, restáuralo */
+html, body {
+  overflow: auto !important;
+  background: #F5FFFF;
 }
 
 /* Responsive */
@@ -82,6 +99,10 @@ html, body, #root {
   
   .app-sidebar.open {
     transform: translateX(0);
+  }
+
+  .viewer-container {
+    height: calc(100dvh - 70px);
   }
 }
 

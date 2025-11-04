@@ -175,6 +175,34 @@ CREATE TABLE auditoria (
   INDEX idx_auditoria_usuario_time (usuario_id, timestamp)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+
+-- Tabla de anotaciones (histórico por ecografía)
+CREATE TABLE IF NOT EXISTS reportes_anotaciones (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  ecografia_id INT NOT NULL,
+  neonato_id INT NOT NULL,
+  medico_id INT NOT NULL,                    -- << aquí el médico autor de la anotación
+  diagnostico TEXT NULL,                     -- diagnóstico preliminar
+  medidas JSON NULL,                         -- { puntos:[], longitudes:[], angulos:[], ... }
+  imagen_filename VARCHAR(255) NULL,         -- PNG/JPG con las rayas
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+
+  CONSTRAINT fk_ra_ecografia  FOREIGN KEY (ecografia_id) REFERENCES ecografias(id),
+  CONSTRAINT fk_ra_neonato    FOREIGN KEY (neonato_id)   REFERENCES neonato(id),
+  CONSTRAINT fk_ra_medico     FOREIGN KEY (medico_id)    REFERENCES medicos(id),
+
+  INDEX idx_ra_ecografia (ecografia_id, created_at),
+  INDEX idx_ra_neonato (neonato_id, created_at),
+  INDEX idx_ra_medico (medico_id, created_at)
+);
+
+
+
+
+
+
+
 -- Roles (solo admin y medico)
 INSERT INTO roles (nombre, descripcion) VALUES
 ('admin','Administración del sistema'),

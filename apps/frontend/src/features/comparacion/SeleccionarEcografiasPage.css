@@ -1,0 +1,251 @@
+/* Lienzo general */
+.se-page {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  min-height: 100vh;
+  font-family: 'Segoe UI', 'Roboto', 'Inter', Arial, sans-serif;
+}
+
+/* Contenido centrado con respiración */
+.se-content {
+  padding: 20px;
+}
+
+/* Card header con badges */
+.se-header-card {
+  background: #fff;
+  padding: 22px 24px;
+  border-radius: 15px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.08);
+  margin-bottom: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-left: 5px solid #2196f3;
+  gap: 16px;
+}
+
+.se-title h1 {
+  color: #1565c0;
+  font-size: 1.6rem;
+  font-weight: 800;
+  margin: 0 0 6px 0;
+}
+
+.se-title p {
+  color: #666;
+  margin: 0;
+  font-weight: 500;
+}
+
+.se-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.se-badge {
+  background: #e3f2fd;
+  color: #1565c0;
+  padding: 8px 12px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: .9rem;
+}
+
+.se-badge.alt {
+  background: #ede7f6;
+  color: #7b1fa2;
+}
+
+/* Grid de dos columnas */
+.se-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+  align-items: start;
+}
+
+/* Cards de listas */
+.se-card {
+  background: #fff;
+  border-radius: 15px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.08);
+  overflow: clip;
+  border: 1px solid #eef2f7;
+}
+
+.se-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: #fafafa;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.se-card-title {
+  font-weight: 800;
+  color: #1565c0;
+}
+
+.se-card-meta {
+  color: #6b7280;
+  font-size: .9rem;
+  font-weight: 600;
+}
+
+/* Lista scrollable */
+.se-list {
+  max-height: 440px;
+  overflow: auto;
+  padding: 12px;
+}
+
+/* Items */
+.se-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid #eef2f7;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease, background .15s ease;
+  background: #fff;
+}
+
+.se-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0,0,0,.08);
+  border-color: #e3f2fd;
+}
+
+.se-item.active {
+  border-color: #2196f3;
+  background: #f6fbff;
+  box-shadow: 0 8px 24px rgba(33,150,243,.15);
+}
+
+.se-item input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #1565c0;
+}
+
+.se-item-main {
+  overflow: hidden;
+}
+
+.se-item-title {
+  font-weight: 700;
+  color: #333;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.se-item-sub {
+  color: #6b7280;
+  font-size: .85rem;
+  margin-top: 2px;
+}
+
+.se-item-id {
+  color: #6b7280;
+  font-size: .85rem;
+}
+
+/* Empty / error / loader */
+.se-empty {
+  padding: 28px 16px;
+  text-align: center;
+  color: #666;
+  background: #fafafa;
+  border-radius: 12px;
+  border: 1px dashed #e5e7eb;
+}
+
+.se-error {
+  margin: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  color: #b71c1c;
+  background: #ffebee;
+  border: 1px solid #ffcdd2;
+  font-weight: 600;
+}
+
+.se-loader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  color: #1565c0;
+  font-weight: 600;
+}
+
+.spinner {
+  width: 22px;
+  height: 22px;
+  border: 3px solid #e3f2fd;
+  border-top: 3px solid #2196f3;
+  border-radius: 50%;
+  animation: se-spin 1s linear infinite;
+}
+
+@keyframes se-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Footer de acciones */
+.se-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.btn {
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+}
+
+.btn:active { transform: translateY(1px); }
+
+.btn-ghost {
+  background: #fff;
+  border-color: #e5e7eb;
+}
+
+.btn-ghost:hover {
+  box-shadow: 0 8px 24px rgba(0,0,0,.08);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+  color: #fff;
+  border: 1px solid #1565c0;
+}
+
+.btn-primary:hover {
+  box-shadow: 0 10px 28px rgba(33,150,243,.28);
+}
+
+.btn-disabled,
+.btn:disabled {
+  opacity: .6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .se-grid { grid-template-columns: 1fr; }
+}

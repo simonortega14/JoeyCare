@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Routes, Route, Navigate, useNavigate, Outlet } from "react-router-dom";
+import { Routes, Route, Navigate, useNavigate, Outlet, useLocation } from "react-router-dom";
 
 import LoginPage from "./features/auth/LoginPage";
 import RegisterPage from "./features/auth/RegisterPage";
@@ -19,6 +19,7 @@ import BuscarPacientes from "./features/buscar_paciente/BuscarPacientesPage";
 import CargarEcografia from "./features/cargar_ecografia/CargarEcografiaPage";
 import DashboardPage from "./features/dashboard/dashBoardPage";
 import PacientePage from "./features/paciente/PacientePage";
+import SeleccionarEcografiasPage from "./features/comparacion/SeleccionarEcografiasPage";
 
 import "./App.css";
 
@@ -64,30 +65,18 @@ function isValidUser(u) {
   return !!(u && u.rol && u.especialidad && u.sede);
 }
 
+// Requiere token; deja que la app se hidrate en background sin bloquear por user incompleto
 function RequireAuth() {
-  const stored = localStorage.getItem("user");
-  if (!stored) return <Navigate to="/login" replace />;
-
-  try {
-    const parsed = JSON.parse(stored);
-    const normalized = normalizeUser(parsed);
-
-    // defaults de seguridad por si backend no los manda
-    if (!normalized.especialidad) normalized.especialidad = "General";
-    if (!normalized.sede) normalized.sede = "Principal";
-
-    if (!isValidUser(normalized)) {
-      return <Navigate to="/login" replace />;
-    }
-  } catch {
+  const token = (localStorage.getItem("token") || "").trim();
+  if (!token) {
     return <Navigate to="/login" replace />;
   }
-
   return <Outlet />;
 }
 
 function PrivateLayout({ user, onLogout }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const location = useLocation(); // clave para remount en cada ruta
 
   return (
     <>
@@ -99,7 +88,8 @@ function PrivateLayout({ user, onLogout }) {
       <div className="app-container">
         <Sidebar isOpen={sidebarOpen} />
         <div className="main-content">
-          <Outlet />
+          {/* Forzar remount del árbol al cambiar pathname: limpia VTK y evita "pantalla negra" */}
+          <Outlet key={location.pathname} />
         </div>
       </div>
     </>
@@ -177,7 +167,6 @@ export default function App() {
     }
 
     const data = await resp.json(); // típicamente { token, user }
-
     const normalized = normalizeUser(data.user ?? data);
 
     // defaults si backend no manda estos campos todavía
@@ -234,22 +223,19 @@ export default function App() {
           {/* Paso 2: visor interactivo en VTK
               - se llega con navigate("/visualizar-ecografias/ver", { state: {...} })
           */}
-          <Route
-            path="/visualizar-ecografias/ver"
-            element={<ImageViewer />}
-          />
+          <Route path="/visualizar-ecografias/ver" element={<ImageViewer />} />
 
-          {/* Herramientas de prueba/debug que ya tenías */}
+          {/* Selección para comparación de 2 pacientes */}
+          <Route path="/seleccionar-ecografias" element={<SeleccionarEcografiasPage />} />
+
+          {/* Herramientas de prueba/debug */}
           <Route path="/vtk-test" element={<VtkViewer />} />
           <Route path="/dicom-test" element={<DicomViewer />} />
 
-          {/* Otras pantallas existentes */}
+          {/* Otras pantallas */}
           <Route path="/cargar-ecografias" element={<CargarEcografia />} />
           <Route path="/dashboard" element={<DashboardPage />} />
-          <Route
-            path="/comparar-ecografias"
-            element={<VisorEcografiaDoble />}
-          />
+          <Route path="/comparar-ecografias" element={<VisorEcografiaDoble />} />
         </Route>
       </Route>
 

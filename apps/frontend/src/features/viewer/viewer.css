@@ -13,7 +13,7 @@
   backdrop-filter: blur(10px);
   border-radius: 20px;
   padding: 2.5rem;
-  box-shadow: 
+  box-shadow:
     0 20px 40px rgba(0, 0, 0, 0.1),
     0 10px 25px rgba(0, 0, 0, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -112,12 +112,12 @@
 
 /* ===== MODO VISUALIZACIÓN ===== */
 .vtk-fullscreen {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 9999;
+  /* Contenido dentro del área principal, no sobre toda la ventana */
+  position: absolute;
+  inset: 0;          /* top/right/bottom/left = 0 */
+  width: 100%;
+  height: 100%;
+  z-index: 5;        /* por encima del contenido del page, por debajo del header/sidebar */
   background: #000;
 }
 
@@ -139,7 +139,7 @@
   position: absolute;
   top: 20px;
   left: 20px;
-  z-index: 10000;
+  z-index: 6;  
   padding: 0.75rem 1.25rem;
   background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(10px);

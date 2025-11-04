@@ -192,13 +192,11 @@ export default function ImageSelector() {
     // Navegamos a la pantalla del visor
     // OJO: esta ruta "/visualizar-ecografias/ver" DEBE existir en tu router
     // con <Route path="/visualizar-ecografias/ver" element={<ImageViewer />} />
-    navigate("/visualizar-ecografias/ver", {
-      state: {
-        ecografiaId,
-        medico,
-        timestamp,
-      },
-    });
+ // persistimos por si el usuario navega y vuelve
+sessionStorage.setItem("viewer:last", JSON.stringify({ ecografiaId, medico, timestamp }));
+ navigate(`/visualizar-ecografias/ver?ecografiaId=${encodeURIComponent(ecografiaId)}`, {
+  state: { ecografiaId, medico, timestamp },
+});
   };
 
   // ======================================================

@@ -7,6 +7,7 @@ networks:
 volumes:
   mysql_data:
   ecografias_storage:
+  reportes_storage:
 
 services:
   # === Base de datos MySQL ===
@@ -46,7 +47,7 @@ services:
       DB_PASSWORD: secret123
       DB_NAME: joeycare_db
       SVC_NAME: ms-usuarios
-      JWT_SECRET: supersecret_cambia_esto
+      JWT_SECRET: supersecret_cambia_esto     # ⬅️ mantener igual en ms-reportes
       JWT_EXPIRES_IN: 8h
     depends_on:
       mysql:
@@ -79,7 +80,7 @@ services:
       - red-backend
       - red-frontend
 
-  # === Microservicio: Visualizador (si todavía lo usas activamente) ===
+  # === Microservicio: Visualizador (si lo usas) ===
   ms-visualizador:
     build:
       context: ./apps/ms-visualizador
@@ -94,31 +95,40 @@ services:
       - red-backend
       - red-frontend
 
-  # === Microservicio: Reportes (igual, opcional por ahora) ===
+  # === Microservicio: Reportes (anotaciones + imagen) ===
   ms-reportes:
     build:
       context: ./apps/ms-reportes
     container_name: ms-reportes
     restart: unless-stopped
     environment:
-      DB_HOST: mysql
-      DB_PORT: "3306"
-      DB_USER: userapp
-      DB_PASSWORD: secret123
-      DB_NAME: joeycare_db
-      SVC_NAME: ms-reportes
+      # === DB (coincide con el resto) ===
+      MYSQL_HOST: mysql
+      MYSQL_PORT: "3306"
+      MYSQL_USER: userapp
+      MYSQL_PASSWORD: secret123
+      MYSQL_DATABASE: joeycare_db
+      # === Auth (MISMO SECRET QUE ms-usuarios) ===
+      JWT_SECRET: supersecret_cambia_esto
+      # === Storage y puerto del servicio ===
+      REPORTES_STORAGE: /var/joeycare/storage/reportes
+      PORT: "3007"
+      # Opcional: si quieres upsert automático a 'informes' en estado 'borrador'
+      # REPORTES_UPSERT_INFORME: "1"
     depends_on:
       mysql:
         condition: service_healthy
+    volumes:
+      - reportes_storage:/var/joeycare/storage/reportes
     networks:
       - red-backend
       - red-frontend
 
-  # === FRONTEND FINAL (Nginx con el build de React + reverse proxy) ===
+  # === FRONTEND FINAL (Nginx: build de React + reverse proxy) ===
   frontend:
     build:
       context: ./apps/frontend
-      dockerfile: Dockerfile  # este es tu Dockerfile multi-stage (node build -> nginx)
+      dockerfile: Dockerfile  # tu Dockerfile multi-stage (node build -> nginx)
     container_name: frontend
     restart: unless-stopped
     depends_on:
@@ -127,11 +137,11 @@ services:
       - ms-visualizador
       - ms-reportes
     ports:
-      - "80:80"  # ESTE es el único que expone hacia tu máquina
+      - "80:80"  # único expuesto hacia tu máquina
     volumes:
-      # montamos el mismo volumen de ecografías en modo lectura,
-      # para que Nginx pueda servir/forwardear archivos si lo usas como /api/ecografias/:id/archivo
+      # (opcional) si sirves archivos de ecografías directo desde Nginx
       - ecografias_storage:/var/joeycare/storage/ecografias:ro
+      # (NO necesario montar reportes_storage aquí, se sirve vía proxy /api/reportes)
     networks:
       - red-frontend
       - red-backend

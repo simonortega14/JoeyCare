@@ -63,7 +63,7 @@
 .jc-btn:hover{ opacity: 0.9; transform: translateY(-1px); }
 .jc-btn[disabled]{ opacity:.6; cursor:not-allowed; }
 
-.login-avatar{ position:absolute; left:50%; transform:translate(-50%, -50%); top:0; width:84px; height:84px; border-radius:50%; background:#fff; border:4px solid var(--brand-weak); display:grid; place-items:center; }
+.login-avatar{ position:absolute; left:50%; transform:translate(-50%, 0); top: 10px;; width:84px; height:84px; border-radius:50%; background:#fff; border:4px solid var(--brand-weak); display:grid; place-items:center; }
 .login-avatar img{ width:48px; height:48px; }
 .login-form{ margin-top:40px; }
 

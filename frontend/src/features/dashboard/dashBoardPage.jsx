@@ -7,7 +7,11 @@ export default function DashboardPage() {
     totalStudies: 0,
     neonatalPatients: 0,
     todayScans: 0,
-    averageTime: 0
+    lowBirthWeight: 0,
+    prematurePatients: 0,
+    pendingReports: 0,
+    signedReportsToday: 0,
+    patientsNeedingFollowup: 0
   });
 
   const [recentActivity, setRecentActivity] = useState([]);
@@ -33,7 +37,11 @@ export default function DashboardPage() {
           totalStudies: 1247,
           neonatalPatients: 342,
           todayScans: 23,
-          averageTime: 15
+          lowBirthWeight: 89,
+          prematurePatients: 156,
+          pendingReports: 12,
+          signedReportsToday: 8,
+          patientsNeedingFollowup: 45
         });
         setRecentActivity([
           { time: '09:15', patient: 'Bebé García', study: 'Ecografía Transfontanelar', status: 'Completado' },
@@ -91,36 +99,72 @@ export default function DashboardPage() {
         <div className="stat-card stat-primary">
           <div className="stat-icon">📊</div>
           <div className="stat-content">
-            <h3>Estudios Totales</h3>
+            <h3>Estudios Realizados</h3>
             <p className="stat-number">{stats.totalStudies?.toLocaleString() || '0'}</p>
-            <span className="stat-change positive">+12% este mes</span>
+            <span className="stat-change positive">Total acumulado</span>
           </div>
         </div>
-        
+
         <div className="stat-card stat-success">
           <div className="stat-icon">👶</div>
           <div className="stat-content">
-            <h3>Pacientes Neonatos</h3>
+            <h3>Pacientes Atendidos</h3>
             <p className="stat-number">{stats.neonatalPatients}</p>
-            <span className="stat-change positive">+8 esta semana</span>
+            <span className="stat-change positive">Pacientes únicos</span>
           </div>
         </div>
-        
+
         <div className="stat-card stat-warning">
           <div className="stat-icon">🔬</div>
           <div className="stat-content">
             <h3>Ecografías Hoy</h3>
             <p className="stat-number">{stats.todayScans}</p>
-            <span className="stat-change neutral">Objetivo: 25</span>
+            <span className="stat-change neutral">Realizadas hoy</span>
           </div>
         </div>
-        
+
         <div className="stat-card stat-info">
-          <div className="stat-icon">⏱️</div>
+          <div className="stat-icon">⚕️</div>
           <div className="stat-content">
-            <h3>Tiempo Promedio</h3>
-            <p className="stat-number">{stats.averageTime} min</p>
-            <span className="stat-change positive">-2 min vs ayer</span>
+            <h3>Bajo Peso Nacimiento</h3>
+            <p className="stat-number">{stats.lowBirthWeight}</p>
+            <span className="stat-change warning">{'<'} 2500g</span>
+          </div>
+        </div>
+
+        <div className="stat-card stat-danger">
+          <div className="stat-icon">🚨</div>
+          <div className="stat-content">
+            <h3>Pacientes Prematuros</h3>
+            <p className="stat-number">{stats.prematurePatients}</p>
+            <span className="stat-change warning">{'<'} 37 semanas</span>
+          </div>
+        </div>
+
+        <div className="stat-card stat-secondary">
+          <div className="stat-icon">📋</div>
+          <div className="stat-content">
+            <h3>Reportes Pendientes</h3>
+            <p className="stat-number">{stats.pendingReports}</p>
+            <span className="stat-change neutral">Por firmar</span>
+          </div>
+        </div>
+
+        <div className="stat-card stat-success">
+          <div className="stat-icon">✅</div>
+          <div className="stat-content">
+            <h3>Reportes Firmados Hoy</h3>
+            <p className="stat-number">{stats.signedReportsToday}</p>
+            <span className="stat-change positive">Completados</span>
+          </div>
+        </div>
+
+        <div className="stat-card stat-warning">
+          <div className="stat-icon">👁️</div>
+          <div className="stat-content">
+            <h3>Requieren Seguimiento</h3>
+            <p className="stat-number">{stats.patientsNeedingFollowup}</p>
+            <span className="stat-change warning">{'>'} 7 días sin eco</span>
           </div>
         </div>
       </section>
@@ -137,6 +181,10 @@ export default function DashboardPage() {
                 <div className="activity-details">
                   <strong>{activity.patient}</strong>
                   <span>{activity.study}</span>
+                  <small style={{ color: '#666', fontSize: '0.8rem' }}>
+                    {activity.gestational_age ? `${activity.gestational_age} sem gestacional` : ''}
+                    {activity.birth_weight ? ` • ${activity.birth_weight}g nacimiento` : ''}
+                  </small>
                 </div>
                 <div className={`activity-status status-${activity.status.toLowerCase().replace(' ', '-')}`}>
                   {activity.status}
@@ -172,35 +220,35 @@ export default function DashboardPage() {
       <section className="quick-actions">
         <h2>🚀 Acciones Rápidas</h2>
         <div className="actions-grid">
-          <button className="action-btn action-primary" onClick={() => window.open('/dashboard/stats', '_blank')}>
-            <span>📊</span>
-            <div>
-              <strong>Estadísticas Detalladas</strong>
-              <small>Ver reportes completos</small>
-            </div>
-          </button>
-
-          <button className="action-btn action-success" onClick={() => window.open('/dashboard/reports', '_blank')}>
-            <span>📝</span>
-            <div>
-              <strong>Generar Reporte</strong>
-              <small>Exportar datos médicos</small>
-            </div>
-          </button>
-
-          <button className="action-btn action-warning" onClick={() => window.open('/settings', '_blank')}>
-            <span>⚙️</span>
-            <div>
-              <strong>Configuración</strong>
-              <small>Ajustes del sistema</small>
-            </div>
-          </button>
-
-          <button className="action-btn action-info" onClick={() => window.location.href = '/buscar-paciente'}>
+          <button className="action-btn action-primary" onClick={() => window.location.href = '/buscar-pacientes'}>
             <span>🔍</span>
             <div>
-              <strong>Buscar Estudios</strong>
-              <small>Localizar pacientes</small>
+              <strong>Buscar Pacientes</strong>
+              <small>Localizar y gestionar</small>
+            </div>
+          </button>
+
+          <button className="action-btn action-success" onClick={() => window.location.href = '/cargar-ecografias'}>
+            <span>📤</span>
+            <div>
+              <strong>Cargar Ecografía</strong>
+              <small>Subir nueva imagen</small>
+            </div>
+          </button>
+
+          <button className="action-btn action-warning" onClick={() => window.location.href = '/visualizar-ecografias'}>
+            <span>👁️</span>
+            <div>
+              <strong>Visualizar Estudios</strong>
+              <small>Ver ecografías existentes</small>
+            </div>
+          </button>
+
+          <button className="action-btn action-info" onClick={() => window.location.href = '/comparar-ecografias'}>
+            <span>⚖️</span>
+            <div>
+              <strong>Comparar Ecografías</strong>
+              <small>Análisis comparativo</small>
             </div>
           </button>
         </div>

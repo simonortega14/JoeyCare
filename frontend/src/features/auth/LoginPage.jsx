@@ -83,27 +83,22 @@ export default function LoginPage({ onSubmit }) {
             />
           </div>
 
-          <div className="actions">
-            <button
-              type="button"
-              className="link"
-              onClick={() => alert("Recuperar contraseña")}
-            >
-              ¿Olvidaste tu contraseña?
-            </button>
+          <div className="actions" style={{ justifyContent: "flex-end" }}>
             <button className="jc-btn" type="submit" disabled={!canSubmit}>
-              {loading ? "Ingresando…" : "Continuar"}
+              {loading ? "Ingresando…" : "Ingresar"}
             </button>
           </div>
 
-          {/* Botón para ir a registro */}
-          <div className="actions" style={{ marginTop: "20px", justifyContent: "center" }}>
+          {/* Texto para ir a registro */}
+          <div style={{ marginTop: "20px", textAlign: "center", fontSize: "14px", color: "#64748b" }}>
+            ¿No tienes una cuenta?{" "}
             <button
               type="button"
-              className="jc-btn jc-btn--ghost"
+              className="link"
+              style={{ textDecoration: "underline", padding: 0, fontSize: "14px" }}
               onClick={() => navigate("/register")}
             >
-              Crear cuenta
+              Regístrate
             </button>
           </div>
 

@@ -1,6 +1,8 @@
 :root{
   --brand:#0ea5e9; --brand-weak:#bfe8fb;
   --text:#0f172a; --bg:#f8fafc; --card:#ffffffcc; --border:#e2e8f0;
+  --danger:#ef4444; --danger-weak:#fee2e2;
+  --success:#10b981; --success-weak:#d1fae5;
 }
 
 /* Haz que el contenedor ocupe toda la pantalla */
@@ -40,24 +42,27 @@
   background: white;
   width: min(420px, 90vw);
   margin: auto;
-  padding: 2rem 1.5rem 1.2rem;
+  padding: 3.5rem 1.5rem 1.2rem;
   border-radius: 18px;
   box-shadow: 0 8px 32px #19366a2a;
+  max-height: 85vh;
+  overflow-y: auto;
 }
-
 
 /* Layout general */
 .jc-header{ height:56px; padding:0 14px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); background:#f0f9ff; }
 .jc-header__left{ display:flex; align-items:center; gap:10px; }
 .jc-logo{ width:26px; height:26px; }
 .jc-brand{ font-size:20px; font-weight:800; color:#0b2a3b; }
-.jc-btn{ background:var(--brand); color:#fff; border:none; border-radius:10px; padding:10px 16px; font-weight:600; cursor:pointer; min-width:140px; }
+.jc-btn{ background:var(--brand); color:#fff; border:none; border-radius:10px; padding:10px 16px; font-weight:600; cursor:pointer; min-width:140px; transition: all 0.2s; }
 .jc-btn--ghost{ background:#e6f6ff; color:#0b2a3b; border:1px solid #ccecff; }
+.jc-btn--danger{ background:#fca5a5; color:#7f1d1d; min-width:auto; border:1px solid #f87171; }
+.jc-btn--danger:hover{ background:#f87171; color:#fff; }
+.jc-btn--success{ background:#86efac; color:#14532d; min-width:auto; border:1px solid #4ade80; }
+.jc-btn--success:hover{ background:#4ade80; color:#fff; }
+.jc-btn:hover{ opacity: 0.9; transform: translateY(-1px); }
 .jc-btn[disabled]{ opacity:.6; cursor:not-allowed; }
 
-.login-page{ min-height:calc(100vh - 56px); background:var(--bg); position:relative; display:flex; align-items:center; justify-content:center; padding:24px; }
-.login-bg{ position:absolute; inset:0; background:url('/test.png') center/contain no-repeat; opacity:.15; pointer-events:none; }
-.login-card{ position:relative; width:min(520px,92vw); background:var(--card); backdrop-filter:blur(6px); border:1px solid var(--border); border-radius:12px; padding:28px 24px 18px; box-shadow:0 10px 30px rgba(0,0,0,.08); }
 .login-avatar{ position:absolute; left:50%; transform:translate(-50%, -50%); top:0; width:84px; height:84px; border-radius:50%; background:#fff; border:4px solid var(--brand-weak); display:grid; place-items:center; }
 .login-avatar img{ width:48px; height:48px; }
 .login-form{ margin-top:40px; }
@@ -70,3 +75,166 @@
 .link{ background:none; border:none; color:var(--brand); text-decoration:underline; cursor:pointer; padding:6px 8px; }
 
 .error{ margin-top:12px; color:#b91c1c; background:#fee2e2; border:1px solid #fecaca; padding:8px 10px; border-radius:8px; }
+
+/* ===== Estilos personalizados para RegisterPage ===== */
+
+/* Alinear los labels arriba del input */
+.field {
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 12px 14px;
+}
+
+.field label {
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--text);
+}
+
+/* Selects con mismo estilo que los inputs */
+.field select {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: #fff;
+  font-size: 16px;
+  color: var(--text);
+  outline: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.field select:focus {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px var(--brand-weak);
+}
+
+/* Centrar el botón Registrarse */
+.login-form .jc-btn {
+  display: block;
+  margin: 20px auto 0 auto;
+  text-align: center;
+  font-size: 16px;
+  border-radius: 12px;
+}
+
+/* Ajuste general del formulario */
+.login-form {
+  margin-top: 50px;
+}
+
+.error {
+  text-align: center;
+}
+
+/* ===== Estilos para AdminPage - Tabla de médicos pendientes ===== */
+
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.admin-header h2 {
+  margin: 0;
+  color: #0f172a !important;
+}
+
+.admin-logout-btn {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 14px;
+}
+
+.admin-logout-btn:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+.admin-table-container {
+  margin-top: 20px;
+  overflow-x: auto;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.admin-table thead {
+  background: var(--brand);
+  color: white !important;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.admin-table th {
+  padding: 12px 10px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 14px;
+  border-bottom: 2px solid var(--border);
+  color: white !important;
+}
+
+.admin-table tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background-color 0.2s;
+}
+
+.admin-table tbody tr:hover {
+  background-color: #f0f9ff;
+}
+
+.admin-table td {
+  padding: 12px 10px;
+  color: #0f172a !important;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.admin-table-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.admin-table-actions .jc-btn {
+  min-width: 80px;
+  padding: 8px 12px;
+  font-size: 13px;
+  border-radius: 8px;
+}
+
+/* Mensaje cuando no hay pendientes */
+.admin-empty-message {
+  text-align: center;
+  padding: 40px 20px;
+  color: #64748b !important;
+  font-size: 15px;
+}
+
+/* Mensaje de éxito */
+.success-message {
+  margin-top: 12px;
+  color: #15803d;
+  background: #dcfce7;
+  border: 1px solid #bbf7d0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  text-align: center;
+}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import logoJoey from "../../assets/Logo Joey care.png";
@@ -9,13 +9,30 @@ export default function RegisterPage() {
   const [form, setForm] = useState({
     nombre: "",
     apellido: "",
-    sede: "",
+    sede_id: "",
+    especialidad_id: "",
     email: "",
     password: "",
   });
+  const [sedes, setSedes] = useState([]);
+  const [especialidades, setEspecialidades] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const sedesRes = await axios.get("http://localhost:4000/api/sedes");
+        setSedes(sedesRes.data);
+        const especialidadesRes = await axios.get("http://localhost:4000/api/especialidades");
+        setEspecialidades(especialidadesRes.data);
+      } catch (err) {
+        console.error("Error cargando sedes o especialidades", err);
+      }
+    };
+    fetchData();
+  }, []);
 
   const handleChange = (e) =>
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
@@ -25,10 +42,20 @@ export default function RegisterPage() {
     setLoading(true);
     setError("");
     try {
-      await axios.post("http://localhost:4000/api/doctores", form);
-      navigate("/"); // 👈 vuelve al login al terminar
+      await axios.post("http://localhost:4000/api/medicos", {
+        rol_id: 2, // siempre médico
+        nombre: form.nombre,
+        apellido: form.apellido,
+        email: form.email,
+        hash_password: form.password,
+        sede_id: parseInt(form.sede_id),
+        especialidad_id: parseInt(form.especialidad_id),
+      });
+      alert("Usuario creado. Espera aprobación del administrador.");
+      navigate("/"); 
     } catch (err) {
-      setError("No se pudo registrar el usuario");
+      console.error(err);
+      setError(err?.response?.data?.message || "No se pudo registrar el usuario");
     } finally {
       setLoading(false);
     }
@@ -56,6 +83,7 @@ export default function RegisterPage() {
 
         <form className="login-form" onSubmit={handleSubmit}>
           <div className="field">
+            <label>Nombre</label>
             <input
               name="nombre"
               type="text"
@@ -66,6 +94,7 @@ export default function RegisterPage() {
             />
           </div>
           <div className="field">
+            <label>Apellido</label>
             <input
               name="apellido"
               type="text"
@@ -76,15 +105,39 @@ export default function RegisterPage() {
             />
           </div>
           <div className="field">
-            <input
-              name="sede"
-              type="text"
-              placeholder="Sede"
-              value={form.sede}
+            <label>Sede</label>
+            <select
+              name="sede_id"
+              value={form.sede_id}
               onChange={handleChange}
-            />
+              required
+            >
+              <option value="">Selecciona una sede</option>
+              {sedes.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.nombre} - {s.ciudad}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="field">
+            <label>Especialidad</label>
+            <select
+              name="especialidad_id"
+              value={form.especialidad_id}
+              onChange={handleChange}
+              required
+            >
+              <option value="">Selecciona una especialidad</option>
+              {especialidades.map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.nombre}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
+            <label>Correo</label>
             <input
               name="email"
               type="email"
@@ -95,6 +148,7 @@ export default function RegisterPage() {
             />
           </div>
           <div className="field">
+            <label>Contraseña</label>
             <input
               name="password"
               type="password"

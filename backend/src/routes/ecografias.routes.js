@@ -116,7 +116,9 @@ router.get("/dashboard/stats", async (req, res) => {
         END as status,
         n.edad_gestacional_sem as gestational_age,
         n.peso_nacimiento_g as birth_weight,
-        e.id as estudio_id
+        e.id as estudio_id,
+        n.id as patient_id,
+        e.filepath as filename
       FROM ecografias e
       JOIN neonato n ON e.neonato_id = n.id
       ORDER BY e.fecha_hora DESC

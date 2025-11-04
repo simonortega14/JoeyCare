@@ -211,7 +211,12 @@ export default function DashboardPage() {
           <h2>📋 Actividad Reciente</h2>
           <div className="activity-list">
             {recentActivity.length > 0 ? recentActivity.map((activity, index) => (
-              <div key={index} className={`activity-item status-${activity.status.toLowerCase().replace(' ', '-')}`}>
+              <div
+                key={index}
+                className={`activity-item status-${activity.status.toLowerCase().replace(' ', '-')} clickable`}
+                onClick={() => window.location.href = `/visualizar-ecografias?patient=${activity.patient_id}&file=${activity.filename}`}
+                style={{ cursor: 'pointer' }}
+              >
                 <div className="activity-time">{activity.time}</div>
                 <div className="activity-details">
                   <strong>{activity.patient}</strong>

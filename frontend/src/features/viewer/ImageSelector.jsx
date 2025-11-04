@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import "./viewer.css";
 
 function ImageSelector({ onImageSelected }) {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [pacientes, setPacientes] = useState([]);
   const [selectedPaciente, setSelectedPaciente] = useState(null);
   const [ecografias, setEcografias] = useState([]);
@@ -15,9 +16,22 @@ function ImageSelector({ onImageSelected }) {
   useEffect(() => {
     fetch("http://localhost:4000/api/neonatos")
       .then(res => res.json())
-      .then(setPacientes)
+      .then(data => {
+        setPacientes(data);
+
+        // Verificar parámetros de URL para preseleccionar paciente y archivo
+        const patientId = searchParams.get('patient');
+        const fileName = searchParams.get('file');
+
+        if (patientId) {
+          const patient = data.find(p => p.id.toString() === patientId);
+          if (patient) {
+            setSelectedPaciente(patient);
+          }
+        }
+      })
       .catch(() => setPacientes([{ id: 1, nombre: "Prueba", apellido: "Paciente" }]));
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     if (!selectedPaciente) {
@@ -26,9 +40,24 @@ function ImageSelector({ onImageSelected }) {
     }
     fetch(`http://localhost:4000/api/neonatos/${selectedPaciente.id}/ecografias`)
       .then(res => res.json())
-      .then(setEcografias)
+      .then(data => {
+        setEcografias(data);
+
+        // Si hay un archivo específico en los parámetros, seleccionarlo automáticamente
+        const fileName = searchParams.get('file');
+        if (fileName && data.length > 0) {
+          const ecografia = data.find(ec => ec.filepath === fileName);
+          if (ecografia) {
+            setSelectedEcografia(ecografia);
+            // Auto-visualizar después de un breve delay para que se renderice
+            setTimeout(() => {
+              onImageSelected(ecografia);
+            }, 100);
+          }
+        }
+      })
       .catch(() => setEcografias([]));
-  }, [selectedPaciente]);
+  }, [selectedPaciente, searchParams, onImageSelected]);
 
   const handleVisualize = () => {
     if (selectedEcografia) {

@@ -51,6 +51,104 @@ router.get("/ecografias", async (req, res) => {
   }
 });
 
+// Obtener estadísticas del dashboard
+router.get("/dashboard/stats", async (req, res) => {
+  try {
+    // Total de estudios
+    const [totalStudies] = await pool.query("SELECT COUNT(*) as count FROM ecografias");
+
+    // Pacientes neonatos únicos
+    const [neonatalPatients] = await pool.query("SELECT COUNT(DISTINCT neonato_id) as count FROM ecografias");
+
+    // Ecografías hoy
+    const today = new Date().toISOString().split('T')[0];
+    const [todayScans] = await pool.query("SELECT COUNT(*) as count FROM ecografias WHERE DATE(fecha_hora) = ?", [today]);
+
+    // Tiempo promedio (simulado por ahora, se puede calcular basado en datos reales)
+    const averageTime = 15; // minutos
+
+    res.json({
+      totalStudies: totalStudies[0].count,
+      neonatalPatients: neonatalPatients[0].count,
+      todayScans: todayScans[0].count,
+      averageTime: averageTime
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Error al obtener estadísticas", error: error.message });
+  }
+});
+
+// Obtener actividad reciente
+router.get("/dashboard/recent-activity", async (req, res) => {
+  try {
+    const [rows] = await pool.query(`
+      SELECT
+        DATE_FORMAT(e.fecha_hora, '%H:%i') as time,
+        CONCAT(n.nombre, ' ', n.apellido) as patient,
+        'Ecografía Transfontanelar' as study,
+        CASE
+          WHEN e.creado_en > DATE_SUB(NOW(), INTERVAL 1 HOUR) THEN 'En Proceso'
+          ELSE 'Completado'
+        END as status
+      FROM ecografias e
+      JOIN neonato n ON e.neonato_id = n.id
+      ORDER BY e.fecha_hora DESC
+      LIMIT 4
+    `);
+
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ message: "Error al obtener actividad reciente", error: error.message });
+  }
+});
+
+// Obtener estadísticas semanales
+router.get("/dashboard/weekly-stats", async (req, res) => {
+  try {
+    const [rows] = await pool.query(`
+      SELECT
+        DAYNAME(fecha_hora) as day_name,
+        DAYOFWEEK(fecha_hora) as day_num,
+        COUNT(*) as scans
+      FROM ecografias
+      WHERE fecha_hora >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+      GROUP BY DAYOFWEEK(fecha_hora), DAYNAME(fecha_hora)
+      ORDER BY day_num
+    `);
+
+    // Mapear a formato esperado por el frontend
+    const dayMap = {
+      'Monday': 'Lun',
+      'Tuesday': 'Mar',
+      'Wednesday': 'Mié',
+      'Thursday': 'Jue',
+      'Friday': 'Vie',
+      'Saturday': 'Sáb',
+      'Sunday': 'Dom'
+    };
+
+    const weeklyStats = [
+      { day: 'Lun', scans: 0 },
+      { day: 'Mar', scans: 0 },
+      { day: 'Mié', scans: 0 },
+      { day: 'Jue', scans: 0 },
+      { day: 'Vie', scans: 0 },
+      { day: 'Sáb', scans: 0 },
+      { day: 'Dom', scans: 0 }
+    ];
+
+    rows.forEach(row => {
+      const dayKey = dayMap[row.day_name];
+      const stat = weeklyStats.find(s => s.day === dayKey);
+      if (stat) stat.scans = row.scans;
+    });
+
+    res.json(weeklyStats);
+  } catch (error) {
+    res.status(500).json({ message: "Error al obtener estadísticas semanales", error: error.message });
+  }
+});
+
 // Subir ecografía
 router.post("/ecografias/:neonatoId", upload.single("imagen"), async (req, res) => {
   try {

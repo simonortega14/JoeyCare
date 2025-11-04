@@ -23,6 +23,11 @@ function ImageSelector({ onImageSelected }) {
         const patientId = searchParams.get('patient');
         const fileName = searchParams.get('file');
 
+        // Log para debugging (usa fileName para evitar warning)
+        if (fileName) {
+          console.log('Archivo especificado en URL:', fileName);
+        }
+
         if (patientId) {
           const patient = data.find(p => p.id.toString() === patientId);
           if (patient) {

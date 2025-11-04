@@ -364,6 +364,89 @@
   color: white;
 }
 
+/* Pacientes sin Ecografías */
+.patients-without-ultrasound {
+  background: white;
+  padding: 25px;
+  border-radius: 15px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  margin-bottom: 25px;
+  border-left: 5px solid #ff5722;
+}
+
+.patients-without-ultrasound h2 {
+  color: #ff5722;
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin: 0 0 20px 0;
+  text-align: center;
+}
+
+.patients-alert-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 15px;
+}
+
+.patient-alert-card {
+  background: #fff3e0;
+  border: 1px solid #ffcc02;
+  border-radius: 10px;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.patient-alert-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.patient-alert-header strong {
+  color: #e65100;
+  font-size: 1.1rem;
+}
+
+.patient-document {
+  color: #666;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.patient-alert-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.patient-alert-details span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.upload-btn {
+  background: linear-gradient(135deg, #ff5722 0%, #d84315 100%);
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  align-self: flex-end;
+}
+
+.upload-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(255, 87, 34, 0.3);
+}
+
 /* Dashboard Footer */
 .dashboard-footer {
   background: white;

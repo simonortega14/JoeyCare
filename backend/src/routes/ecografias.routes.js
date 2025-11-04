@@ -87,6 +87,83 @@ router.get("/dashboard/stats", async (req, res) => {
       )
     `);
 
+    // Pacientes sin ecografías
+    const [patientsWithoutUltrasound] = await pool.query(`
+      SELECT
+        n.id,
+        n.nombre,
+        n.apellido,
+        n.documento,
+        n.fecha_nacimiento,
+        n.edad_gestacional_sem,
+        n.peso_nacimiento_g,
+        DATEDIFF(CURDATE(), n.fecha_nacimiento) as dias_vida
+      FROM neonato n
+      WHERE n.id NOT IN (SELECT DISTINCT neonato_id FROM ecografias)
+      ORDER BY n.fecha_nacimiento DESC
+      LIMIT 5
+    `);
+
+    // Actividad reciente (últimas 5 ecografías)
+    const [recentActivityRows] = await pool.query(`
+      SELECT
+        DATE_FORMAT(e.fecha_hora, '%H:%i') as time,
+        CONCAT(n.nombre, ' ', n.apellido) as patient,
+        CONCAT('Ecografía - ', n.documento) as study,
+        CASE
+          WHEN e.creado_en > DATE_SUB(NOW(), INTERVAL 1 HOUR) THEN 'En Proceso'
+          ELSE 'Completado'
+        END as status,
+        n.edad_gestacional_sem as gestational_age,
+        n.peso_nacimiento_g as birth_weight,
+        e.id as estudio_id
+      FROM ecografias e
+      JOIN neonato n ON e.neonato_id = n.id
+      ORDER BY e.fecha_hora DESC
+      LIMIT 5
+    `);
+
+    // Estadísticas semanales (últimas 5 entradas)
+    const [weeklyStatsRows] = await pool.query(`
+      SELECT
+        DATE(e.fecha_hora) as upload_date,
+        DAYNAME(e.fecha_hora) as day_name,
+        DAYOFWEEK(e.fecha_hora) as day_num,
+        COUNT(*) as scans
+      FROM ecografias e
+      WHERE e.fecha_hora >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+      GROUP BY DATE(e.fecha_hora), DAYOFWEEK(e.fecha_hora), DAYNAME(e.fecha_hora)
+      ORDER BY upload_date DESC
+      LIMIT 5
+    `);
+
+    // Mapear estadísticas semanales
+    const dayMap = {
+      'Monday': 'Lun',
+      'Tuesday': 'Mar',
+      'Wednesday': 'Mié',
+      'Thursday': 'Jue',
+      'Friday': 'Vie',
+      'Saturday': 'Sáb',
+      'Sunday': 'Dom'
+    };
+
+    const weeklyStats = [
+      { day: 'Lun', scans: 0 },
+      { day: 'Mar', scans: 0 },
+      { day: 'Mié', scans: 0 },
+      { day: 'Jue', scans: 0 },
+      { day: 'Vie', scans: 0 },
+      { day: 'Sáb', scans: 0 },
+      { day: 'Dom', scans: 0 }
+    ];
+
+    weeklyStatsRows.forEach(row => {
+      const dayKey = dayMap[row.day_name];
+      const stat = weeklyStats.find(s => s.day === dayKey);
+      if (stat) stat.scans = row.scans;
+    });
+
     res.json({
       stats: {
         totalStudies: totalStudies[0].count,
@@ -98,8 +175,9 @@ router.get("/dashboard/stats", async (req, res) => {
         signedReportsToday: signedReportsToday[0].count,
         patientsNeedingFollowup: patientsNeedingFollowup[0].count
       },
-      weeklyStats: [],
-      recentActivity: [],
+      weeklyStats: weeklyStats,
+      recentActivity: recentActivityRows,
+      patientsWithoutUltrasound: patientsWithoutUltrasound,
       alerts: []
     });
   } catch (error) {
@@ -140,13 +218,14 @@ router.get("/dashboard/weekly-stats", async (req, res) => {
   try {
     const [rows] = await pool.query(`
       SELECT
+        DATE(fecha_hora) as upload_date,
         DAYNAME(fecha_hora) as day_name,
         DAYOFWEEK(fecha_hora) as day_num,
         COUNT(*) as scans
       FROM ecografias
       WHERE fecha_hora >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
-      GROUP BY DAYOFWEEK(fecha_hora), DAYNAME(fecha_hora)
-      ORDER BY day_num
+      GROUP BY DATE(fecha_hora), DAYOFWEEK(fecha_hora), DAYNAME(fecha_hora)
+      ORDER BY upload_date DESC
     `);
 
     // Mapear a formato esperado por el frontend

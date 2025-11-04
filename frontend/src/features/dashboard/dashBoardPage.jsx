@@ -16,6 +16,7 @@ export default function DashboardPage() {
 
   const [recentActivity, setRecentActivity] = useState([]);
   const [weeklyStats, setWeeklyStats] = useState([]);
+  const [patientsWithoutUltrasound, setPatientsWithoutUltrasound] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Cargar datos reales del backend
@@ -29,6 +30,7 @@ export default function DashboardPage() {
           setStats(data.stats);
           setRecentActivity(data.recentActivity);
           setWeeklyStats(data.weeklyStats);
+          setPatientsWithoutUltrasound(data.patientsWithoutUltrasound || []);
         }
       } catch (error) {
         console.error('Error loading dashboard data:', error);
@@ -168,6 +170,39 @@ export default function DashboardPage() {
           </div>
         </div>
       </section>
+
+      {/* Pacientes sin Ecografías */}
+      {patientsWithoutUltrasound.length > 0 && (
+        <section className="patients-without-ultrasound">
+          <h2>⚠️ Pacientes Sin Ecografías</h2>
+          <div className="patients-alert-grid">
+            {patientsWithoutUltrasound.map((patient, index) => (
+              <div key={index} className="patient-alert-card">
+                <div className="patient-alert-header">
+                  <strong>{patient.nombre} {patient.apellido}</strong>
+                  <span className="patient-document">Doc: {patient.documento}</span>
+                </div>
+                <div className="patient-alert-details">
+                  <span>Nacido: {new Date(patient.fecha_nacimiento).toLocaleDateString('es-ES')}</span>
+                  <span>Días de vida: {patient.dias_vida}</span>
+                  {patient.edad_gestacional_sem && (
+                    <span>Edad gestacional: {patient.edad_gestacional_sem} sem</span>
+                  )}
+                  {patient.peso_nacimiento_g && (
+                    <span>Peso nacimiento: {patient.peso_nacimiento_g}g</span>
+                  )}
+                </div>
+                <button
+                  className="upload-btn"
+                  onClick={() => window.location.href = `/cargar-ecografias?patient=${patient.id}`}
+                >
+                  📤 Subir Ecografía
+                </button>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Contenido Principal del Dashboard */}
       <div className="dashboard-main">

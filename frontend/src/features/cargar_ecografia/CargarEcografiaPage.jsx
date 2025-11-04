@@ -1,13 +1,15 @@
 // src/features/viewer/CargarEcografiaPage.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import "./CargarEcografia.css";
 
 const CargarEcografiaPage = () => {
+  const [searchParams] = useSearchParams();
   const [pacientes, setPacientes] = useState([]);
   const [file, setFile] = useState(null);
-  const [query, setQuery] = useState("");           
-  const [patient, setPatient] = useState(null);     
-  const [openList, setOpenList] = useState(false);  
+  const [query, setQuery] = useState("");
+  const [patient, setPatient] = useState(null);
+  const [openList, setOpenList] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -16,7 +18,7 @@ const CargarEcografiaPage = () => {
   // Tipos permitidos
   const allowedTypes = [".png", ".jpg", ".jpeg", ".dcm"];
 
-  // Cargar neonatos
+  // Cargar neonatos y verificar parámetro de paciente
   useEffect(() => {
     const cargarNeonatos = async () => {
       try {
@@ -26,6 +28,16 @@ const CargarEcografiaPage = () => {
         if (!response.ok) throw new Error(`Error del servidor: ${response.status}`);
         const data = await response.json();
         setPacientes(data || []);
+
+        // Verificar si hay un parámetro de paciente en la URL
+        const patientId = searchParams.get('patient');
+        if (patientId && data) {
+          const selectedPatient = data.find(p => p.id.toString() === patientId);
+          if (selectedPatient) {
+            setPatient(selectedPatient);
+            setQuery(`${selectedPatient.documento} — ${selectedPatient.nombre} ${selectedPatient.apellido}`);
+          }
+        }
       } catch (err) {
         console.error("Error cargando neonatos:", err);
         setError("No se pudieron cargar los neonatos. Usando datos de prueba.");
@@ -41,7 +53,7 @@ const CargarEcografiaPage = () => {
       }
     };
     cargarNeonatos();
-  }, []);
+  }, [searchParams]);
 
   // Filtrar pacientes
   const suggestions = useMemo(() => {

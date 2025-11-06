@@ -11,6 +11,7 @@ import BuscarPacientes from "./features/buscar_paciente/BuscarPacientesPage";
 import CargarEcografia from "./features/cargar_ecografia/CargarEcografiaPage";
 import DashboardPage from "./features/dashboard/dashBoardPage";
 import PacientePage from "./features/paciente/PacientePage";
+import CrearPacientePage from "./features/crear_paciente/CrearPacientePage";
 import RegisterPage from "./features/auth/RegisterPage";
 import "./App.css";
 
@@ -98,6 +99,7 @@ export default function App() {
               <Routes>
                 <Route path="/perfil" element={<MiPerfil user={user} />} />
                 <Route path="/buscar-pacientes" element={<BuscarPacientes />} />
+                <Route path="/crear-paciente" element={<CrearPacientePage />} />
                 <Route path="/neonato/:id" element={<PacientePage />} />
                 <Route path="/visualizar-ecografias" element={<VtkViewer />} />
                 <Route path="/dicom-test" element={<DicomViewer />} />

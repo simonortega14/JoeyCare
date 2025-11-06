@@ -44,22 +44,35 @@ router.get("/neonatos", async (req, res) => {
   }
 });
 
-// Crear un nuevo neonato
+// Crear un nuevo neonato y su acudiente
 router.post("/neonatos", async (req, res) => {
+  const connection = await pool.getConnection();
   try {
-    const { nombre, apellido, documento, sexo, fecha_nacimiento, edad_gestacional_sem, edad_corregida_sem, peso_nacimiento_g, peso_actual_g, perimetro_cefalico } = req.body;
+    await connection.beginTransaction();
 
-    if (!nombre || !apellido || !documento) {
-      return res.status(400).json({ message: "Nombre, apellido y documento son obligatorios" });
+    const { nombre, apellido, documento, sexo, fecha_nacimiento, edad_gestacional_sem, edad_corregida_sem, peso_nacimiento_g, peso_actual_g, perimetro_cefalico,
+            nombre_acudiente, apellido_acudiente, parentesco, telefono, correo } = req.body;
+
+    if (!nombre || !apellido || !documento || !nombre_acudiente || !apellido_acudiente || !telefono || !correo) {
+      return res.status(400).json({ message: "Nombre, apellido, documento del paciente y nombre, apellido, teléfono y correo del acudiente son obligatorios" });
     }
 
-    const [result] = await pool.query(
+    const [result] = await connection.query(
       "INSERT INTO neonato (nombre, apellido, documento, sexo, fecha_nacimiento, edad_gestacional_sem, edad_corregida_sem, peso_nacimiento_g, peso_actual_g, perimetro_cefalico) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
       [nombre, apellido, documento, sexo || null, fecha_nacimiento || null, edad_gestacional_sem || null, edad_corregida_sem || null, peso_nacimiento_g || null, peso_actual_g || null, perimetro_cefalico || null]
     );
 
+    const neonatoId = result.insertId;
+
+    await connection.query(
+      "INSERT INTO acudiente (neonato_id, nombre, apellido, parentesco, telefono, correo) VALUES (?, ?, ?, ?, ?, ?)",
+      [neonatoId, nombre_acudiente, apellido_acudiente, parentesco || null, telefono, correo]
+    );
+
+    await connection.commit();
+
     res.status(201).json({
-      id: result.insertId,
+      id: neonatoId,
       nombre,
       apellido,
       documento,
@@ -70,10 +83,20 @@ router.post("/neonatos", async (req, res) => {
       peso_nacimiento_g,
       peso_actual_g,
       perimetro_cefalico,
+      acudiente: {
+        nombre: nombre_acudiente,
+        apellido: apellido_acudiente,
+        parentesco,
+        telefono,
+        correo
+      }
     });
   } catch (error) {
+    await connection.rollback();
     console.error(error);
-    res.status(500).json({ message: "Error al crear neonato" });
+    res.status(500).json({ message: "Error al crear neonato y acudiente" });
+  } finally {
+    connection.release();
   }
 });
 

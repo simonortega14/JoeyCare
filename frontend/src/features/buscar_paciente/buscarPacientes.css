@@ -162,6 +162,7 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   outline: none;
   -moz-appearance: textfield;
+  appearance: textfield;
 }
 
 .filter-group input::-webkit-outer-spin-button,
@@ -174,6 +175,11 @@
 .filter-group input[type=number] {
   -moz-appearance: textfield;
   appearance: textfield;
+}
+
+.filter-group input:focus {
+  border-color: #1976d2;
+  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
 }
 
 .filter-group input::placeholder {

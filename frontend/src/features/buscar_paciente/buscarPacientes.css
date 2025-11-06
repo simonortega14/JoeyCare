@@ -40,12 +40,101 @@
   font-weight: 500;
 }
 
+.main-search-container {
+  margin: 20px 0;
+  padding: 0 25px;
+}
+
+.main-search-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.main-search-group label {
+  color: #1565c0;
+  font-size: 2rem;
+  font-weight: 800;
+  margin: 0 0 5px 0;
+}
+
+.main-search-input {
+  width: 100% !important;
+  height: 50px !important;
+  padding: 0 20px !important;
+  border: 2px solid #2196f3 !important;
+  border-radius: 25px !important;
+  background-color: #f8f9fa !important;
+  color: #000000 !important;
+  font-size: 16px !important;
+  box-shadow: 0 2px 8px rgba(33, 150, 243, 0.1) !important;
+  outline: none !important;
+  transition: all 0.3s ease !important;
+}
+
+.main-search-input:focus {
+  border-color: #1976d2 !important;
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.2) !important;
+  background-color: #ffffff !important;
+}
+
+.main-search-input::placeholder {
+  color: #666 !important;
+}
+
 .filters-container {
   display: flex;
   flex-wrap: wrap;
   gap: 15px;
   justify-content: center;
   align-items: end;
+  padding: 0 25px;
+}
+
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  margin-top: 15px;
+}
+
+.clear-filters-btn {
+  background-color: #2196f3;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: #FFFFFF;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  width: 120px;
+}
+
+.clear-filters-btn:hover {
+  background-color: #1976d2;
+  transform: scale(1.05);
+}
+
+.compare-patients-btn {
+  background-color: #4caf50;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: #FFFFFF;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  width: 120px;
+}
+
+.compare-patients-btn:hover {
+  background-color: #388e3c;
+  transform: scale(1.05);
 }
 
 .filter-group {
@@ -55,9 +144,10 @@
 }
 
 .filter-group label {
-  color: #000000;
-  font-size: 14px;
-  font-weight: 600;
+  color: #1565c0;
+  font-size: 1rem;
+  font-weight: 800;
+  margin: 0 0 5px 0;
 }
 
 .filter-group input {
@@ -71,6 +161,19 @@
   font-size: 14px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   outline: none;
+  -moz-appearance: textfield;
+}
+
+.filter-group input::-webkit-outer-spin-button,
+.filter-group input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+
+.filter-group input[type=number] {
+  -moz-appearance: textfield;
+  appearance: textfield;
 }
 
 .filter-group input::placeholder {
@@ -80,7 +183,7 @@
 .search-btn {
   background-color: #4DC2FF;
   border: none;
-  padding: 10px 20px;
+  padding: 12px 24px;
   border-radius: 20px;
   cursor: pointer;
   font-size: 14px;
@@ -88,6 +191,7 @@
   color: #FFFFFF;
   transition: background-color 0.3s ease, transform 0.2s ease;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  width: 120px;
 }
 
 .search-btn:hover {
@@ -158,6 +262,15 @@
   height: 20px;
   cursor: pointer;
   z-index: 10;
+  accent-color: #4caf50;
+  appearance: checkbox;
+  -webkit-appearance: checkbox;
+  -moz-appearance: checkbox;
+}
+
+.paciente-checkbox:checked {
+  background-color: #4caf50;
+  border-color: #4caf50;
 }
 
 .paciente-logo {

@@ -11,15 +11,16 @@ const BuscarPacientesPage = ({ onOpenSettings }) => {
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState({
     nombre: '',
-    peso_min: '',
-    peso_max: '',
-    edad_gestacional_min: '',
-    edad_gestacional_max: '',
-    edad_corregida_min: '',
-    edad_corregida_max: ''
+    peso_min: 500,
+    peso_max: 5000,
+    edad_gestacional_min: 22,
+    edad_gestacional_max: 42,
+    edad_corregida_min: 22,
+    edad_corregida_max: 42
   });
   const [selectedNeonatos, setSelectedNeonatos] = useState([]);
   const [showComparisonModal, setShowComparisonModal] = useState(false);
+  const [showCheckboxes, setShowCheckboxes] = useState(false);
   const navigate = useNavigate();
 
   const fetchNeonatos = useCallback(async () => {
@@ -60,6 +61,19 @@ const BuscarPacientesPage = ({ onOpenSettings }) => {
     fetchNeonatos();
   };
 
+  const handleClearFilters = () => {
+    setFilters({
+      nombre: '',
+      peso_min: 500,
+      peso_max: 5000,
+      edad_gestacional_min: 22,
+      edad_gestacional_max: 42,
+      edad_corregida_min: 22,
+      edad_corregida_max: 42
+    });
+    fetchNeonatos();
+  };
+
   const handleViewDetails = (neonatoId) => {
     navigate(`/neonato/${neonatoId}`);
   };
@@ -79,11 +93,15 @@ const BuscarPacientesPage = ({ onOpenSettings }) => {
   const handleCompareSelected = () => {
     if (selectedNeonatos.length === 2) {
       setShowComparisonModal(true);
+    } else {
+      setShowCheckboxes(true);
     }
   };
 
   const handleCloseModal = () => {
     setShowComparisonModal(false);
+    setSelectedNeonatos([]);
+    setShowCheckboxes(false);
   };
 
   return (
@@ -99,18 +117,22 @@ const BuscarPacientesPage = ({ onOpenSettings }) => {
           </div>
         </div>
 
-        <div className="filters-container">
-          <div className="filter-group">
-            <label>Nombre:</label>
+        <div className="main-search-container">
+          <div className="main-search-group">
+            <label>Buscar por nombre:</label>
             <input
               type="text"
               name="nombre"
               value={filters.nombre}
               onChange={handleFilterChange}
               onKeyPress={handleKeyPress}
-              placeholder="Buscar por nombre"
+              placeholder="Ingrese el nombre o apellido del paciente"
+              className="main-search-input"
             />
           </div>
+        </div>
+
+        <div className="filters-container">
           <div className="filter-group">
             <label>Peso (g):</label>
             <input
@@ -162,12 +184,12 @@ const BuscarPacientesPage = ({ onOpenSettings }) => {
               placeholder="Máximo"
             />
           </div>
-          <button onClick={handleSearch} className="search-btn">Buscar</button>
-          {selectedNeonatos.length === 2 && (
-            <button onClick={handleCompareSelected} className="compare-btn">
-              Comparar seleccionados ({selectedNeonatos.length}/2)
+          <div className="action-buttons">
+            <button onClick={handleClearFilters} className="clear-filters-btn">Limpiar Filtros</button>
+            <button onClick={handleCompareSelected} className="compare-patients-btn">
+              {showCheckboxes ? (selectedNeonatos.length === 2 ? 'Comparar Pacientes' : `Seleccionar Pacientes (${selectedNeonatos.length}/2)`) : 'Comparar Pacientes'}
             </button>
-          )}
+          </div>
         </div>
 
         {loading && <div className="loading">Cargando neonatos...</div>}
@@ -177,13 +199,15 @@ const BuscarPacientesPage = ({ onOpenSettings }) => {
           {neonatos.map((neonato, index) => (
             <div key={neonato.id || index} className="paciente-card">
               <div className="paciente-image-container">
-                <input
-                  type="checkbox"
-                  checked={selectedNeonatos.some(p => p.id === neonato.id)}
-                  onChange={() => handleNeonatoSelect(neonato)}
-                  className="paciente-checkbox"
-                />
-                <div className="logo-placeholder paciente-logo">N</div>
+                {showCheckboxes && (
+                  <input
+                    type="checkbox"
+                    checked={selectedNeonatos.some(p => p.id === neonato.id)}
+                    onChange={() => handleNeonatoSelect(neonato)}
+                    className="paciente-checkbox"
+                  />
+                )}
+                <div className="logo-placeholder paciente-logo">N{neonato.id}</div>
               </div>
               <div className="paciente-info">
                 <h3 className="paciente-name-id">{neonato.nombre} {neonato.apellido} - {neonato.documento}</h3>

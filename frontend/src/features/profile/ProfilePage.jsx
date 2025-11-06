@@ -65,7 +65,7 @@ const ProfilePage = ({ onOpenSettings, user }) => {
                 <p><strong>Rol:</strong> {user ? user.rol : 'Médico'}</p>
                 <p><strong>Especialidad:</strong> {user ? user.especialidad : 'Neonatología'}</p>
                 <p><em>{user && user.especialidad_descripcion ? user.especialidad_descripcion : 'Descripción no disponible'}</em></p>
-                <p><strong>Estado:</strong> {user ? (user.activo ? 'Activo' : 'Inactivo') : 'Activo'}</p>
+                <p><strong>Estado:</strong> {user ? (user.activo ? '🟢 Activo' : '🔴 Inactivo') : '🟢 Activo'}</p>
               </div>
             </div>
             <div className="sede-info">

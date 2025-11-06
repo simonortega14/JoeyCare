@@ -31,8 +31,8 @@ export default function App() {
         console.log("Parsed user data:", userData);
 
         // Validar que el usuario tenga la estructura correcta de 'medicos'
-        // (rol, especialidad, sede, especialidad_descripcion, sede_institucion, etc. son campos nuevos)
-        if (userData.rol && userData.especialidad && userData.sede && userData.especialidad_descripcion !== undefined) {
+        // (rol, especialidad, sede, especialidad_descripcion, sede_institucion, foto_perfil, etc. son campos nuevos)
+        if (userData.rol && userData.especialidad && userData.sede && userData.especialidad_descripcion !== undefined && userData.foto_perfil !== undefined) {
           setUser(userData);
           setIsLoggedIn(true);
         } else {

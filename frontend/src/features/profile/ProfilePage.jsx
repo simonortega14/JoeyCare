@@ -1,10 +1,46 @@
-import React from 'react';
+import React, { useState } from 'react';
 import logoPerfil from '../../assets/logo perfil.png';
 import AppHeader from '../../components/AppHeader.jsx';
 import AppSidebar from '../../components/AppSidebar.jsx';
 import './profile.css';
 
 const ProfilePage = ({ onOpenSettings, user }) => {
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [preview, setPreview] = useState(null);
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    setSelectedFile(file);
+    if (file) {
+      setPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!selectedFile) return;
+
+    const formData = new FormData();
+    formData.append('foto', selectedFile);
+
+    try {
+      const response = await fetch(`http://localhost:4000/api/medicos/${user.id}/foto`, {
+        method: 'PUT',
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error('Error al subir foto');
+
+      const data = await response.json();
+      alert('Foto actualizada');
+      // Update user data
+      user.foto_perfil = data.foto_perfil;
+      localStorage.setItem('user', JSON.stringify(user));
+      setSelectedFile(null);
+      setPreview(null);
+    } catch (error) {
+      alert(error.message);
+    }
+  };
 
 
   return (
@@ -18,7 +54,10 @@ const ProfilePage = ({ onOpenSettings, user }) => {
           <div className="profile-info-content">
             <div className="doctor-info">
               <div className="profile-image-container">
-                <img src={logoPerfil} alt="Perfil" className="profile-logo" />
+                <img src={preview || (user && user.foto_perfil ? `http://localhost:4000/uploads/${user.foto_perfil}` : logoPerfil)} alt="Perfil" className="profile-logo" />
+                <input type="file" id="foto-input" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
+                <button onClick={() => document.getElementById('foto-input').click()} className="change-photo-btn">Cambiar Foto</button>
+                {selectedFile && <button onClick={handleUpload} className="upload-btn">Subir Foto</button>}
               </div>
               <div className="profile-info-text">
                 <h1>{user ? `${user.nombre} ${user.apellido}` : 'Nombre Apellido'}</h1>
@@ -55,11 +94,6 @@ const ProfilePage = ({ onOpenSettings, user }) => {
             <h3>Reportes Firmados</h3>
             <div className="metric-number">{user ? user.reportesFirmados || 0 : 0}</div>
             <div className="metric-trend positive">Este mes: {user ? user.reportesMes || 0 : 0}</div>
-          </div>
-          <div className="metric-card">
-            <h3>Tasa de Éxito</h3>
-            <div className="metric-number">{user ? `${user.tasaExito || 0}%` : '0%'}</div>
-            <div className="metric-trend positive">Promedio general</div>
           </div>
         </div>
       </div>

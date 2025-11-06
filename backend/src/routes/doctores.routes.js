@@ -1,7 +1,22 @@
 import { Router } from "express";
 import pool from "../db.js";
+import multer from "multer";
+import path from "path";
 
 const router = Router();
+
+// Configurar multer para subir fotos de perfil
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/');
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, 'profile-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ storage });
 
 // Obtener todos los medicos
 router.get("/medicos", async (req, res) => {
@@ -80,11 +95,34 @@ router.post("/medicos/login", async (req, res) => {
       sede_institucion: medico.sede_institucion,
       sede_ciudad: medico.sede_ciudad,
       sede_direccion: medico.sede_direccion,
+      foto_perfil: medico.foto_perfil,
       activo: medico.activo,
     });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Error en el login" });
+  }
+});
+
+// Actualizar foto de perfil
+router.put("/medicos/:id/foto", upload.single('foto'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const fotoPath = req.file ? req.file.filename : null;
+
+    if (!fotoPath) {
+      return res.status(400).json({ message: "No se proporcionó una foto" });
+    }
+
+    await pool.query(
+      "UPDATE medicos SET foto_perfil = ? WHERE id = ?",
+      [fotoPath, id]
+    );
+
+    res.json({ message: "Foto de perfil actualizada", foto_perfil: fotoPath });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error al actualizar foto de perfil" });
   }
 });
 

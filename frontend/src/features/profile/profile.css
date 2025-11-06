@@ -63,15 +63,32 @@
   font-weight: 500;
 }
 
+.change-photo-btn, .upload-btn {
+  margin-top: 10px;
+  padding: 5px 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.change-photo-btn:hover, .upload-btn:hover {
+  background-color: #0056b3;
+}
+
 .profile-image-container {
   width: 100px;
   height: 100px;
   background-color: #F5FFFF;
   border-radius: 50%;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
 }
 
 .profile-logo {

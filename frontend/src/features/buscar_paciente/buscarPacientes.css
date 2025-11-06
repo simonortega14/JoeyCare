@@ -15,21 +15,29 @@
 
 /* Encabezado de búsqueda */
 .buscar-pacientes-header {
-  background-color: rgba(77, 194, 255, 0.46);
-  border-radius: 12px;
-  padding: 25px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  background: white;
+  padding: 25px 30px;
+  border-radius: 15px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  margin-bottom: 25px;
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
   align-items: center;
-  gap: 20px;
+  border-left: 5px solid #2196f3;
 }
 
-.buscar-pacientes-header h1 {
-  color: #000000;
-  font-size: 28px;
-  font-weight: 700;
+.dashboard-title h1 {
+  color: #1565c0;
+  font-size: 2rem;
+  font-weight: 800;
+  margin: 0 0 5px 0;
+}
+
+.dashboard-title p {
+  color: #666;
+  font-size: 1rem;
   margin: 0;
+  font-weight: 500;
 }
 
 .filters-container {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppHeader from '../../components/AppHeader.jsx';
 import AppSidebar from '../../components/AppSidebar.jsx';
@@ -22,7 +22,7 @@ const BuscarPacientesPage = ({ onOpenSettings }) => {
   const [showComparisonModal, setShowComparisonModal] = useState(false);
   const navigate = useNavigate();
 
-  const fetchNeonatos = async () => {
+  const fetchNeonatos = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -39,15 +39,21 @@ const BuscarPacientesPage = ({ onOpenSettings }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
   useEffect(() => {
     fetchNeonatos();
-  }, []);
+  }, [fetchNeonatos]);
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
   };
 
   const handleSearch = () => {
@@ -87,76 +93,81 @@ const BuscarPacientesPage = ({ onOpenSettings }) => {
 
       <div className="buscar-pacientes-content">
         <div className="buscar-pacientes-header">
-          <h1>Buscar Neonatos</h1>
-          <div className="filters-container">
-            <div className="filter-group">
-              <label>Nombre:</label>
-              <input
-                type="text"
-                name="nombre"
-                value={filters.nombre}
-                onChange={handleFilterChange}
-                placeholder="Buscar por nombre"
-              />
-            </div>
-            <div className="filter-group">
-              <label>Peso (g):</label>
-              <input
-                type="number"
-                name="peso_min"
-                value={filters.peso_min}
-                onChange={handleFilterChange}
-                placeholder="Mínimo"
-              />
-              <input
-                type="number"
-                name="peso_max"
-                value={filters.peso_max}
-                onChange={handleFilterChange}
-                placeholder="Máximo"
-              />
-            </div>
-            <div className="filter-group">
-              <label>Edad Gestacional (sem):</label>
-              <input
-                type="number"
-                name="edad_gestacional_min"
-                value={filters.edad_gestacional_min}
-                onChange={handleFilterChange}
-                placeholder="Mínimo"
-              />
-              <input
-                type="number"
-                name="edad_gestacional_max"
-                value={filters.edad_gestacional_max}
-                onChange={handleFilterChange}
-                placeholder="Máximo"
-              />
-            </div>
-            <div className="filter-group">
-              <label>Edad Corregida (sem):</label>
-              <input
-                type="number"
-                name="edad_corregida_min"
-                value={filters.edad_corregida_min}
-                onChange={handleFilterChange}
-                placeholder="Mínimo"
-              />
-              <input
-                type="number"
-                name="edad_corregida_max"
-                value={filters.edad_corregida_max}
-                onChange={handleFilterChange}
-                placeholder="Máximo"
-              />
-            </div>
-            <button onClick={handleSearch} className="search-btn">Buscar</button>
-            {selectedNeonatos.length === 2 && (
-              <button onClick={handleCompareSelected} className="compare-btn">
-                Comparar seleccionados ({selectedNeonatos.length}/2)
-              </button>
-            )}
+          <div className="dashboard-title">
+            <h1>🔍 Buscar Neonatos</h1>
+            <p>Sistema PACS - Fundación Canguro</p>
           </div>
+        </div>
+
+        <div className="filters-container">
+          <div className="filter-group">
+            <label>Nombre:</label>
+            <input
+              type="text"
+              name="nombre"
+              value={filters.nombre}
+              onChange={handleFilterChange}
+              onKeyPress={handleKeyPress}
+              placeholder="Buscar por nombre"
+            />
+          </div>
+          <div className="filter-group">
+            <label>Peso (g):</label>
+            <input
+              type="number"
+              name="peso_min"
+              value={filters.peso_min}
+              onChange={handleFilterChange}
+              placeholder="Mínimo"
+            />
+            <input
+              type="number"
+              name="peso_max"
+              value={filters.peso_max}
+              onChange={handleFilterChange}
+              placeholder="Máximo"
+            />
+          </div>
+          <div className="filter-group">
+            <label>Edad Gestacional (sem):</label>
+            <input
+              type="number"
+              name="edad_gestacional_min"
+              value={filters.edad_gestacional_min}
+              onChange={handleFilterChange}
+              placeholder="Mínimo"
+            />
+            <input
+              type="number"
+              name="edad_gestacional_max"
+              value={filters.edad_gestacional_max}
+              onChange={handleFilterChange}
+              placeholder="Máximo"
+            />
+          </div>
+          <div className="filter-group">
+            <label>Edad Corregida (sem):</label>
+            <input
+              type="number"
+              name="edad_corregida_min"
+              value={filters.edad_corregida_min}
+              onChange={handleFilterChange}
+              placeholder="Mínimo"
+            />
+            <input
+              type="number"
+              name="edad_corregida_max"
+              value={filters.edad_corregida_max}
+              onChange={handleFilterChange}
+              placeholder="Máximo"
+            />
+          </div>
+          <button onClick={handleSearch} className="search-btn">Buscar</button>
+          {selectedNeonatos.length === 2 && (
+            <button onClick={handleCompareSelected} className="compare-btn">
+              Comparar seleccionados ({selectedNeonatos.length}/2)
+            </button>
+          )}
         </div>
 
         {loading && <div className="loading">Cargando neonatos...</div>}

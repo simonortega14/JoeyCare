@@ -6,11 +6,15 @@ const router = Router();
 // Obtener todos los neonatos con filtros opcionales
 router.get("/neonatos", async (req, res) => {
   try {
-    const { peso_min, peso_max, edad_gestacional_min, edad_gestacional_max, edad_corregida_min, edad_corregida_max } = req.query;
+    const { nombre, peso_min, peso_max, edad_gestacional_min, edad_gestacional_max, edad_corregida_min, edad_corregida_max } = req.query;
 
     let query = "SELECT id, nombre, apellido, sexo, documento, fecha_nacimiento, edad_gestacional_sem, edad_corregida_sem, peso_nacimiento_g, peso_actual_g, perimetro_cefalico FROM neonato WHERE 1=1";
     let params = [];
 
+    if (nombre) {
+      query += " AND (nombre LIKE ? OR apellido LIKE ?)";
+      params.push(`%${nombre}%`, `%${nombre}%`);
+    }
     if (peso_min) {
       query += " AND peso_nacimiento_g >= ?";
       params.push(parseFloat(peso_min));

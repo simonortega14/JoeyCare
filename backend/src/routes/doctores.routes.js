@@ -8,7 +8,8 @@ router.get("/medicos", async (req, res) => {
   try {
     const [rows] = await pool.query(`
       SELECT m.id, m.nombre, m.apellido, m.email, m.activo, m.creado_en, m.actualizado_en,
-             r.nombre as rol, e.nombre as especialidad, s.nombre as sede, s.ciudad
+             r.nombre as rol, e.nombre as especialidad, e.descripcion as especialidad_descripcion,
+             s.nombre as sede, s.institucion as sede_institucion, s.ciudad as sede_ciudad, s.direccion as sede_direccion
       FROM medicos m
       JOIN roles r ON m.rol_id = r.id
       JOIN especialidades e ON m.especialidad_id = e.id
@@ -57,7 +58,7 @@ router.post("/medicos/login", async (req, res) => {
     }
 
     const [rows] = await pool.query(
-      "SELECT m.*, r.nombre as rol, e.nombre as especialidad, s.nombre as sede, s.ciudad FROM medicos m JOIN roles r ON m.rol_id = r.id JOIN especialidades e ON m.especialidad_id = e.id JOIN sedes s ON m.sede_id = s.id WHERE m.email = ? AND m.hash_password = ? AND m.activo = TRUE",
+      "SELECT m.*, r.nombre as rol, e.nombre as especialidad, e.descripcion as especialidad_descripcion, s.nombre as sede, s.institucion as sede_institucion, s.ciudad as sede_ciudad, s.direccion as sede_direccion FROM medicos m JOIN roles r ON m.rol_id = r.id JOIN especialidades e ON m.especialidad_id = e.id JOIN sedes s ON m.sede_id = s.id WHERE m.email = ? AND m.hash_password = ? AND m.activo = TRUE",
       [email, password]
     );
 
@@ -74,8 +75,12 @@ router.post("/medicos/login", async (req, res) => {
       email: medico.email,
       rol: medico.rol,
       especialidad: medico.especialidad,
+      especialidad_descripcion: medico.especialidad_descripcion,
       sede: medico.sede,
-      ciudad: medico.ciudad,
+      sede_institucion: medico.sede_institucion,
+      sede_ciudad: medico.sede_ciudad,
+      sede_direccion: medico.sede_direccion,
+      activo: medico.activo,
     });
   } catch (error) {
     console.error(error);

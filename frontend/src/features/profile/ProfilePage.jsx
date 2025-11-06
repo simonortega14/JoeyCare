@@ -1,27 +1,11 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import logoPerfil from '../../assets/logo perfil.png';
-import logoPacientes from '../../assets/logo pacientes.png';
 import AppHeader from '../../components/AppHeader.jsx';
 import AppSidebar from '../../components/AppSidebar.jsx';
 import './profile.css';
 
 const ProfilePage = ({ onOpenSettings, user }) => {
-  const navigate = useNavigate();
 
-  // Datos de ejemplo para pacientes revisados
-  const pacientesRevisados = [
-    { nombre: "Bebé García", id: "BG-123", peso: "2.4 kg", edad: "32 semanas" },
-    { nombre: "Bebé Rodríguez", id: "BR-456", peso: "2.1 kg", edad: "28 semanas" },
-    { nombre: "Bebé López", id: "BL-789", peso: "2.6 kg", edad: "30 semanas" },
-    { nombre: "Bebé Martínez", id: "BM-012", peso: "2.3 kg", edad: "31 semanas" },
-    { nombre: "Bebé González", id: "BG-345", peso: "2.5 kg", edad: "33 semanas" }
-  ];
-
-  // Función para manejar el clic en "Ver detalles"
-  const handleViewDetails = (pacienteId) => {
-    navigate(`/paciente/${pacienteId}`);
-  };
 
   return (
     <div className="profile-container">
@@ -32,44 +16,50 @@ const ProfilePage = ({ onOpenSettings, user }) => {
         {/* Contenedor de información del perfil */}
         <div className="profile-info-card">
           <div className="profile-info-content">
-            <div className="profile-image-container">
-              <img src={logoPerfil} alt="Perfil" className="profile-logo" />
+            <div className="doctor-info">
+              <div className="profile-image-container">
+                <img src={logoPerfil} alt="Perfil" className="profile-logo" />
+              </div>
+              <div className="profile-info-text">
+                <h1>{user ? `${user.nombre} ${user.apellido}` : 'Nombre Apellido'}</h1>
+                <p><strong>Email:</strong> {user ? user.email : 'email@ejemplo.com'}</p>
+                <p><strong>Rol:</strong> {user ? user.rol : 'Médico'}</p>
+                <p><strong>Especialidad:</strong> {user ? user.especialidad : 'Neonatología'}</p>
+                <p><em>{user && user.especialidad_descripcion ? user.especialidad_descripcion : 'Descripción no disponible'}</em></p>
+                <p><strong>Estado:</strong> {user ? (user.activo ? 'Activo' : 'Inactivo') : 'Activo'}</p>
+              </div>
             </div>
-            <div className="profile-info-text">
-              <h1>{user ? `${user.nombre} ${user.apellido}` : 'Nombre Apellido'}</h1>
-              <p><strong>{user ? user.sede : 'Sede en la que labora'}</strong></p>
+            <div className="sede-info">
+              <h2>Información de la Sede</h2>
+              <p><strong>Sede:</strong> {user ? user.sede : 'Sede en la que labora'}</p>
+              <p><strong>Institución:</strong> {user && user.sede_institucion ? user.sede_institucion : 'No disponible'}</p>
+              <p><strong>Ciudad:</strong> {user && user.sede_ciudad ? user.sede_ciudad : 'No disponible'}</p>
+              <p><strong>Dirección:</strong> {user && user.sede_direccion ? user.sede_direccion : 'No disponible'}</p>
             </div>
           </div>
         </div>
 
-        {/* Aquí dejamos el resto igual, pacientes asignados, etc */}
-        <div className="patients-assigned-card">
-          <h3>Pacientes asignados</h3>
-          <div className="patients-number">22</div>
-          <div className="patients-trend">+12% desde el mes pasado</div>
-        </div>
-
-        {/* Contenedor de pacientes revisados recientemente */}
-        <div className="recent-patients-card">
-          <h2>Pacientes revisados recientemente</h2>
-          <div className="patients-grid">
-            {pacientesRevisados.map((paciente, index) => (
-              <div key={index} className="patient-item-card">
-                <div className="patient-image-container">
-                  <img src={logoPacientes} alt="Paciente" className="patient-logo" />
-                </div>
-                <div className="patient-info">
-                  <div className="patient-name-id">{paciente.nombre} {paciente.id}</div>
-                  <div className="patient-details">{paciente.peso} {paciente.edad}</div>
-                  <button 
-                    className="view-paciente-btn"
-                    onClick={() => handleViewDetails(paciente.id)}
-                  >
-                    Ver detalles
-                  </button>
-                </div>
-              </div>
-            ))}
+        {/* KPIs del Médico */}
+        <div className="metrics-container">
+          <div className="metric-card">
+            <h3>Pacientes Atendidos</h3>
+            <div className="metric-number">{user ? user.pacientesAtendidos || 0 : 0}</div>
+            <div className="metric-trend positive">Total acumulado</div>
+          </div>
+          <div className="metric-card">
+            <h3>Ecografías Realizadas</h3>
+            <div className="metric-number">{user ? user.ecografiasRealizadas || 0 : 0}</div>
+            <div className="metric-trend positive">Este mes: {user ? user.ecografiasMes || 0 : 0}</div>
+          </div>
+          <div className="metric-card">
+            <h3>Reportes Firmados</h3>
+            <div className="metric-number">{user ? user.reportesFirmados || 0 : 0}</div>
+            <div className="metric-trend positive">Este mes: {user ? user.reportesMes || 0 : 0}</div>
+          </div>
+          <div className="metric-card">
+            <h3>Tasa de Éxito</h3>
+            <div className="metric-number">{user ? `${user.tasaExito || 0}%` : '0%'}</div>
+            <div className="metric-trend positive">Promedio general</div>
           </div>
         </div>
       </div>

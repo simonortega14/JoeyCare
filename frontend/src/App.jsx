@@ -31,8 +31,8 @@ export default function App() {
         console.log("Parsed user data:", userData);
 
         // Validar que el usuario tenga la estructura correcta de 'medicos'
-        // (rol, especialidad, sede son campos nuevos de la tabla medicos)
-        if (userData.rol && userData.especialidad && userData.sede) {
+        // (rol, especialidad, sede, especialidad_descripcion, sede_institucion, etc. son campos nuevos)
+        if (userData.rol && userData.especialidad && userData.sede && userData.especialidad_descripcion !== undefined) {
           setUser(userData);
           setIsLoggedIn(true);
         } else {

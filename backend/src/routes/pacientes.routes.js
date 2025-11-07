@@ -104,11 +104,16 @@ router.post("/neonatos", async (req, res) => {
   }
 });
 
-// Obtener un neonato por ID
+// Obtener un neonato por ID con datos del acudiente
 router.get("/neonatos/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const [rows] = await pool.query("SELECT * FROM neonato WHERE id = ?", [id]);
+    const [rows] = await pool.query(`
+      SELECT n.*, a.nombre as nombre_acudiente, a.apellido as apellido_acudiente, a.parentesco, a.telefono, a.correo
+      FROM neonato n
+      LEFT JOIN acudiente a ON n.id = a.neonato_id
+      WHERE n.id = ?
+    `, [id]);
 
     if (rows.length === 0) {
       return res.status(404).json({ message: "Neonato no encontrado" });

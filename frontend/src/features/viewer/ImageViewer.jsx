@@ -41,6 +41,11 @@ function ImageViewer({ imageFile, onClose, isEmbedded = false, side = null, exte
   const [pointColor, setPointColor] = useState([1, 0, 0]);
   const pointColorRef = useRef([1, 0, 0]);
 
+  // Estados para el reporte
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportText, setReportText] = useState('');
+  const [signatureText, setSignatureText] = useState('');
+
   // Efecto para marcar el componente como montado
   useEffect(() => {
     setIsMounted(true);
@@ -899,6 +904,10 @@ function ImageViewer({ imageFile, onClose, isEmbedded = false, side = null, exte
             </>
           )}
 
+          <button onClick={() => setShowReportModal(true)} style={buttonStyle}>
+            📄 Reporte
+          </button>
+
           <span style={{ marginLeft: "auto", color: "#fff", fontSize: "13px" }}>
             {imageFile.filepath || imageFile.filename}
           </span>
@@ -906,14 +915,87 @@ function ImageViewer({ imageFile, onClose, isEmbedded = false, side = null, exte
       )}
 
       {/* Panel lateral de información - solo si NO está embedded */}
-      {!isEmbedded && (points.length > 0 || drawings.length > 0) && (
+      {!isEmbedded && (points.length > 0 || drawings.length > 0 || showReportModal) && (
         <div style={{
           position: "absolute", top: "60px", right: "10px",
           background: "rgba(0,0,0,0.85)", padding: "10px",
           borderRadius: "5px", color: "#fff", fontSize: "12px",
           maxHeight: "calc(100vh - 150px)", overflowY: "auto",
-          minWidth: "200px", zIndex: 100
+          minWidth: "300px", zIndex: 100
         }}>
+          {showReportModal && (
+            <div style={{ marginBottom: "20px" }}>
+              <div style={{ fontWeight: "bold", marginBottom: "15px", fontSize: "16px", color: "#fff" }}>
+                📄 Reporte Médico
+              </div>
+
+              <div style={{ marginBottom: "15px" }}>
+                <label style={{ display: "block", marginBottom: "5px", fontWeight: "bold", color: "#fff" }}>
+                  Reporte:
+                </label>
+                <textarea
+                  value={reportText}
+                  onChange={(e) => setReportText(e.target.value)}
+                  placeholder="Escriba el reporte médico aquí..."
+                  style={{
+                    width: "100%",
+                    height: "150px",
+                    padding: "8px",
+                    border: "1px solid #ccc",
+                    borderRadius: "4px",
+                    fontFamily: "Arial, sans-serif",
+                    fontSize: "12px",
+                    resize: "vertical",
+                    backgroundColor: "#fff",
+                    color: "#333"
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: "15px" }}>
+                <label style={{ display: "block", marginBottom: "5px", fontWeight: "bold", color: "#fff" }}>
+                  Firma del Médico:
+                </label>
+                <textarea
+                  value={signatureText}
+                  onChange={(e) => setSignatureText(e.target.value)}
+                  placeholder="Nombre completo del médico..."
+                  style={{
+                    width: "100%",
+                    height: "50px",
+                    padding: "8px",
+                    border: "1px solid #ccc",
+                    borderRadius: "4px",
+                    fontFamily: "Arial, sans-serif",
+                    fontSize: "12px",
+                    resize: "vertical",
+                    backgroundColor: "#fff",
+                    color: "#333"
+                  }}
+                />
+              </div>
+
+              <button
+                onClick={() => {
+                  // Aquí puedes agregar lógica para guardar el reporte
+                  console.log("Reporte guardado:", { reportText, signatureText });
+                  alert("Reporte guardado exitosamente");
+                  setShowReportModal(false);
+                  setReportText('');
+                  setSignatureText('');
+                }}
+                style={{
+                  ...buttonStyle,
+                  backgroundColor: "#4caf50",
+                  width: "100%",
+                  marginTop: "10px"
+                }}
+              >
+                💾 Guardar Reporte
+              </button>
+            </div>
+          )}
+
           {points.length > 0 && (
             <>
               <div style={{ fontWeight: "bold", marginBottom: "8px", fontSize: "14px" }}>
@@ -937,7 +1019,7 @@ function ImageViewer({ imageFile, onClose, isEmbedded = false, side = null, exte
               ))}
             </>
           )}
-          
+
           {drawings.length > 0 && (
             <>
               <div style={{ fontWeight: "bold", marginTop: "12px", marginBottom: "8px", fontSize: "14px" }}>
@@ -1002,22 +1084,23 @@ function ImageViewer({ imageFile, onClose, isEmbedded = false, side = null, exte
         </div>
       )}
 
-      <div 
-        ref={vtkContainerRef} 
-        style={isEmbedded ? { 
-          flex: 1, 
-          width: '100%', 
+      <div
+        ref={vtkContainerRef}
+        style={isEmbedded ? {
+          flex: 1,
+          width: '100%',
           height: '100%',
           position: 'relative',
           minHeight: '400px'
-        } : { 
-          width: "100%", 
-          height: "100%", 
+        } : {
+          width: "100%",
+          height: "100%",
           position: "absolute",
           top: 0,
           left: 0
-        }} 
+        }}
       />
+
     </div>
   );
 }

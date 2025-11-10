@@ -67,12 +67,11 @@
   font-size: 0.9rem;
 }
 
-/* Stats Grid */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
-  margin-bottom: 30px;
+  grid-template-columns: repeat(3, 1fr); /* 3 columnas fijas */
+  gap: 25px;
+  margin-bottom: 40px;
 }
 
 .stat-card {
@@ -131,6 +130,11 @@
 .stat-change.neutral {
   background: #fff3e0;
   color: #f57c00;
+}
+
+.stat-change.warning {
+  background: #fce4ec;
+  color: #c2185b;
 }
 
 /* Dashboard Main Content */

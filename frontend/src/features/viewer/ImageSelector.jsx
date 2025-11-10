@@ -71,9 +71,14 @@ function ImageSelector({ onImageSelected }) {
   };
 
   const handleLongitudinalAnalysis = () => {
-    setIsLongitudinalMode(true);
-    setSelectedEcografia(null);
-  };
+  setIsLongitudinalMode(true);
+
+  if (selectedEcografia) {
+    setSelectedEcografiaA(selectedEcografia);
+  }
+
+};
+
 
   const handleVisualizeComparison = () => {
     if (selectedEcografiaA && selectedEcografiaB) {

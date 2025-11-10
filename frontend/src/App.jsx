@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import LoginPage from "./features/auth/LoginPage";
+import RegisterPage from "./features/auth/RegisterPage";
+import AdminPage from "./features/auth/AdminPage";
 import VtkViewer from "./features/viewer/VtkViewer";
 import DicomViewer from "./features/viewer/DicomViewer";
 import VisorEcografiaDoble from "./features/comparacion/VisorEcografiaDoble";
@@ -18,13 +20,11 @@ import "./App.css";
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
-  const [sidebarOpen, setSidebarOpen] = useState(false); // ✅ agregado
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Log para verificar localStorage al inicializar la app
     const storedUser = localStorage.getItem("user");
-    console.log("App initialization - localStorage user:", storedUser);
     if (storedUser) {
       try {
         const userData = JSON.parse(storedUser);
@@ -36,15 +36,11 @@ export default function App() {
           setUser(userData);
           setIsLoggedIn(true);
         } else {
-          console.log("User data is outdated (old schema), clearing localStorage");
-          localStorage.removeItem("user"); // Limpiar datos antiguos
+          localStorage.removeItem("user");
         }
       } catch (error) {
-        console.error("Error parsing stored user data:", error);
-        localStorage.removeItem("user"); // Limpiar datos corruptos
+        localStorage.removeItem("user");
       }
-    } else {
-      console.log("No user data found in localStorage");
     }
   }, []);
 
@@ -56,14 +52,12 @@ export default function App() {
         body: JSON.stringify({ email: form.username, password: form.password }),
       });
 
-      if (!response.ok) {
-        throw new Error("Credenciales inválidas");
-      }
+      if (!response.ok) throw new Error("Credenciales inválidas");
 
       const userData = await response.json();
       setUser(userData);
       setIsLoggedIn(true);
-      localStorage.setItem("user", JSON.stringify(userData)); // guarda la sesión
+      localStorage.setItem("user", JSON.stringify(userData));
     } catch (error) {
       alert(error.message || "Error en el inicio de sesión");
     }
@@ -76,6 +70,7 @@ export default function App() {
     navigate("/");
   }
 
+  // Si no está logueado
   if (!isLoggedIn) {
     return (
       <Routes>
@@ -85,6 +80,12 @@ export default function App() {
     );
   }
 
+  // Si el usuario es admin (rol_id === 1)
+  if (user?.rol_id === 1) {
+    return <AdminPage onLogout={handleLogout} />;
+  }
+
+  // Usuarios normales (médicos)
   return (
     <Routes>
       <Route path="/comparar-ecografias" element={

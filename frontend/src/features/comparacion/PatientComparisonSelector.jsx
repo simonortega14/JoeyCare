@@ -44,40 +44,61 @@ function PatientComparisonSelector({ selectedPacientes, onClose }) {
       left: 0,
       right: 0,
       bottom: 0,
-      backgroundColor: "rgba(0,0,0,0.8)",
+      backgroundColor: "rgba(0,0,0,0.5)",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
       zIndex: 10000
     }}>
       <div style={{
-        backgroundColor: "#333",
+        backgroundColor: "#F5FFFF",
         padding: "20px",
-        borderRadius: "8px",
+        borderRadius: "15px",
         maxWidth: "600px",
         width: "90%",
         maxHeight: "80vh",
-        overflowY: "auto"
+        overflowY: "auto",
+        boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
+        borderLeft: "5px solid #2196f3"
       }}>
-        <h3 style={{ color: "#fff", marginTop: 0 }}>Seleccionar ecografías para comparar</h3>
-        <p style={{ color: "#ccc", marginBottom: "20px" }}>
+        <h3 style={{
+          color: "#1565c0",
+          fontSize: "2rem",
+          fontWeight: 800,
+          marginTop: 0,
+          marginBottom: "10px"
+        }}>Seleccionar ecografías para comparar</h3>
+        <p style={{
+          color: "#666",
+          marginBottom: "20px",
+          fontSize: "1rem",
+          fontWeight: 500
+        }}>
           Elige una ecografía de cada paciente para comparar.
         </p>
 
         <div style={{ display: "flex", gap: "20px" }}>
           {/* Paciente 1 */}
           <div style={{ flex: 1 }}>
-            <h4 style={{ color: "#fff", marginBottom: "10px" }}>
+            <h4 style={{
+              color: "#1565c0",
+              fontSize: "1.2rem",
+              fontWeight: 700,
+              marginBottom: "10px"
+            }}>
               {paciente1.nombre} {paciente1.apellido}
             </h4>
             <select
               style={{
                 width: "100%",
                 padding: "8px",
-                backgroundColor: "#555",
-                color: "#fff",
-                border: "1px solid #777",
-                borderRadius: "4px"
+                backgroundColor: "#f8f9fa",
+                color: "#000000",
+                border: "2px solid #2196f3",
+                borderRadius: "8px",
+                fontSize: "14px",
+                boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+                outline: "none"
               }}
               value={selectedEcografia1?.id || ""}
               onChange={e => {
@@ -93,7 +114,12 @@ function PatientComparisonSelector({ selectedPacientes, onClose }) {
               ))}
             </select>
             {ecografiasPaciente1.length === 0 && (
-              <p style={{ color: "#ccc", fontSize: "14px", marginTop: "5px" }}>
+              <p style={{
+                color: "#666",
+                fontSize: "14px",
+                marginTop: "5px",
+                fontWeight: 500
+              }}>
                 No hay ecografías disponibles
               </p>
             )}
@@ -101,17 +127,25 @@ function PatientComparisonSelector({ selectedPacientes, onClose }) {
 
           {/* Paciente 2 */}
           <div style={{ flex: 1 }}>
-            <h4 style={{ color: "#fff", marginBottom: "10px" }}>
+            <h4 style={{
+              color: "#1565c0",
+              fontSize: "1.2rem",
+              fontWeight: 700,
+              marginBottom: "10px"
+            }}>
               {paciente2.nombre} {paciente2.apellido}
             </h4>
             <select
               style={{
                 width: "100%",
                 padding: "8px",
-                backgroundColor: "#555",
-                color: "#fff",
-                border: "1px solid #777",
-                borderRadius: "4px"
+                backgroundColor: "#f8f9fa",
+                color: "#000000",
+                border: "2px solid #2196f3",
+                borderRadius: "8px",
+                fontSize: "14px",
+                boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+                outline: "none"
               }}
               value={selectedEcografia2?.id || ""}
               onChange={e => {
@@ -127,7 +161,12 @@ function PatientComparisonSelector({ selectedPacientes, onClose }) {
               ))}
             </select>
             {ecografiasPaciente2.length === 0 && (
-              <p style={{ color: "#ccc", fontSize: "14px", marginTop: "5px" }}>
+              <p style={{
+                color: "#666",
+                fontSize: "14px",
+                marginTop: "5px",
+                fontWeight: 500
+              }}>
                 No hay ecografías disponibles
               </p>
             )}
@@ -138,12 +177,16 @@ function PatientComparisonSelector({ selectedPacientes, onClose }) {
           <button
             onClick={onClose}
             style={{
-              padding: "8px 16px",
-              backgroundColor: "#666",
-              color: "#fff",
+              padding: "12px 24px",
+              backgroundColor: "#2196f3",
+              color: "#FFFFFF",
               border: "none",
-              borderRadius: "4px",
-              cursor: "pointer"
+              borderRadius: "20px",
+              cursor: "pointer",
+              fontSize: "14px",
+              fontWeight: 600,
+              transition: "background-color 0.3s ease, transform 0.2s ease",
+              boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)"
             }}
           >
             Cancelar
@@ -152,12 +195,16 @@ function PatientComparisonSelector({ selectedPacientes, onClose }) {
             onClick={handleCompare}
             disabled={!selectedEcografia1 || !selectedEcografia2}
             style={{
-              padding: "8px 16px",
-              backgroundColor: (selectedEcografia1 && selectedEcografia2) ? "#4caf50" : "#444",
-              color: "#fff",
+              padding: "12px 24px",
+              backgroundColor: (selectedEcografia1 && selectedEcografia2) ? "#4caf50" : "#cccccc",
+              color: "#FFFFFF",
               border: "none",
-              borderRadius: "4px",
-              cursor: (selectedEcografia1 && selectedEcografia2) ? "pointer" : "not-allowed"
+              borderRadius: "20px",
+              cursor: (selectedEcografia1 && selectedEcografia2) ? "pointer" : "not-allowed",
+              fontSize: "14px",
+              fontWeight: 600,
+              transition: "background-color 0.3s ease, transform 0.2s ease",
+              boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)"
             }}
           >
             Comparar

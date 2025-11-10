@@ -46,6 +46,17 @@ const PacientePage = ({ onOpenSettings }) => {
   }, [id]);
 
 
+  // Función para traducir el parentesco
+  const traducirParentesco = (parentesco) => {
+    switch (parentesco) {
+      case 'P': return 'Padre';
+      case 'M': return 'Madre';
+      case 'H': return 'Hermano/a';
+      case 'O': return 'Otro';
+      default: return 'N/A';
+    }
+  };
+
   // Función para manejar el clic en "Ver detalles" de ecografía
   const handleViewEcografia = (ecografia) => {
     window.location.href = `/visualizar-ecografias?patient=${id}&file=${ecografia.filepath}`;
@@ -169,7 +180,7 @@ const PacientePage = ({ onOpenSettings }) => {
               </div>
               <div className="detail-item">
                 <span className="detail-label">Parentesco</span>
-                <span className="detail-value">{paciente.parentesco || 'N/A'}</span>
+                <span className="detail-value">{traducirParentesco(paciente.parentesco)}</span>
               </div>
               <div className="detail-item">
                 <span className="detail-label">Teléfono</span>

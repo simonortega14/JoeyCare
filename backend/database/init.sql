@@ -276,6 +276,66 @@ VALUES
 ('Emilio','Prieto',101300,'M','2022-02-14',34,36,2190,2640,31.9);
 
 -- -------------------------
+-- SEED DE ACUDIENTES (30 registros + casos gemelares)
+-- -------------------------
+INSERT INTO acudiente (neonato_id, nombre, apellido, parentesco, telefono, correo)
+VALUES
+-- 1 y 2: Hermanos gemelos, misma madre
+(1, 'Laura', 'García', 'M', '3101111111', 'laura.garcia@example.com'),
+(2, 'Laura', 'García', 'M', '3101111111', 'laura.garcia@example.com'),
+-- 3: Padre único
+(3, 'Carlos', 'Rodríguez', 'P', '3102222222', 'carlos.rodriguez@example.com'),
+-- 4 y 5: Mellizos, mismo padre
+(4, 'Andrés', 'Hernández', 'P', '3103333333', 'andres.hernandez@example.com'),
+(5, 'Andrés', 'Hernández', 'P', '3103333333', 'andres.hernandez@example.com'),
+-- 6: Madre
+(6, 'Marcela', 'Gómez', 'M', '3104444444', 'marcela.gomez@example.com'),
+-- 7: Padre
+(7, 'Felipe', 'Pérez', 'P', '3105555555', 'felipe.perez@example.com'),
+-- 8: Madre
+(8, 'Lucía', 'Sánchez', 'M', '3106666666', 'lucia.sanchez@example.com'),
+-- 9 y 10: Gemelos, misma madre
+(9, 'Adriana', 'Díaz', 'M', '3107777777', 'adriana.diaz@example.com'),
+(10, 'Adriana', 'Díaz', 'M', '3107777777', 'adriana.diaz@example.com'),
+-- 11: Padre
+(11, 'Fernando', 'Ramírez', 'P', '3108888888', 'fernando.ramirez@example.com'),
+-- 12: Madre
+(12, 'Paola', 'Castaño', 'M', '3109999999', 'paola.castano@example.com'),
+-- 13: Otro (abuela)
+(13, 'Rosa', 'Muñoz', 'O', '3201111111', 'rosa.munoz@example.com'),
+-- 14: Madre
+(14, 'Sandra', 'Rojas', 'M', '3202222222', 'sandra.rojas@example.com'),
+-- 15: Padre
+(15, 'Juan', 'Vargas', 'P', '3203333333', 'juan.vargas@example.com'),
+-- 16 y 17: Hermanos gemelos, misma madre
+(16, 'Tatiana', 'Mendoza', 'M', '3204444444', 'tatiana.mendoza@example.com'),
+(17, 'Tatiana', 'Mendoza', 'M', '3204444444', 'tatiana.mendoza@example.com'),
+-- 18: Madre
+(18, 'Carolina', 'Navarro', 'M', '3205555555', 'carolina.navarro@example.com'),
+-- 19: Padre
+(19, 'Jorge', 'Guerrero', 'P', '3206666666', 'jorge.guerrero@example.com'),
+-- 20: Madre
+(20, 'Mónica', 'Ortega', 'M', '3207777777', 'monica.ortega@example.com'),
+-- 21: Otro (tía)
+(21, 'Verónica', 'Peña', 'O', '3208888888', 'veronica.pena@example.com'),
+-- 22: Padre
+(22, 'Luis', 'Cortés', 'P', '3209999999', 'luis.cortes@example.com'),
+-- 23 y 24: Mellizos, mismo padre
+(23, 'Ricardo', 'Luna', 'P', '3001111111', 'ricardo.luna@example.com'),
+(24, 'Ricardo', 'Luna', 'P', '3001111111', 'ricardo.luna@example.com'),
+-- 25: Madre
+(25, 'Beatriz', 'Ibáñez', 'M', '3002222222', 'beatriz.ibanez@example.com'),
+-- 26: Padre
+(26, 'Oscar', 'Camacho', 'P', '3003333333', 'oscar.camacho@example.com'),
+-- 27: Madre
+(27, 'Patricia', 'Cárdenas', 'M', '3004444444', 'patricia.cardenas@example.com'),
+-- 28: Madre
+(28, 'Claudia', 'Salazar', 'M', '3005555555', 'claudia.salazar@example.com'),
+-- 29 y 30: Hermanos gemelos, mismo padre
+(29, 'Hernán', 'Mejía', 'P', '3006666666', 'hernan.mejia@example.com'),
+(30, 'Hernán', 'Mejía', 'P', '3006666666', 'hernan.mejia@example.com');
+
+-- -------------------------
 -- CONSULTAS DE VERIFICACIÓN
 -- -------------------------
 SELECT '--- ROLES ---' AS 'ESTADO DE DATOS';
@@ -292,3 +352,6 @@ SELECT id, nombre, apellido, email, rol_id, sede_id, especialidad_id FROM medico
 
 SELECT '--- NEONATOS (PACIENTES) ---' AS 'ESTADO DE DATOS';
 SELECT id, nombre, apellido, documento, sexo, fecha_nacimiento FROM neonato;
+
+SELECT '--- ACUDIENTES ---' AS 'ESTADO DE DATOS';
+SELECT id, nombre, apellido, parentesco, telefono , correo FROM acudiente;

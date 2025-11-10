@@ -38,6 +38,21 @@ function ImageSelector({ onImageSelected }) {
       .catch(() => setPacientes([{ id: 1, nombre: "Prueba", apellido: "Paciente" }]));
   }, [searchParams]);
 
+  // Limpiar selecciones cuando se monta el componente (al volver desde el visor)
+  // Solo si NO hay parámetros en la URL (es decir, si vino desde el selector normal)
+  useEffect(() => {
+    const patientId = searchParams.get('patient');
+    const fileName = searchParams.get('file');
+
+    if (!patientId && !fileName) {
+      setSelectedPaciente(null);
+      setSelectedEcografia(null);
+      setSelectedEcografiaA(null);
+      setSelectedEcografiaB(null);
+      setIsLongitudinalMode(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (!selectedPaciente) {
       setEcografias([]);

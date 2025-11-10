@@ -14,7 +14,7 @@ import CargarEcografia from "./features/cargar_ecografia/CargarEcografiaPage";
 import DashboardPage from "./features/dashboard/dashBoardPage";
 import PacientePage from "./features/paciente/PacientePage";
 import CrearPacientePage from "./features/crear_paciente/CrearPacientePage";
-import RegisterPage from "./features/auth/RegisterPage";
+
 import "./App.css";
 
 export default function App() {
@@ -39,6 +39,7 @@ export default function App() {
           localStorage.removeItem("user");
         }
       } catch (error) {
+        console.error("Error parsing user data from localStorage:", error);
         localStorage.removeItem("user");
       }
     }

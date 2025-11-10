@@ -758,8 +758,8 @@ function ImageViewer({ imageFile, onClose, isEmbedded = false, side = null, exte
   }
 
   return (
-    <div className={isEmbedded ? "vtk-embedded" : "vtk-fullscreen"} 
-         style={isEmbedded ? { height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' } : 
+    <div className={isEmbedded ? "vtk-embedded" : "vtk-fullscreen"}
+          style={isEmbedded ? { height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' } :
                 { width: "100%", height: "100vh", position: "relative", background: "#000", overflow: "hidden" }}>
       
       {/* Toolbar superior - SOLO si NO está embedded */}

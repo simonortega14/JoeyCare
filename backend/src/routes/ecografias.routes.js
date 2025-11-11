@@ -327,9 +327,60 @@ router.get("/reportes/:ecografiaId", async (req, res) => {
   }
 });
 
+// Obtener KPIs de un médico
+router.get("/medicos/:medicoId/kpis", async (req, res) => {
+  try {
+    const { medicoId } = req.params;
+
+    // Pacientes creados por el médico
+    const [pacientesRows] = await pool.query("SELECT COUNT(*) as count FROM neonato WHERE created_by_medico_id = ?", [medicoId]);
+    const pacientesCreados = pacientesRows[0].count;
+
+    // Ecografías subidas por el médico
+    const [ecografiasRows] = await pool.query("SELECT COUNT(*) as count FROM ecografias WHERE uploader_medico_id = ?", [medicoId]);
+    const ecografiasSubidas = ecografiasRows[0].count;
+
+    // Reportes firmados por el médico (donde aparece en firma_medico)
+    const [reportesRows] = await pool.query("SELECT COUNT(*) as count FROM reportes WHERE created_by_medico_id = ? OR updated_by_medico_id = ?", [medicoId, medicoId]);
+    const reportesFirmados = reportesRows[0].count;
+
+    res.json({
+      pacientesCreados,
+      ecografiasSubidas,
+      reportesFirmados
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Error al obtener KPIs", error: error.message });
+  }
+});
+
+// Obtener historial de reportes modificados por un médico
+router.get("/reportes/history/:medicoId", async (req, res) => {
+  try {
+    const { medicoId } = req.params;
+    const [rows] = await pool.query(`
+      SELECT DISTINCT r.id, r.titulo, r.fecha_reporte, r.updated_at,
+             e.filepath, n.nombre as paciente_nombre, n.apellido as paciente_apellido
+      FROM reportes r
+      JOIN ecografias e ON r.ecografia_id = e.id
+      JOIN neonato n ON e.neonato_id = n.id
+      WHERE r.updated_by_medico_id = ? OR r.created_by_medico_id = ?
+      ORDER BY r.updated_at DESC
+      LIMIT 10
+    `, [medicoId, medicoId]);
+
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ message: "Error al obtener historial de reportes", error: error.message });
+  }
+});
+
 // Crear o actualizar reporte
 router.post("/reportes", async (req, res) => {
+  const connection = await pool.getConnection();
   try {
+    await connection.beginTransaction();
+
     const { ecografia_id, titulo, contenido, hallazgos, conclusion, recomendaciones, firma_medico, medico_id } = req.body;
 
     // Validar campos requeridos
@@ -338,7 +389,7 @@ router.post("/reportes", async (req, res) => {
     }
 
     // Verificar que la ecografía existe
-    const [ecografiaRows] = await pool.query("SELECT id FROM ecografias WHERE id = ?", [ecografia_id]);
+    const [ecografiaRows] = await connection.query("SELECT id FROM ecografias WHERE id = ?", [ecografia_id]);
     if (ecografiaRows.length === 0) {
       return res.status(404).json({ message: "Ecografía no encontrada" });
     }
@@ -346,8 +397,25 @@ router.post("/reportes", async (req, res) => {
     // Usar medico_id del request o default
     const currentMedicoId = medico_id || 1;
 
+    // Verificar si ya existe un reporte para esta ecografía
+    const [existingReport] = await connection.query("SELECT * FROM reportes WHERE ecografia_id = ?", [ecografia_id]);
+
+    // Si existe un reporte, guardar en historial antes de actualizar
+    if (existingReport.length > 0) {
+      const oldReport = existingReport[0];
+      // Obtener la versión más alta actual
+      const [versionResult] = await connection.query("SELECT MAX(version) as max_version FROM reportes_historial WHERE reporte_id = ?", [oldReport.id]);
+      const nextVersion = (versionResult[0].max_version || 0) + 1;
+
+      // Guardar versión anterior en historial
+      await connection.query(`
+        INSERT INTO reportes_historial (reporte_id, version, datos_json, medico_id)
+        VALUES (?, ?, ?, ?)
+      `, [oldReport.id, nextVersion, JSON.stringify(oldReport), currentMedicoId]);
+    }
+
     // Intentar insertar, si ya existe, actualizar
-    const [result] = await pool.query(`
+    const [result] = await connection.query(`
       INSERT INTO reportes (ecografia_id, created_by_medico_id, titulo, contenido, hallazgos, conclusion, recomendaciones, firma_medico, fecha_reporte)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
       ON DUPLICATE KEY UPDATE
@@ -361,13 +429,36 @@ router.post("/reportes", async (req, res) => {
         updated_at = NOW()
     `, [ecografia_id, currentMedicoId, titulo, contenido, hallazgos, conclusion, recomendaciones, firma_medico]);
 
+    await connection.commit();
+
     res.status(201).json({
       message: "Reporte guardado correctamente",
       id: result.insertId || ecografia_id
     });
 
   } catch (error) {
+    await connection.rollback();
     res.status(500).json({ message: "Error al guardar reporte", error: error.message });
+  } finally {
+    connection.release();
+  }
+});
+
+// Obtener historial de versiones de un reporte
+router.get("/reportes/:reporteId/historial", async (req, res) => {
+  try {
+    const { reporteId } = req.params;
+    const [rows] = await pool.query(`
+      SELECT h.*, m.nombre as medico_nombre, m.apellido as medico_apellido
+      FROM reportes_historial h
+      JOIN medicos m ON h.medico_id = m.id
+      WHERE h.reporte_id = ?
+      ORDER BY h.version DESC
+    `, [reporteId]);
+
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ message: "Error al obtener historial del reporte", error: error.message });
   }
 });
 

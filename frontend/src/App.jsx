@@ -9,6 +9,7 @@ import VisorEcografiaDoble from "./features/comparacion/VisorEcografiaDoble";
 import AppHeader from "./components/AppHeader";
 import Sidebar from "./components/AppSidebar";
 import MiPerfil from "./features/profile/ProfilePage";
+import ReportHistoryPage from "./features/profile/ReportHistoryPage";
 import BuscarPacientes from "./features/buscar_paciente/BuscarPacientesPage";
 import CargarEcografia from "./features/cargar_ecografia/CargarEcografiaPage";
 import DashboardPage from "./features/dashboard/dashBoardPage";
@@ -100,6 +101,7 @@ export default function App() {
             <div className="main-content">
               <Routes>
                 <Route path="/perfil" element={<MiPerfil user={user} />} />
+                <Route path="/historial-reportes" element={<ReportHistoryPage user={user} />} />
                 <Route path="/buscar-pacientes" element={<BuscarPacientes />} />
                 <Route path="/crear-paciente" element={<CrearPacientePage />} />
                 <Route path="/neonato/:id" element={<PacientePage />} />

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import logoPerfil from '../../assets/logo perfil.png';
 import AppHeader from '../../components/AppHeader.jsx';
 import AppSidebar from '../../components/AppSidebar.jsx';
@@ -7,6 +7,13 @@ import './profile.css';
 const ProfilePage = ({ onOpenSettings, user }) => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [preview, setPreview] = useState(null);
+  const [kpis, setKpis] = useState({
+    pacientesCreados: 0,
+    ecografiasSubidas: 0,
+    reportesFirmados: 0
+  });
+  const [reportesHistory, setReportesHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -15,6 +22,43 @@ const ProfilePage = ({ onOpenSettings, user }) => {
       setPreview(URL.createObjectURL(file));
     }
   };
+
+  const fetchKpis = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      const response = await fetch(`http://localhost:4000/api/medicos/${user.id}/kpis`);
+      if (response.ok) {
+        const data = await response.json();
+        setKpis(data);
+      }
+    } catch (error) {
+      console.error('Error fetching KPIs:', error);
+    }
+  }, [user]);
+
+  const fetchReportesHistory = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      const response = await fetch(`http://localhost:4000/api/reportes/history/${user.id}`);
+      if (response.ok) {
+        const data = await response.json();
+        setReportesHistory(data);
+      }
+    } catch (error) {
+      console.error('Error fetching reports history:', error);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      await Promise.all([fetchKpis(), fetchReportesHistory()]);
+      setLoading(false);
+    };
+    loadData();
+  }, [user, fetchKpis, fetchReportesHistory]);
 
   const handleUpload = async () => {
     if (!selectedFile) return;
@@ -80,22 +124,61 @@ const ProfilePage = ({ onOpenSettings, user }) => {
 
         {/* KPIs del Médico */}
         <div className="metrics-container">
-          <div className="metric-card">
-            <h3>Pacientes Atendidos</h3>
-            <div className="metric-number">{user ? user.pacientesAtendidos || 0 : 0}</div>
-            <div className="metric-trend positive">Total acumulado</div>
-          </div>
-          <div className="metric-card">
-            <h3>Ecografías Realizadas</h3>
-            <div className="metric-number">{user ? user.ecografiasRealizadas || 0 : 0}</div>
-            <div className="metric-trend positive">Este mes: {user ? user.ecografiasMes || 0 : 0}</div>
-          </div>
-          <div className="metric-card">
-            <h3>Reportes Firmados</h3>
-            <div className="metric-number">{user ? user.reportesFirmados || 0 : 0}</div>
-            <div className="metric-trend positive">Este mes: {user ? user.reportesMes || 0 : 0}</div>
-          </div>
-        </div>
+           <div className="metric-card">
+             <h3>Pacientes Creados</h3>
+             <div className="metric-number">{loading ? '...' : kpis.pacientesCreados}</div>
+             <div className="metric-trend positive">Total acumulado</div>
+           </div>
+           <div className="metric-card">
+             <h3>Ecografías Subidas</h3>
+             <div className="metric-number">{loading ? '...' : kpis.ecografiasSubidas}</div>
+             <div className="metric-trend positive">Total acumulado</div>
+           </div>
+           <div className="metric-card">
+             <h3>Reportes Gestionados</h3>
+             <div className="metric-number">{loading ? '...' : kpis.reportesFirmados}</div>
+             <div className="metric-trend positive">Total acumulado</div>
+           </div>
+         </div>
+
+         {/* Historial de Reportes */}
+         <div className="reports-history-card">
+           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+             <h2>Historial de Reportes Recientes</h2>
+             <button
+               className="view-report-btn"
+               style={{ backgroundColor: '#17a2b8' }}
+               onClick={() => window.location.href = '/historial-reportes'}
+             >
+               Ver Historial Completo
+             </button>
+           </div>
+           {loading ? (
+             <p>Cargando...</p>
+           ) : reportesHistory.length > 0 ? (
+             <div className="reports-list">
+               {reportesHistory.map((reporte) => (
+                 <div key={reporte.id} className="report-item">
+                   <div className="report-info">
+                     <h4>{reporte.titulo || 'Sin título'}</h4>
+                     <p><strong>Paciente:</strong> {reporte.paciente_nombre} {reporte.paciente_apellido}</p>
+                     <p><strong>Última modificación:</strong> {new Date(reporte.updated_at || reporte.fecha_reporte).toLocaleDateString()}</p>
+                   </div>
+                   <div className="report-actions">
+                     <button
+                       className="view-report-btn"
+                       onClick={() => window.open(`/visualizar-ecografias?reporte=${reporte.id}`, '_blank')}
+                     >
+                       Ver Reporte
+                     </button>
+                   </div>
+                 </div>
+               ))}
+             </div>
+           ) : (
+             <p>No hay reportes recientes</p>
+           )}
+         </div>
       </div>
     </div>
   );

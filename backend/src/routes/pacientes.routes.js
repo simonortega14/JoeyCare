@@ -55,22 +55,22 @@ router.post("/neonatos", async (req, res) => {
     await connection.beginTransaction();
 
     const { nombre, apellido, documento, sexo, fecha_nacimiento, edad_gestacional_sem, edad_corregida_sem, peso_nacimiento_g, peso_actual_g, perimetro_cefalico,
-            nombre_acudiente, apellido_acudiente, parentesco, telefono, correo } = req.body;
+            nombre_acudiente, apellido_acudiente, sexo_acudiente, parentesco, telefono, correo, medico_id } = req.body;
 
-    if (!nombre || !apellido || !documento || !nombre_acudiente || !apellido_acudiente || !telefono || !correo) {
-      return res.status(400).json({ message: "Nombre, apellido, documento del paciente y nombre, apellido, teléfono y correo del acudiente son obligatorios" });
+    if (!nombre || !apellido || !documento || !nombre_acudiente || !apellido_acudiente || !telefono || !correo || !medico_id) {
+      return res.status(400).json({ message: "Nombre, apellido, documento del paciente, nombre, apellido, teléfono, correo del acudiente y médico son obligatorios" });
     }
 
     const [result] = await connection.query(
-      "INSERT INTO neonato (nombre, apellido, documento, sexo, fecha_nacimiento, edad_gestacional_sem, edad_corregida_sem, peso_nacimiento_g, peso_actual_g, perimetro_cefalico) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-      [nombre, apellido, documento, sexo || null, fecha_nacimiento || null, edad_gestacional_sem || null, edad_corregida_sem || null, peso_nacimiento_g || null, peso_actual_g || null, perimetro_cefalico || null]
+      "INSERT INTO neonato (nombre, apellido, documento, sexo, fecha_nacimiento, edad_gestacional_sem, edad_corregida_sem, peso_nacimiento_g, peso_actual_g, perimetro_cefalico, created_by_medico_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [nombre, apellido, documento, sexo || null, fecha_nacimiento || null, edad_gestacional_sem || null, edad_corregida_sem || null, peso_nacimiento_g || null, peso_actual_g || null, perimetro_cefalico || null, medico_id]
     );
 
     const neonatoId = result.insertId;
 
     await connection.query(
-      "INSERT INTO acudiente (neonato_id, nombre, apellido, parentesco, telefono, correo) VALUES (?, ?, ?, ?, ?, ?)",
-      [neonatoId, nombre_acudiente, apellido_acudiente, parentesco || null, telefono, correo]
+      "INSERT INTO acudiente (neonato_id, nombre, apellido, sexo, parentesco, telefono, correo) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      [neonatoId, nombre_acudiente, apellido_acudiente, sexo_acudiente || null, parentesco || null, telefono, correo]
     );
 
     await connection.commit();
@@ -87,9 +87,11 @@ router.post("/neonatos", async (req, res) => {
       peso_nacimiento_g,
       peso_actual_g,
       perimetro_cefalico,
+      created_by_medico_id: medico_id,
       acudiente: {
         nombre: nombre_acudiente,
         apellido: apellido_acudiente,
+        sexo: sexo_acudiente,
         parentesco,
         telefono,
         correo

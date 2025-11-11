@@ -171,6 +171,146 @@
   color: white;
 }
 
+/* Historial de Reportes */
+.reports-history-card {
+  width: 100%;
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  padding: 25px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  margin-top: 20px;
+}
+
+.reports-history-card h2 {
+  color: #007bff;
+  font-size: 24px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #007bff;
+  padding-bottom: 10px;
+}
+
+.reports-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.report-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  background-color: rgba(240, 248, 255, 0.8);
+  border-radius: 8px;
+  border-left: 4px solid #007bff;
+  transition: all 0.3s ease;
+}
+
+.report-item:hover {
+  background-color: rgba(240, 248, 255, 0.9);
+  transform: translateX(5px);
+}
+
+.report-info h4 {
+  margin: 0 0 8px 0;
+  color: #333;
+  font-size: 18px;
+}
+
+.report-info p {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.report-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.view-report-btn {
+  padding: 8px 16px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+}
+
+.view-report-btn:hover {
+  background-color: #0056b3;
+}
+
+/* Historial Detallado */
+.historial-detalle {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 2px solid #007bff;
+}
+
+.historial-detalle h3 {
+  color: #007bff;
+  font-size: 20px;
+  margin-bottom: 15px;
+}
+
+.historial-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.historial-item {
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  padding: 15px;
+  border-left: 4px solid #28a745;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.version-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.version-header h4 {
+  margin: 0;
+  color: #333;
+  font-size: 16px;
+}
+
+.version-date {
+  color: #666;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.version-info p {
+  margin: 0 0 10px 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.version-data {
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+  padding: 10px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.version-data pre {
+  margin: 0;
+  font-size: 12px;
+  color: #333;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
 
 /* Responsive */
 @media (max-width: 1200px) {

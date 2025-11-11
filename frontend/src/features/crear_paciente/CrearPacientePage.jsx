@@ -15,6 +15,7 @@ const CrearPacientePage = () => {
     perimetro_cefalico: '',
     nombre_acudiente: '',
     apellido_acudiente: '',
+    sexo_acudiente: '',
     parentesco: '',
     telefono: '',
     correo: '',
@@ -87,11 +88,22 @@ const CrearPacientePage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
+
+    // Get current user from localStorage
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (!user) {
+      alert('Usuario no autenticado');
+      return;
+    }
+
     try {
       const response = await fetch('http://localhost:4000/api/neonatos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          medico_id: user.id
+        }),
       });
       if (!response.ok) throw new Error('Error al crear paciente');
       alert('Paciente creado exitosamente');
@@ -243,6 +255,19 @@ const CrearPacientePage = () => {
                 required
               />
               {errors.apellido_acudiente && <span className="error">{errors.apellido_acudiente}</span>}
+            </div>
+            <div className="form-group">
+              <label>Sexo del Acudiente:</label>
+              <select
+                name="sexo_acudiente"
+                value={formData.sexo_acudiente}
+                onChange={handleChange}
+              >
+                <option value="">Seleccionar</option>
+                <option value="M">Masculino</option>
+                <option value="F">Femenino</option>
+                <option value="X">Otro</option>
+              </select>
             </div>
             <div className="form-group">
               <label>Parentesco:</label>

@@ -42,13 +42,14 @@ function ImageViewer({ imageFile, onClose, isEmbedded = false, side = null, exte
   const pointColorRef = useRef([1, 0, 0]);
 
   // Estados para el reporte
-  const [showReportModal, setShowReportModal] = useState(false);
-  const [titulo, setTitulo] = useState('');
-  const [contenido, setContenido] = useState('');
-  const [hallazgos, setHallazgos] = useState('');
-  const [conclusion, setConclusion] = useState('');
-  const [recomendaciones, setRecomendaciones] = useState('');
-  const [firmaMedico, setFirmaMedico] = useState('');
+   const [showReportModal, setShowReportModal] = useState(false);
+   const [titulo, setTitulo] = useState('');
+   const [contenido, setContenido] = useState('');
+   const [hallazgos, setHallazgos] = useState('');
+   const [conclusion, setConclusion] = useState('');
+   const [recomendaciones, setRecomendaciones] = useState('');
+   const [firmaMedico, setFirmaMedico] = useState('');
+   const [isEditing, setIsEditing] = useState(false);
 
   // Efecto para marcar el componente como montado
   useEffect(() => {
@@ -742,6 +743,40 @@ function ImageViewer({ imageFile, onClose, isEmbedded = false, side = null, exte
     return mimeTypes[ext] || "application/octet-stream";
   };
 
+  const openReportModal = async () => {
+    try {
+      const response = await fetch(`http://localhost:4000/api/informes/${imageFile.id}`);
+      if (response.ok) {
+        const report = await response.json();
+        setIsEditing(true);
+        setTitulo(report.titulo || '');
+        setContenido(report.contenido || '');
+        setHallazgos(report.hallazgos || '');
+        setConclusion(report.conclusion || '');
+        setRecomendaciones(report.recomendaciones || '');
+        setFirmaMedico(report.firma_medico || '');
+      } else {
+        setIsEditing(false);
+        setTitulo('');
+        setContenido('');
+        setHallazgos('');
+        setConclusion('');
+        setRecomendaciones('');
+        setFirmaMedico('');
+      }
+    } catch (error) {
+      console.error("Error fetching report:", error);
+      setIsEditing(false);
+      setTitulo('');
+      setContenido('');
+      setHallazgos('');
+      setConclusion('');
+      setRecomendaciones('');
+      setFirmaMedico('');
+    }
+    setShowReportModal(true);
+  };
+
   const handleResetView = () => {
     if (context.current) {
       context.current.renderer.resetCamera();
@@ -908,7 +943,7 @@ function ImageViewer({ imageFile, onClose, isEmbedded = false, side = null, exte
             </>
           )}
 
-          <button onClick={() => setShowReportModal(true)} style={buttonStyle}>
+          <button onClick={openReportModal} style={buttonStyle}>
             📄 Reporte
           </button>
 
@@ -929,9 +964,9 @@ function ImageViewer({ imageFile, onClose, isEmbedded = false, side = null, exte
         }}>
           {showReportModal && (
             <div style={{ marginBottom: "20px" }}>
-              <div style={{ fontWeight: "bold", marginBottom: "15px", fontSize: "16px", color: "#fff" }}>
-                📄 Reporte Médico
-              </div>
+               <div style={{ fontWeight: "bold", marginBottom: "15px", fontSize: "16px", color: "#fff" }}>
+                 📄 {isEditing ? "Editar Reporte Médico" : "Crear Reporte Médico"}
+               </div>
 
               <div style={{ marginBottom: "15px" }}>
                 <label style={{ display: "block", marginBottom: "5px", fontWeight: "bold", color: "#fff" }}>
@@ -1097,7 +1132,7 @@ function ImageViewer({ imageFile, onClose, isEmbedded = false, side = null, exte
                     });
 
                     if (response.ok) {
-                      alert("Reporte guardado exitosamente");
+                      alert(isEditing ? "Reporte actualizado exitosamente" : "Reporte guardado exitosamente");
                       setShowReportModal(false);
                       setTitulo('');
                       setContenido('');
@@ -1105,6 +1140,7 @@ function ImageViewer({ imageFile, onClose, isEmbedded = false, side = null, exte
                       setConclusion('');
                       setRecomendaciones('');
                       setFirmaMedico('');
+                      setIsEditing(false);
                     } else {
                       alert("Error al guardar el reporte");
                     }
@@ -1120,7 +1156,7 @@ function ImageViewer({ imageFile, onClose, isEmbedded = false, side = null, exte
                   marginTop: "10px"
                 }}
               >
-                💾 Guardar Reporte
+                💾 {isEditing ? "Actualizar Reporte" : "Guardar Reporte"}
               </button>
             </div>
           )}

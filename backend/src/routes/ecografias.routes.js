@@ -313,6 +313,20 @@ router.get("/neonatos/:id/ecografias", async (req, res) => {
   }
 });
 
+// Obtener informe por ecografia_id
+router.get("/informes/:ecografiaId", async (req, res) => {
+  try {
+    const { ecografiaId } = req.params;
+    const [rows] = await pool.query("SELECT * FROM informes WHERE ecografia_id = ?", [ecografiaId]);
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "Informe no encontrado" });
+    }
+    res.json(rows[0]);
+  } catch (error) {
+    res.status(500).json({ message: "Error al obtener informe", error: error.message });
+  }
+});
+
 // Crear o actualizar informe
 router.post("/informes", async (req, res) => {
   try {

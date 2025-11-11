@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import ImageViewer from "../viewer/ImageViewer";
 import "./VisorEcografiaDoble.css";
 
-function VisorEcografiaDoble({ datosIzquierda = null, datosDerecha = null }) {
+function VisorEcografiaDoble({ user, datosIzquierda = null, datosDerecha = null }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [imagenIzquierda, setImagenIzquierda] = useState(null);
@@ -214,10 +214,11 @@ function VisorEcografiaDoble({ datosIzquierda = null, datosDerecha = null }) {
         <div className="visor-panel">
           <h3 className="titulo-panel">Ecografía A</h3>
           {isReady && imagenIzquierda ? (
-            <ImageViewer 
+            <ImageViewer
               key={`left-${imagenIzquierda.id}`}
-              imageFile={imagenIzquierda} 
+              imageFile={imagenIzquierda}
               onClose={() => {}}
+              user={user}
               isEmbedded={true}
               side="left"
               externalPointMode={pointMode}
@@ -243,10 +244,11 @@ function VisorEcografiaDoble({ datosIzquierda = null, datosDerecha = null }) {
         <div className="visor-panel">
           <h3 className="titulo-panel">Ecografía B</h3>
           {isReady && imagenDerecha ? (
-            <ImageViewer 
+            <ImageViewer
               key={`right-${imagenDerecha.id}`}
-              imageFile={imagenDerecha} 
+              imageFile={imagenDerecha}
               onClose={() => {}}
+              user={user}
               isEmbedded={true}
               side="right"
               externalPointMode={pointMode}

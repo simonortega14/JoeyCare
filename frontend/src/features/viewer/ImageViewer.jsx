@@ -13,7 +13,7 @@ import vtkCellArray from "@kitware/vtk.js/Common/Core/CellArray";
 import { readImage } from "@itk-wasm/image-io";
 import "./viewer.css";
 
-function ImageViewer({ imageFile, onClose, isEmbedded = false, side = null, externalPointMode = false, externalDrawMode = false, externalPointColor = [1, 0, 0], externalDrawColor = [1, 0, 0], externalLineWidth = 2 }) {
+function ImageViewer({ imageFile, onClose, user, isEmbedded = false, side = null, externalPointMode = false, externalDrawMode = false, externalPointColor = [1, 0, 0], externalDrawColor = [1, 0, 0], externalLineWidth = 2 }) {
   const vtkContainerRef = useRef(null);
   const context = useRef(null);
   const [loading, setLoading] = useState(false);
@@ -744,6 +744,7 @@ function ImageViewer({ imageFile, onClose, isEmbedded = false, side = null, exte
   };
 
   const openReportModal = async () => {
+    const doctorName = user ? `${user.nombre} ${user.apellido}` : '';
     try {
       const response = await fetch(`http://localhost:4000/api/informes/${imageFile.id}`);
       if (response.ok) {
@@ -754,7 +755,7 @@ function ImageViewer({ imageFile, onClose, isEmbedded = false, side = null, exte
         setHallazgos(report.hallazgos || '');
         setConclusion(report.conclusion || '');
         setRecomendaciones(report.recomendaciones || '');
-        setFirmaMedico(report.firma_medico || '');
+        setFirmaMedico(doctorName); // Always use current doctor's name
       } else {
         setIsEditing(false);
         setTitulo('');
@@ -762,7 +763,7 @@ function ImageViewer({ imageFile, onClose, isEmbedded = false, side = null, exte
         setHallazgos('');
         setConclusion('');
         setRecomendaciones('');
-        setFirmaMedico('');
+        setFirmaMedico(doctorName);
       }
     } catch (error) {
       console.error("Error fetching report:", error);
@@ -772,7 +773,7 @@ function ImageViewer({ imageFile, onClose, isEmbedded = false, side = null, exte
       setHallazgos('');
       setConclusion('');
       setRecomendaciones('');
-      setFirmaMedico('');
+      setFirmaMedico(doctorName);
     }
     setShowReportModal(true);
   };
@@ -1083,27 +1084,26 @@ function ImageViewer({ imageFile, onClose, isEmbedded = false, side = null, exte
               </div>
 
               <div style={{ marginBottom: "15px" }}>
-                <label style={{ display: "block", marginBottom: "5px", fontWeight: "bold", color: "#fff" }}>
-                  Firma del Médico:
-                </label>
-                <textarea
-                  value={firmaMedico}
-                  onChange={(e) => setFirmaMedico(e.target.value)}
-                  placeholder="Nombre completo del médico..."
-                  style={{
-                    width: "100%",
-                    height: "50px",
-                    padding: "8px",
-                    border: "1px solid #ccc",
-                    borderRadius: "4px",
-                    fontFamily: "Arial, sans-serif",
-                    fontSize: "12px",
-                    resize: "vertical",
-                    backgroundColor: "#fff",
-                    color: "#333"
-                  }}
-                />
-              </div>
+                 <label style={{ display: "block", marginBottom: "5px", fontWeight: "bold", color: "#fff" }}>
+                   Firma del Médico:
+                 </label>
+                 <div
+                   style={{
+                     width: "100%",
+                     minHeight: "50px",
+                     padding: "8px",
+                     border: "1px solid #ccc",
+                     borderRadius: "4px",
+                     fontFamily: "Arial, sans-serif",
+                     fontSize: "12px",
+                     backgroundColor: "#f5f5f5",
+                     color: "#333",
+                     whiteSpace: "pre-wrap"
+                   }}
+                 >
+                   {firmaMedico}
+                 </div>
+               </div>
 
               <button
                 onClick={async () => {

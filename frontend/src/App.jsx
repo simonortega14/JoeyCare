@@ -90,7 +90,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/comparar-ecografias" element={
-        <VisorEcografiaDoble />
+        <VisorEcografiaDoble user={user} />
       } />
       <Route path="*" element={
         <>
@@ -103,7 +103,7 @@ export default function App() {
                 <Route path="/buscar-pacientes" element={<BuscarPacientes />} />
                 <Route path="/crear-paciente" element={<CrearPacientePage />} />
                 <Route path="/neonato/:id" element={<PacientePage />} />
-                <Route path="/visualizar-ecografias" element={<VtkViewer />} />
+                <Route path="/visualizar-ecografias" element={<VtkViewer user={user} />} />
                 <Route path="/dicom-test" element={<DicomViewer />} />
                 <Route path="/cargar-ecografias" element={<CargarEcografia />} />
                 <Route path="/dashboard" element={<DashboardPage />} />

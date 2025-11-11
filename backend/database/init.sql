@@ -7,7 +7,8 @@ USE joeycare_db;
 -- Limpieza ordenada
 SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS auditoria;
-DROP TABLE IF EXISTS informes;
+DROP TABLE IF EXISTS reportes_historial;
+DROP TABLE IF EXISTS reportes;
 DROP TABLE IF EXISTS metadatos_dicom;
 DROP TABLE IF EXISTS instancias;
 DROP TABLE IF EXISTS ecografias;
@@ -72,8 +73,10 @@ CREATE TABLE neonato (
   peso_nacimiento_g SMALLINT,
   peso_actual_g SMALLINT NULL,
   perimetro_cefalico DECIMAL(5,2) NULL,
+  created_by_medico_id INT NOT NULL,
   creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  actualizado_en TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
+  actualizado_en TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_neonato_medicos FOREIGN KEY (created_by_medico_id) REFERENCES medicos(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE acudiente (
@@ -81,6 +84,7 @@ CREATE TABLE acudiente (
   neonato_id INT NOT NULL,
   nombre VARCHAR(100) NOT NULL,
   apellido VARCHAR(100) NOT NULL,
+  sexo ENUM('M','F','X') NULL,
   parentesco ENUM('P','M','H','O') NULL,
   telefono VARCHAR(20) NOT NULL,
   correo VARCHAR(150) NOT NULL,
@@ -146,12 +150,13 @@ CREATE TABLE metadatos_dicom (
   INDEX idx_meta_uids (study_instance_uid, series_instance_uid, sop_instance_uid)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- Informe 1:1 por ecografía, firmado por médico
-CREATE TABLE informes (
+-- Reporte 1:1 por ecografía, firmado por médico
+CREATE TABLE reportes (
   id INT AUTO_INCREMENT PRIMARY KEY,
   ecografia_id INT NOT NULL UNIQUE,
-  medico_id INT NOT NULL,
-  fecha_informe DATETIME NOT NULL,
+  created_by_medico_id INT NOT NULL,
+  updated_by_medico_id INT NULL,
+  fecha_reporte DATETIME NOT NULL,
   titulo VARCHAR(255),
   contenido TEXT,
   hallazgos TEXT,
@@ -161,8 +166,22 @@ CREATE TABLE informes (
   estado ENUM('borrador','firmado','anulado') DEFAULT 'borrador',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
-  CONSTRAINT fk_informes_ecografias FOREIGN KEY (ecografia_id) REFERENCES ecografias(id),
-  CONSTRAINT fk_informes_medicos FOREIGN KEY (medico_id) REFERENCES medicos(id)
+  CONSTRAINT fk_reportes_ecografias FOREIGN KEY (ecografia_id) REFERENCES ecografias(id),
+  CONSTRAINT fk_reportes_created_medicos FOREIGN KEY (created_by_medico_id) REFERENCES medicos(id),
+  CONSTRAINT fk_reportes_updated_medicos FOREIGN KEY (updated_by_medico_id) REFERENCES medicos(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Historial de versiones de reportes
+CREATE TABLE reportes_historial (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  reporte_id INT NOT NULL,
+  version INT NOT NULL DEFAULT 1,
+  datos_json JSON NOT NULL,
+  fecha_cambio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  medico_id INT NOT NULL,
+  CONSTRAINT fk_historial_reportes FOREIGN KEY (reporte_id) REFERENCES reportes(id),
+  CONSTRAINT fk_historial_medicos FOREIGN KEY (medico_id) REFERENCES medicos(id),
+  INDEX idx_historial_reporte_version (reporte_id, version)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Auditoría de acciones
@@ -246,98 +265,98 @@ VALUES
 -- -------------------------
 -- SEED DE NEONATOS (PACIENTES) - 24+ filas
 -- -------------------------
-INSERT INTO neonato (nombre, apellido, documento, sexo, fecha_nacimiento, edad_gestacional_sem, edad_corregida_sem, peso_nacimiento_g, peso_actual_g, perimetro_cefalico)
+INSERT INTO neonato (nombre, apellido, documento, sexo, fecha_nacimiento, edad_gestacional_sem, edad_corregida_sem, peso_nacimiento_g, peso_actual_g, perimetro_cefalico, created_by_medico_id)
 VALUES
-('María','García',101010,'F','2022-10-25',34,36,2200,2700,32.4),
-('Pedro','Martínez',101020,'M','2023-01-15',35,38,2300,2850,33.0),
-('Sofía','Rodríguez',101030,'F','2021-08-01',33,40,2100,3000,34.2),
-('Luis','Hernández',101040,'M','2024-03-01',32,36,2000,2450,31.8),
-('Valentina','López',101050,'F','2023-11-20',34,37,2180,2620,32.1),
-('Sebastián','Gómez',101060,'M','2022-07-12',35,39,2400,2980,33.8),
-('Camila','Pérez',101070,'F','2024-04-08',31,35,1900,2320,31.2),
-('Mateo','Sánchez',101080,'M','2023-09-05',36,38,2550,2900,33.5),
-('Lucía','Díaz',101090,'F','2021-12-30',33,39,2050,2870,33.9),
-('Samuel','Torres',101100,'M','2022-03-22',34,37,2220,2700,32.6),
-('Isabella','Ramírez',101110,'F','2024-01-18',32,34,1980,2280,31.0),
-('Emiliano','Castaño',101120,'M','2023-05-27',35,38,2360,2810,33.2),
-('Antonella','Muñoz',101130,'F','2022-11-14',34,36,2210,2680,32.3),
-('Thiago','Rojas',101140,'M','2021-10-09',33,41,2080,3050,34.6),
-('Emma','Vargas',101150,'F','2023-02-02',36,38,2580,2920,33.4),
-('Benjamín','Rivera',101160,'M','2024-05-11',31,33,1850,2200,30.8),
-('Regina','Mendoza',101170,'F','2023-07-19',35,37,2420,2760,32.9),
-('Martín','Navarro',101180,'M','2022-08-28',34,37,2250,2710,32.7),
-('Victoria','Guerrero',101190,'F','2021-06-06',33,40,2120,2990,34.1),
-('Gael','Ortega',101200,'M','2022-09-13',35,38,2390,2840,33.1),
-('Salomé','Peña',101210,'F','2023-12-24',32,34,1960,2250,30.9),
-('Joaquín','Cortés',101220,'M','2023-03-03',36,39,2600,3010,34.0),
-('Allison','Luna',101230,'F','2024-02-26',31,33,1830,2180,30.7),
-('Santiago','Valencia',101240,'M','2022-01-07',34,36,2205,2660,32.0),
-('Zoe','Ibáñez',101250,'F','2021-09-21',33,40,2105,2960,34.3),
-('Dylan','Camacho',101260,'M','2023-06-17',35,37,2410,2750,32.8),
-('Abigail','Cárdenas',101270,'F','2022-04-29',34,37,2230,2690,32.5),
-('Iker','Salazar',101280,'M','2024-06-09',31,32,1800,2100,30.2),
-('Julieta','Mejía',101290,'F','2023-08-31',36,38,2570,2930,33.6),
-('Emilio','Prieto',101300,'M','2022-02-14',34,36,2190,2640,31.9);
+('María','García',101010,'F','2022-10-25',34,36,2200,2700,32.4,2),
+('Pedro','Martínez',101020,'M','2023-01-15',35,38,2300,2850,33.0,3),
+('Sofía','Rodríguez',101030,'F','2021-08-01',33,40,2100,3000,34.2,4),
+('Luis','Hernández',101040,'M','2024-03-01',32,36,2000,2450,31.8,5),
+('Valentina','López',101050,'F','2023-11-20',34,37,2180,2620,32.1,6),
+('Sebastián','Gómez',101060,'M','2022-07-12',35,39,2400,2980,33.8,7),
+('Camila','Pérez',101070,'F','2024-04-08',31,35,1900,2320,31.2,8),
+('Mateo','Sánchez',101080,'M','2023-09-05',36,38,2550,2900,33.5,9),
+('Lucía','Díaz',101090,'F','2021-12-30',33,39,2050,2870,33.9,10),
+('Samuel','Torres',101100,'M','2022-03-22',34,37,2220,2700,32.6,11),
+('Isabella','Ramírez',101110,'F','2024-01-18',32,34,1980,2280,31.0,12),
+('Emiliano','Castaño',101120,'M','2023-05-27',35,38,2360,2810,33.2,13),
+('Antonella','Muñoz',101130,'F','2022-11-14',34,36,2210,2680,32.3,14),
+('Thiago','Rojas',101140,'M','2021-10-09',33,41,2080,3050,34.6,2),
+('Emma','Vargas',101150,'F','2023-02-02',36,38,2580,2920,33.4,3),
+('Benjamín','Rivera',101160,'M','2024-05-11',31,33,1850,2200,30.8,4),
+('Regina','Mendoza',101170,'F','2023-07-19',35,37,2420,2760,32.9,5),
+('Martín','Navarro',101180,'M','2022-08-28',34,37,2250,2710,32.7,6),
+('Victoria','Guerrero',101190,'F','2021-06-06',33,40,2120,2990,34.1,7),
+('Gael','Ortega',101200,'M','2022-09-13',35,38,2390,2840,33.1,8),
+('Salomé','Peña',101210,'F','2023-12-24',32,34,1960,2250,30.9,9),
+('Joaquín','Cortés',101220,'M','2023-03-03',36,39,2600,3010,34.0,10),
+('Allison','Luna',101230,'F','2024-02-26',31,33,1830,2180,30.7,11),
+('Santiago','Valencia',101240,'M','2022-01-07',34,36,2205,2660,32.0,12),
+('Zoe','Ibáñez',101250,'F','2021-09-21',33,40,2105,2960,34.3,13),
+('Dylan','Camacho',101260,'M','2023-06-17',35,37,2410,2750,32.8,14),
+('Abigail','Cárdenas',101270,'F','2022-04-29',34,37,2230,2690,32.5,2),
+('Iker','Salazar',101280,'M','2024-06-09',31,32,1800,2100,30.2,3),
+('Julieta','Mejía',101290,'F','2023-08-31',36,38,2570,2930,33.6,4),
+('Emilio','Prieto',101300,'M','2022-02-14',34,36,2190,2640,31.9,5);
 
 -- -------------------------
 -- SEED DE ACUDIENTES (30 registros + casos gemelares)
 -- -------------------------
-INSERT INTO acudiente (neonato_id, nombre, apellido, parentesco, telefono, correo)
+INSERT INTO acudiente (neonato_id, nombre, apellido, sexo, parentesco, telefono, correo)
 VALUES
 -- 1 y 2: Hermanos gemelos, misma madre
-(1, 'Laura', 'García', 'M', '3101111111', 'laura.garcia@example.com'),
-(2, 'Laura', 'García', 'M', '3101111111', 'laura.garcia@example.com'),
+(1, 'Laura', 'García', 'F', 'M', '3101111111', 'laura.garcia@example.com'),
+(2, 'Laura', 'García', 'F', 'M', '3101111111', 'laura.garcia@example.com'),
 -- 3: Padre único
-(3, 'Carlos', 'Rodríguez', 'P', '3102222222', 'carlos.rodriguez@example.com'),
+(3, 'Carlos', 'Rodríguez', 'M', 'P', '3102222222', 'carlos.rodriguez@example.com'),
 -- 4 y 5: Mellizos, mismo padre
-(4, 'Andrés', 'Hernández', 'P', '3103333333', 'andres.hernandez@example.com'),
-(5, 'Andrés', 'Hernández', 'P', '3103333333', 'andres.hernandez@example.com'),
+(4, 'Andrés', 'Hernández', 'M', 'P', '3103333333', 'andres.hernandez@example.com'),
+(5, 'Andrés', 'Hernández', 'M', 'P', '3103333333', 'andres.hernandez@example.com'),
 -- 6: Madre
-(6, 'Marcela', 'Gómez', 'M', '3104444444', 'marcela.gomez@example.com'),
+(6, 'Marcela', 'Gómez', 'F', 'M', '3104444444', 'marcela.gomez@example.com'),
 -- 7: Padre
-(7, 'Felipe', 'Pérez', 'P', '3105555555', 'felipe.perez@example.com'),
+(7, 'Felipe', 'Pérez', 'M', 'P', '3105555555', 'felipe.perez@example.com'),
 -- 8: Madre
-(8, 'Lucía', 'Sánchez', 'M', '3106666666', 'lucia.sanchez@example.com'),
+(8, 'Lucía', 'Sánchez', 'F', 'M', '3106666666', 'lucia.sanchez@example.com'),
 -- 9 y 10: Gemelos, misma madre
-(9, 'Adriana', 'Díaz', 'M', '3107777777', 'adriana.diaz@example.com'),
-(10, 'Adriana', 'Díaz', 'M', '3107777777', 'adriana.diaz@example.com'),
+(9, 'Adriana', 'Díaz', 'F', 'M', '3107777777', 'adriana.diaz@example.com'),
+(10, 'Adriana', 'Díaz', 'F', 'M', '3107777777', 'adriana.diaz@example.com'),
 -- 11: Padre
-(11, 'Fernando', 'Ramírez', 'P', '3108888888', 'fernando.ramirez@example.com'),
+(11, 'Fernando', 'Ramírez', 'M', 'P', '3108888888', 'fernando.ramirez@example.com'),
 -- 12: Madre
-(12, 'Paola', 'Castaño', 'M', '3109999999', 'paola.castano@example.com'),
+(12, 'Paola', 'Castaño', 'F', 'M', '3109999999', 'paola.castano@example.com'),
 -- 13: Otro (abuela)
-(13, 'Rosa', 'Muñoz', 'O', '3201111111', 'rosa.munoz@example.com'),
+(13, 'Rosa', 'Muñoz', 'F', 'O', '3201111111', 'rosa.munoz@example.com'),
 -- 14: Madre
-(14, 'Sandra', 'Rojas', 'M', '3202222222', 'sandra.rojas@example.com'),
+(14, 'Sandra', 'Rojas', 'F', 'M', '3202222222', 'sandra.rojas@example.com'),
 -- 15: Padre
-(15, 'Juan', 'Vargas', 'P', '3203333333', 'juan.vargas@example.com'),
+(15, 'Juan', 'Vargas', 'M', 'P', '3203333333', 'juan.vargas@example.com'),
 -- 16 y 17: Hermanos gemelos, misma madre
-(16, 'Tatiana', 'Mendoza', 'M', '3204444444', 'tatiana.mendoza@example.com'),
-(17, 'Tatiana', 'Mendoza', 'M', '3204444444', 'tatiana.mendoza@example.com'),
+(16, 'Tatiana', 'Mendoza', 'F', 'M', '3204444444', 'tatiana.mendoza@example.com'),
+(17, 'Tatiana', 'Mendoza', 'F', 'M', '3204444444', 'tatiana.mendoza@example.com'),
 -- 18: Madre
-(18, 'Carolina', 'Navarro', 'M', '3205555555', 'carolina.navarro@example.com'),
+(18, 'Carolina', 'Navarro', 'F', 'M', '3205555555', 'carolina.navarro@example.com'),
 -- 19: Padre
-(19, 'Jorge', 'Guerrero', 'P', '3206666666', 'jorge.guerrero@example.com'),
+(19, 'Jorge', 'Guerrero', 'M', 'P', '3206666666', 'jorge.guerrero@example.com'),
 -- 20: Madre
-(20, 'Mónica', 'Ortega', 'M', '3207777777', 'monica.ortega@example.com'),
+(20, 'Mónica', 'Ortega', 'F', 'M', '3207777777', 'monica.ortega@example.com'),
 -- 21: Otro (tía)
-(21, 'Verónica', 'Peña', 'O', '3208888888', 'veronica.pena@example.com'),
+(21, 'Verónica', 'Peña', 'F', 'O', '3208888888', 'veronica.pena@example.com'),
 -- 22: Padre
-(22, 'Luis', 'Cortés', 'P', '3209999999', 'luis.cortes@example.com'),
+(22, 'Luis', 'Cortés', 'M', 'P', '3209999999', 'luis.cortes@example.com'),
 -- 23 y 24: Mellizos, mismo padre
-(23, 'Ricardo', 'Luna', 'P', '3001111111', 'ricardo.luna@example.com'),
-(24, 'Ricardo', 'Luna', 'P', '3001111111', 'ricardo.luna@example.com'),
+(23, 'Ricardo', 'Luna', 'M', 'P', '3001111111', 'ricardo.luna@example.com'),
+(24, 'Ricardo', 'Luna', 'M', 'P', '3001111111', 'ricardo.luna@example.com'),
 -- 25: Madre
-(25, 'Beatriz', 'Ibáñez', 'M', '3002222222', 'beatriz.ibanez@example.com'),
+(25, 'Beatriz', 'Ibáñez', 'F', 'M', '3002222222', 'beatriz.ibanez@example.com'),
 -- 26: Padre
-(26, 'Oscar', 'Camacho', 'P', '3003333333', 'oscar.camacho@example.com'),
+(26, 'Oscar', 'Camacho', 'M', 'P', '3003333333', 'oscar.camacho@example.com'),
 -- 27: Madre
-(27, 'Patricia', 'Cárdenas', 'M', '3004444444', 'patricia.cardenas@example.com'),
+(27, 'Patricia', 'Cárdenas', 'F', 'M', '3004444444', 'patricia.cardenas@example.com'),
 -- 28: Madre
-(28, 'Claudia', 'Salazar', 'M', '3005555555', 'claudia.salazar@example.com'),
+(28, 'Claudia', 'Salazar', 'F', 'M', '3005555555', 'claudia.salazar@example.com'),
 -- 29 y 30: Hermanos gemelos, mismo padre
-(29, 'Hernán', 'Mejía', 'P', '3006666666', 'hernan.mejia@example.com'),
-(30, 'Hernán', 'Mejía', 'P', '3006666666', 'hernan.mejia@example.com');
+(29, 'Hernán', 'Mejía', 'M', 'P', '3006666666', 'hernan.mejia@example.com'),
+(30, 'Hernán', 'Mejía', 'M', 'P', '3006666666', 'hernan.mejia@example.com');
 
 -- -------------------------
 -- CONSULTAS DE VERIFICACIÓN
@@ -358,4 +377,4 @@ SELECT '--- NEONATOS (PACIENTES) ---' AS 'ESTADO DE DATOS';
 SELECT id, nombre, apellido, documento, sexo, fecha_nacimiento FROM neonato;
 
 SELECT '--- ACUDIENTES ---' AS 'ESTADO DE DATOS';
-SELECT id, nombre, apellido, parentesco, telefono , correo FROM acudiente;
+SELECT id, nombre, apellido, sexo, parentesco, telefono , correo FROM acudiente;

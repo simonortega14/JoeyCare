@@ -746,7 +746,7 @@ function ImageViewer({ imageFile, onClose, user, isEmbedded = false, side = null
   const openReportModal = async () => {
     const doctorName = user ? `${user.nombre} ${user.apellido}` : '';
     try {
-      const response = await fetch(`http://localhost:4000/api/informes/${imageFile.id}`);
+      const response = await fetch(`http://localhost:4000/api/reportes/${imageFile.id}`);
       if (response.ok) {
         const report = await response.json();
         setIsEditing(true);
@@ -1115,7 +1115,7 @@ function ImageViewer({ imageFile, onClose, user, isEmbedded = false, side = null
 
                   try {
                     // Aquí enviar al backend
-                    const response = await fetch(`http://localhost:4000/api/informes`, {
+                    const response = await fetch(`http://localhost:4000/api/reportes`, {
                       method: 'POST',
                       headers: {
                         'Content-Type': 'application/json',
@@ -1127,7 +1127,8 @@ function ImageViewer({ imageFile, onClose, user, isEmbedded = false, side = null
                         hallazgos,
                         conclusion,
                         recomendaciones,
-                        firma_medico: firmaMedico
+                        firma_medico: firmaMedico,
+                        medico_id: user?.id
                       })
                     });
 

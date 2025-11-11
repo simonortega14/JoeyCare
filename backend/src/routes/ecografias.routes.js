@@ -70,11 +70,11 @@ router.get("/dashboard/stats", async (req, res) => {
     // Pacientes prematuros (< 37 semanas)
     const [prematurePatients] = await pool.query("SELECT COUNT(DISTINCT n.id) as count FROM neonato n JOIN ecografias e ON n.id = e.neonato_id WHERE n.edad_gestacional_sem < 37");
 
-    // Informes pendientes de firma
-    const [pendingReports] = await pool.query("SELECT COUNT(*) as count FROM informes WHERE estado = 'borrador'");
+    // Reportes pendientes de firma
+    const [pendingReports] = await pool.query("SELECT COUNT(*) as count FROM reportes WHERE estado = 'borrador'");
 
-    // Informes firmados hoy
-    const [signedReportsToday] = await pool.query("SELECT COUNT(*) as count FROM informes WHERE estado = 'firmado' AND DATE(updated_at) = ?", [today]);
+    // Reportes firmados hoy
+    const [signedReportsToday] = await pool.query("SELECT COUNT(*) as count FROM reportes WHERE estado = 'firmado' AND DATE(updated_at) = ?", [today]);
 
     // Pacientes que requieren seguimiento (última ecografía hace más de 7 días)
     const [patientsNeedingFollowup] = await pool.query(`
@@ -313,24 +313,24 @@ router.get("/neonatos/:id/ecografias", async (req, res) => {
   }
 });
 
-// Obtener informe por ecografia_id
-router.get("/informes/:ecografiaId", async (req, res) => {
+// Obtener reporte por ecografia_id
+router.get("/reportes/:ecografiaId", async (req, res) => {
   try {
     const { ecografiaId } = req.params;
-    const [rows] = await pool.query("SELECT * FROM informes WHERE ecografia_id = ?", [ecografiaId]);
+    const [rows] = await pool.query("SELECT * FROM reportes WHERE ecografia_id = ?", [ecografiaId]);
     if (rows.length === 0) {
-      return res.status(404).json({ message: "Informe no encontrado" });
+      return res.status(404).json({ message: "Reporte no encontrado" });
     }
     res.json(rows[0]);
   } catch (error) {
-    res.status(500).json({ message: "Error al obtener informe", error: error.message });
+    res.status(500).json({ message: "Error al obtener reporte", error: error.message });
   }
 });
 
-// Crear o actualizar informe
-router.post("/informes", async (req, res) => {
+// Crear o actualizar reporte
+router.post("/reportes", async (req, res) => {
   try {
-    const { ecografia_id, titulo, contenido, hallazgos, conclusion, recomendaciones, firma_medico } = req.body;
+    const { ecografia_id, titulo, contenido, hallazgos, conclusion, recomendaciones, firma_medico, medico_id } = req.body;
 
     // Validar campos requeridos
     if (!ecografia_id || !titulo || !contenido || !hallazgos || !conclusion || !recomendaciones || !firma_medico) {
@@ -343,9 +343,12 @@ router.post("/informes", async (req, res) => {
       return res.status(404).json({ message: "Ecografía no encontrada" });
     }
 
+    // Usar medico_id del request o default
+    const currentMedicoId = medico_id || 1;
+
     // Intentar insertar, si ya existe, actualizar
     const [result] = await pool.query(`
-      INSERT INTO informes (ecografia_id, medico_id, titulo, contenido, hallazgos, conclusion, recomendaciones, firma_medico, fecha_informe)
+      INSERT INTO reportes (ecografia_id, created_by_medico_id, titulo, contenido, hallazgos, conclusion, recomendaciones, firma_medico, fecha_reporte)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
       ON DUPLICATE KEY UPDATE
         titulo = VALUES(titulo),
@@ -354,16 +357,17 @@ router.post("/informes", async (req, res) => {
         conclusion = VALUES(conclusion),
         recomendaciones = VALUES(recomendaciones),
         firma_medico = VALUES(firma_medico),
+        updated_by_medico_id = VALUES(created_by_medico_id),
         updated_at = NOW()
-    `, [ecografia_id, 1, titulo, contenido, hallazgos, conclusion, recomendaciones, firma_medico]); // medico_id hardcoded as 1 for now
+    `, [ecografia_id, currentMedicoId, titulo, contenido, hallazgos, conclusion, recomendaciones, firma_medico]);
 
     res.status(201).json({
-      message: "Informe guardado correctamente",
+      message: "Reporte guardado correctamente",
       id: result.insertId || ecografia_id
     });
 
   } catch (error) {
-    res.status(500).json({ message: "Error al guardar informe", error: error.message });
+    res.status(500).json({ message: "Error al guardar reporte", error: error.message });
   }
 });
 

@@ -18,8 +18,8 @@ function VisorEcografiaDoble({ datosIzquierda = null, datosDerecha = null }) {
   const [lineWidth, setLineWidth] = useState(2);
   
   // Referencias a los viewers
-  const leftViewerRef = useRef(null);
-  const rightViewerRef = useRef(null);
+  const LeftViewerRef = useRef(null);
+  const RightViewerRef = useRef(null);
 
   useEffect(() => {
     console.log("=== VISOR DOBLE - INICIALIZANDO ===");

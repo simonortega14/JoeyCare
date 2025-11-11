@@ -43,8 +43,12 @@ function ImageViewer({ imageFile, onClose, isEmbedded = false, side = null, exte
 
   // Estados para el reporte
   const [showReportModal, setShowReportModal] = useState(false);
-  const [reportText, setReportText] = useState('');
-  const [signatureText, setSignatureText] = useState('');
+  const [titulo, setTitulo] = useState('');
+  const [contenido, setContenido] = useState('');
+  const [hallazgos, setHallazgos] = useState('');
+  const [conclusion, setConclusion] = useState('');
+  const [recomendaciones, setRecomendaciones] = useState('');
+  const [firmaMedico, setFirmaMedico] = useState('');
 
   // Efecto para marcar el componente como montado
   useEffect(() => {
@@ -931,15 +935,106 @@ function ImageViewer({ imageFile, onClose, isEmbedded = false, side = null, exte
 
               <div style={{ marginBottom: "15px" }}>
                 <label style={{ display: "block", marginBottom: "5px", fontWeight: "bold", color: "#fff" }}>
-                  Reporte:
+                  Título:
                 </label>
-                <textarea
-                  value={reportText}
-                  onChange={(e) => setReportText(e.target.value)}
-                  placeholder="Escriba el reporte médico aquí..."
+                <input
+                  type="text"
+                  value={titulo}
+                  onChange={(e) => setTitulo(e.target.value)}
+                  placeholder="Título del reporte..."
                   style={{
                     width: "100%",
-                    height: "150px",
+                    padding: "8px",
+                    border: "1px solid #ccc",
+                    borderRadius: "4px",
+                    fontFamily: "Arial, sans-serif",
+                    fontSize: "12px",
+                    backgroundColor: "#fff",
+                    color: "#333"
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: "15px" }}>
+                <label style={{ display: "block", marginBottom: "5px", fontWeight: "bold", color: "#fff" }}>
+                  Contenido:
+                </label>
+                <textarea
+                  value={contenido}
+                  onChange={(e) => setContenido(e.target.value)}
+                  placeholder="Contenido del reporte..."
+                  style={{
+                    width: "100%",
+                    height: "100px",
+                    padding: "8px",
+                    border: "1px solid #ccc",
+                    borderRadius: "4px",
+                    fontFamily: "Arial, sans-serif",
+                    fontSize: "12px",
+                    resize: "vertical",
+                    backgroundColor: "#fff",
+                    color: "#333"
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: "15px" }}>
+                <label style={{ display: "block", marginBottom: "5px", fontWeight: "bold", color: "#fff" }}>
+                  Hallazgos:
+                </label>
+                <textarea
+                  value={hallazgos}
+                  onChange={(e) => setHallazgos(e.target.value)}
+                  placeholder="Describa los hallazgos..."
+                  style={{
+                    width: "100%",
+                    height: "80px",
+                    padding: "8px",
+                    border: "1px solid #ccc",
+                    borderRadius: "4px",
+                    fontFamily: "Arial, sans-serif",
+                    fontSize: "12px",
+                    resize: "vertical",
+                    backgroundColor: "#fff",
+                    color: "#333"
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: "15px" }}>
+                <label style={{ display: "block", marginBottom: "5px", fontWeight: "bold", color: "#fff" }}>
+                  Conclusión:
+                </label>
+                <textarea
+                  value={conclusion}
+                  onChange={(e) => setConclusion(e.target.value)}
+                  placeholder="Conclusión del reporte..."
+                  style={{
+                    width: "100%",
+                    height: "80px",
+                    padding: "8px",
+                    border: "1px solid #ccc",
+                    borderRadius: "4px",
+                    fontFamily: "Arial, sans-serif",
+                    fontSize: "12px",
+                    resize: "vertical",
+                    backgroundColor: "#fff",
+                    color: "#333"
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: "15px" }}>
+                <label style={{ display: "block", marginBottom: "5px", fontWeight: "bold", color: "#fff" }}>
+                  Recomendaciones:
+                </label>
+                <textarea
+                  value={recomendaciones}
+                  onChange={(e) => setRecomendaciones(e.target.value)}
+                  placeholder="Recomendaciones médicas..."
+                  style={{
+                    width: "100%",
+                    height: "80px",
                     padding: "8px",
                     border: "1px solid #ccc",
                     borderRadius: "4px",
@@ -957,8 +1052,8 @@ function ImageViewer({ imageFile, onClose, isEmbedded = false, side = null, exte
                   Firma del Médico:
                 </label>
                 <textarea
-                  value={signatureText}
-                  onChange={(e) => setSignatureText(e.target.value)}
+                  value={firmaMedico}
+                  onChange={(e) => setFirmaMedico(e.target.value)}
                   placeholder="Nombre completo del médico..."
                   style={{
                     width: "100%",
@@ -976,13 +1071,47 @@ function ImageViewer({ imageFile, onClose, isEmbedded = false, side = null, exte
               </div>
 
               <button
-                onClick={() => {
-                  // Aquí puedes agregar lógica para guardar el reporte
-                  console.log("Reporte guardado:", { reportText, signatureText });
-                  alert("Reporte guardado exitosamente");
-                  setShowReportModal(false);
-                  setReportText('');
-                  setSignatureText('');
+                onClick={async () => {
+                  // Validar que todos los campos estén llenos
+                  if (!titulo.trim() || !contenido.trim() || !hallazgos.trim() || !conclusion.trim() || !recomendaciones.trim() || !firmaMedico.trim()) {
+                    alert("Todos los campos son obligatorios");
+                    return;
+                  }
+
+                  try {
+                    // Aquí enviar al backend
+                    const response = await fetch(`http://localhost:4000/api/informes`, {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify({
+                        ecografia_id: imageFile.id,
+                        titulo,
+                        contenido,
+                        hallazgos,
+                        conclusion,
+                        recomendaciones,
+                        firma_medico: firmaMedico
+                      })
+                    });
+
+                    if (response.ok) {
+                      alert("Reporte guardado exitosamente");
+                      setShowReportModal(false);
+                      setTitulo('');
+                      setContenido('');
+                      setHallazgos('');
+                      setConclusion('');
+                      setRecomendaciones('');
+                      setFirmaMedico('');
+                    } else {
+                      alert("Error al guardar el reporte");
+                    }
+                  } catch (error) {
+                    console.error("Error:", error);
+                    alert("Error al guardar el reporte");
+                  }
                 }}
                 style={{
                   ...buttonStyle,

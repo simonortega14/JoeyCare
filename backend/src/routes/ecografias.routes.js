@@ -313,6 +313,46 @@ router.get("/neonatos/:id/ecografias", async (req, res) => {
   }
 });
 
+// Crear o actualizar informe
+router.post("/informes", async (req, res) => {
+  try {
+    const { ecografia_id, titulo, contenido, hallazgos, conclusion, recomendaciones, firma_medico } = req.body;
+
+    // Validar campos requeridos
+    if (!ecografia_id || !titulo || !contenido || !hallazgos || !conclusion || !recomendaciones || !firma_medico) {
+      return res.status(400).json({ message: "Todos los campos son requeridos" });
+    }
+
+    // Verificar que la ecografía existe
+    const [ecografiaRows] = await pool.query("SELECT id FROM ecografias WHERE id = ?", [ecografia_id]);
+    if (ecografiaRows.length === 0) {
+      return res.status(404).json({ message: "Ecografía no encontrada" });
+    }
+
+    // Intentar insertar, si ya existe, actualizar
+    const [result] = await pool.query(`
+      INSERT INTO informes (ecografia_id, medico_id, titulo, contenido, hallazgos, conclusion, recomendaciones, firma_medico, fecha_informe)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
+      ON DUPLICATE KEY UPDATE
+        titulo = VALUES(titulo),
+        contenido = VALUES(contenido),
+        hallazgos = VALUES(hallazgos),
+        conclusion = VALUES(conclusion),
+        recomendaciones = VALUES(recomendaciones),
+        firma_medico = VALUES(firma_medico),
+        updated_at = NOW()
+    `, [ecografia_id, 1, titulo, contenido, hallazgos, conclusion, recomendaciones, firma_medico]); // medico_id hardcoded as 1 for now
+
+    res.status(201).json({
+      message: "Informe guardado correctamente",
+      id: result.insertId || ecografia_id
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: "Error al guardar informe", error: error.message });
+  }
+});
+
 // Servir archivos
 router.get("/uploads/:filename", (req, res) => {
   const filePath = path.join(uploadsDir, req.params.filename);

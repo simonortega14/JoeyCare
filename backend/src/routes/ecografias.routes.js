@@ -313,20 +313,6 @@ router.get("/neonatos/:id/ecografias", async (req, res) => {
   }
 });
 
-// Obtener reporte por ecografia_id
-router.get("/reportes/:ecografiaId", async (req, res) => {
-  try {
-    const { ecografiaId } = req.params;
-    const [rows] = await pool.query("SELECT * FROM reportes WHERE ecografia_id = ?", [ecografiaId]);
-    if (rows.length === 0) {
-      return res.status(404).json({ message: "Reporte no encontrado" });
-    }
-    res.json(rows[0]);
-  } catch (error) {
-    res.status(500).json({ message: "Error al obtener reporte", error: error.message });
-  }
-});
-
 // Obtener KPIs de un médico
 router.get("/medicos/:medicoId/kpis", async (req, res) => {
   try {
@@ -351,6 +337,52 @@ router.get("/medicos/:medicoId/kpis", async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: "Error al obtener KPIs", error: error.message });
+  }
+});
+
+// Obtener todos los reportes con información completa
+router.get("/reportes/all", async (req, res) => {
+  try {
+    const [rows] = await pool.query(`
+      SELECT r.id, r.titulo, r.contenido, r.hallazgos, r.conclusion, r.recomendaciones,
+             r.firma_medico, r.fecha_reporte, r.estado, r.created_at, r.updated_at,
+             r.created_by_medico_id, r.updated_by_medico_id,
+             n.nombre as paciente_nombre, n.apellido as paciente_apellido, n.documento as paciente_documento,
+             m.nombre as medico_nombre, m.apellido as medico_apellido,
+             e.filepath, e.id as ecografia_id
+      FROM reportes r
+      JOIN ecografias e ON r.ecografia_id = e.id
+      JOIN neonato n ON e.neonato_id = n.id
+      LEFT JOIN medicos m ON r.created_by_medico_id = m.id
+      ORDER BY r.updated_at DESC
+    `);
+
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ message: "Error al obtener todos los reportes", error: error.message });
+  }
+});
+
+// Obtener reporte por ecografia_id con información completa
+router.get("/reportes/:ecografiaId", async (req, res) => {
+  try {
+    const { ecografiaId } = req.params;
+    const [rows] = await pool.query(`
+      SELECT r.*, n.nombre as paciente_nombre, n.apellido as paciente_apellido, n.documento as paciente_documento,
+             m.nombre as medico_nombre, m.apellido as medico_apellido
+      FROM reportes r
+      JOIN ecografias e ON r.ecografia_id = e.id
+      JOIN neonato n ON e.neonato_id = n.id
+      LEFT JOIN medicos m ON r.created_by_medico_id = m.id
+      WHERE r.ecografia_id = ?
+    `, [ecografiaId]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "Reporte no encontrado" });
+    }
+    res.json(rows[0]);
+  } catch (error) {
+    res.status(500).json({ message: "Error al obtener reporte", error: error.message });
   }
 });
 

@@ -10,6 +10,8 @@ import AppHeader from "./components/AppHeader";
 import Sidebar from "./components/AppSidebar";
 import MiPerfil from "./features/profile/ProfilePage";
 import ReportHistoryPage from "./features/profile/ReportHistoryPage";
+import ReportsPage from "./features/reports/ReportsPage";
+import ReportDetailPage from "./features/reports/ReportDetailPage";
 import BuscarPacientes from "./features/buscar_paciente/BuscarPacientesPage";
 import CargarEcografia from "./features/cargar_ecografia/CargarEcografiaPage";
 import DashboardPage from "./features/dashboard/dashBoardPage";
@@ -102,6 +104,8 @@ export default function App() {
               <Routes>
                 <Route path="/perfil" element={<MiPerfil user={user} />} />
                 <Route path="/historial-reportes" element={<ReportHistoryPage user={user} />} />
+                <Route path="/reportes" element={<ReportsPage />} />
+                <Route path="/reportes/:id" element={<ReportDetailPage />} />
                 <Route path="/buscar-pacientes" element={<BuscarPacientes />} />
                 <Route path="/crear-paciente" element={<CrearPacientePage />} />
                 <Route path="/neonato/:id" element={<PacientePage />} />

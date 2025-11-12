@@ -1133,7 +1133,7 @@ function ImageViewer({ imageFile, onClose, user, isEmbedded = false, side = null
                     });
 
                     if (response.ok) {
-                      alert(isEditing ? "Reporte actualizado exitosamente" : "Reporte guardado exitosamente");
+                      alert(isEditing ? "Reporte actualizado exitosamente" : "Reporte firmado exitosamente");
                       setShowReportModal(false);
                       setTitulo('');
                       setContenido('');

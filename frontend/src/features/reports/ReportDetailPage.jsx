@@ -45,6 +45,7 @@ const ReportDetailPage = () => {
     switch (estado) {
       case 'firmado': return '#28a745';
       case 'borrador': return '#ffc107';
+      case 'antiguo': return '#6c757d';
       case 'anulado': return '#dc3545';
       default: return '#6c757d';
     }
@@ -54,6 +55,7 @@ const ReportDetailPage = () => {
     switch (estado) {
       case 'firmado': return 'Firmado';
       case 'borrador': return 'Borrador';
+      case 'antiguo': return 'Antiguo';
       case 'anulado': return 'Anulado';
       default: return estado;
     }

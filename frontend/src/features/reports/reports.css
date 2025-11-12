@@ -140,8 +140,14 @@
   color: #212529;
 }
 
+
 .status-badge.firmado {
   background-color: #28a745;
+  color: white;
+}
+
+.status-badge.antiguo {
+  background-color: #6c757d;
   color: white;
 }
 

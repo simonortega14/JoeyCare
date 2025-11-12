@@ -80,6 +80,8 @@ const ReportsPage = () => {
               <option value="todos">Todos los estados</option>
               <option value="borrador">Borrador</option>
               <option value="firmado">Firmado</option>
+              <option value="firmado">Firmado</option>
+              <option value="antiguo">Antiguo</option>
               <option value="anulado">Anulado</option>
             </select>
           </div>

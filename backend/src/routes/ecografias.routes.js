@@ -407,12 +407,9 @@ router.get("/reportes/history/:medicoId", async (req, res) => {
   }
 });
 
-// Crear o actualizar reporte
+// Crear o actualizar reporte con manejo de estados
 router.post("/reportes", async (req, res) => {
-  const connection = await pool.getConnection();
   try {
-    await connection.beginTransaction();
-
     const { ecografia_id, titulo, contenido, hallazgos, conclusion, recomendaciones, firma_medico, medico_id } = req.body;
 
     // Validar campos requeridos
@@ -421,7 +418,7 @@ router.post("/reportes", async (req, res) => {
     }
 
     // Verificar que la ecografía existe
-    const [ecografiaRows] = await connection.query("SELECT id FROM ecografias WHERE id = ?", [ecografia_id]);
+    const [ecografiaRows] = await pool.query("SELECT id FROM ecografias WHERE id = ?", [ecografia_id]);
     if (ecografiaRows.length === 0) {
       return res.status(404).json({ message: "Ecografía no encontrada" });
     }
@@ -429,27 +426,10 @@ router.post("/reportes", async (req, res) => {
     // Usar medico_id del request o default
     const currentMedicoId = medico_id || 1;
 
-    // Verificar si ya existe un reporte para esta ecografía
-    const [existingReport] = await connection.query("SELECT * FROM reportes WHERE ecografia_id = ?", [ecografia_id]);
-
-    // Si existe un reporte, guardar en historial antes de actualizar
-    if (existingReport.length > 0) {
-      const oldReport = existingReport[0];
-      // Obtener la versión más alta actual
-      const [versionResult] = await connection.query("SELECT MAX(version) as max_version FROM reportes_historial WHERE reporte_id = ?", [oldReport.id]);
-      const nextVersion = (versionResult[0].max_version || 0) + 1;
-
-      // Guardar versión anterior en historial
-      await connection.query(`
-        INSERT INTO reportes_historial (reporte_id, version, datos_json, medico_id)
-        VALUES (?, ?, ?, ?)
-      `, [oldReport.id, nextVersion, JSON.stringify(oldReport), currentMedicoId]);
-    }
-
-    // Intentar insertar, si ya existe, actualizar
-    const [result] = await connection.query(`
-      INSERT INTO reportes (ecografia_id, created_by_medico_id, titulo, contenido, hallazgos, conclusion, recomendaciones, firma_medico, fecha_reporte)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
+    // Crear o actualizar reporte con estado 'firmado'
+    const [result] = await pool.query(`
+      INSERT INTO reportes (ecografia_id, created_by_medico_id, titulo, contenido, hallazgos, conclusion, recomendaciones, firma_medico, fecha_reporte, estado)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), 'firmado')
       ON DUPLICATE KEY UPDATE
         titulo = VALUES(titulo),
         contenido = VALUES(contenido),
@@ -457,22 +437,18 @@ router.post("/reportes", async (req, res) => {
         conclusion = VALUES(conclusion),
         recomendaciones = VALUES(recomendaciones),
         firma_medico = VALUES(firma_medico),
+        estado = 'firmado',
         updated_by_medico_id = VALUES(created_by_medico_id),
         updated_at = NOW()
     `, [ecografia_id, currentMedicoId, titulo, contenido, hallazgos, conclusion, recomendaciones, firma_medico]);
 
-    await connection.commit();
-
-    res.status(201).json({
-      message: "Reporte guardado correctamente",
+    res.status(200).json({
+      message: "Reporte firmado correctamente",
       id: result.insertId || ecografia_id
     });
 
   } catch (error) {
-    await connection.rollback();
     res.status(500).json({ message: "Error al guardar reporte", error: error.message });
-  } finally {
-    connection.release();
   }
 });
 

@@ -5,12 +5,12 @@ import './sidebar.css';
 const AppSidebar = ({ isOpen }) => {
   const menuItems = [
     { id: 0, name: "Dashboards", icon: "📊", path: "/dashboard"},
-    { id: 1, name: "Mi perfil", icon: "👤", path: "/perfil" },
-    { id: 2, name: "Visualizar Ecografías", icon: "🖼️", path: "/visualizar-ecografias" },
-    { id: 3, name: "Cargar Ecografías", icon: "📁", path: "/cargar-ecografias"},
     { id: 4, name: "Buscar Pacientes", icon: "🔍", path: "/buscar-pacientes" },
     { id: 5, name: "Crear Paciente", icon: "➕", path: "/crear-paciente" },
-    { id: 6, name: "Reportes", icon: "📄", path: "/reportes" }
+    { id: 3, name: "Cargar Ecografías", icon: "📁", path: "/cargar-ecografias"},
+    { id: 2, name: "Visualizar Ecografías", icon: "🖼️", path: "/visualizar-ecografias" },
+    { id: 6, name: "Reportes", icon: "📄", path: "/reportes" },
+    { id: 1, name: "Mi perfil", icon: "👤", path: "/perfil" }
   ];
 
   return (

@@ -368,8 +368,8 @@ router.get("/reportes/:ecografiaId", async (req, res) => {
   try {
     const { ecografiaId } = req.params;
     const [rows] = await pool.query(`
-      SELECT r.*, n.nombre as paciente_nombre, n.apellido as paciente_apellido, n.documento as paciente_documento,
-             m.nombre as medico_nombre, m.apellido as medico_apellido
+      SELECT r.*, n.id as paciente_id, n.nombre as paciente_nombre, n.apellido as paciente_apellido, n.documento as paciente_documento,
+             m.nombre as medico_nombre, m.apellido as medico_apellido, e.filepath
       FROM reportes r
       JOIN ecografias e ON r.ecografia_id = e.id
       JOIN neonato n ON e.neonato_id = n.id
@@ -392,7 +392,7 @@ router.get("/reportes/history/:medicoId", async (req, res) => {
     const { medicoId } = req.params;
     const [rows] = await pool.query(`
       SELECT DISTINCT r.id, r.titulo, r.fecha_reporte, r.updated_at,
-             e.filepath, n.nombre as paciente_nombre, n.apellido as paciente_apellido
+             e.id as ecografia_id, e.filepath, n.nombre as paciente_nombre, n.apellido as paciente_apellido
       FROM reportes r
       JOIN ecografias e ON r.ecografia_id = e.id
       JOIN neonato n ON e.neonato_id = n.id

@@ -329,7 +329,7 @@ const ReportDetailPage = () => {
             </>
           )}
           <button
-            onClick={() => navigate(`/visualizar-ecografias?reporte=${reporte.ecografia_id}`)}
+            onClick={() => navigate(`/visualizar-ecografias?patient=${reporte.paciente_id}&file=${encodeURIComponent(reporte.filepath)}`)}
             className="action-btn primary"
           >
             🖼️ Ver Imágenes del Estudio

@@ -9,6 +9,7 @@ const PacientePage = ({ onOpenSettings }) => {
   const navigate = useNavigate();
   const [paciente, setPaciente] = useState(null);
   const [ecografias, setEcografias] = useState([]);
+  const [reportes, setReportes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -21,9 +22,11 @@ const PacientePage = ({ onOpenSettings }) => {
         }
         const data = await response.json();
         setPaciente(data);
+        return data;
       } catch (err) {
         setError(err.message);
         console.error('Error fetching paciente:', err);
+        throw err;
       }
     };
 
@@ -40,7 +43,27 @@ const PacientePage = ({ onOpenSettings }) => {
       }
     };
 
-    Promise.all([fetchPaciente(), fetchEcografias()]).finally(() => {
+    const fetchReportes = async (pacienteData) => {
+      try {
+        const response = await fetch(`http://localhost:4000/api/reportes/all`);
+        if (!response.ok) {
+          throw new Error('Error al obtener los reportes');
+        }
+        const data = await response.json();
+        // Filter reports for this patient
+        const patientReports = data.filter(reporte => reporte.paciente_documento === pacienteData.documento);
+        setReportes(patientReports);
+      } catch (err) {
+        console.error('Error fetching reportes:', err);
+      }
+    };
+
+    const loadData = async () => {
+      const pacienteData = await fetchPaciente();
+      await Promise.all([fetchEcografias(), fetchReportes(pacienteData)]);
+    };
+
+    loadData().finally(() => {
       setLoading(false);
     });
   }, [id]);
@@ -223,6 +246,33 @@ const PacientePage = ({ onOpenSettings }) => {
             ) : (
               <p>No hay ecografías registradas para este paciente.</p>
             )}
+          </div>
+
+          {/* Subsección de Reportes */}
+          <div className="reportes-subsection">
+            <h3>Reportes</h3>
+            <div className="reportes-list">
+              {reportes.length > 0 ? (
+                reportes.map(reporte => (
+                  <div key={reporte.id} className="reporte-card">
+                    <div className="reporte-info">
+                      <h4>{reporte.titulo || 'Sin título'}</h4>
+                      <p>Estado: <span className={`status-badge ${reporte.estado}`}>{reporte.estado}</span></p>
+                      <p>Fecha: {new Date(reporte.fecha_reporte).toLocaleDateString('es-ES')}</p>
+                      <p>Médico: {reporte.medico_nombre} {reporte.medico_apellido}</p>
+                    </div>
+                    <button
+                      className="reporte-action-btn"
+                      onClick={() => navigate(`/reportes/${reporte.ecografia_id}`)}
+                    >
+                      Ver Reporte
+                    </button>
+                  </div>
+                ))
+              ) : (
+                <p>No hay reportes registrados para este paciente.</p>
+              )}
+            </div>
           </div>
         </div>
       </div>

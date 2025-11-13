@@ -96,7 +96,7 @@ const ReportHistoryPage = ({ user }) => {
                     <div className="version-info">
                       <p><strong>Médico:</strong> {version.medico_nombre} {version.medico_apellido}</p>
                       <div className="version-data">
-                        <pre>{JSON.stringify(JSON.parse(version.datos_json), null, 2)}</pre>
+                        <pre>{JSON.stringify(typeof version.datos_json === 'string' ? JSON.parse(version.datos_json) : version.datos_json, null, 2)}</pre>
                       </div>
                     </div>
                   </div>

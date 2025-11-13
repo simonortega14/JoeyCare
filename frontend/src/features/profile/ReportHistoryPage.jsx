@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import './profile.css';
 
 const ReportHistoryPage = ({ user }) => {
-  const navigate = useNavigate();
   const [reportesHistory, setReportesHistory] = useState([]);
   const [selectedReporte, setSelectedReporte] = useState(null);
   const [historial, setHistorial] = useState([]);
@@ -73,7 +71,7 @@ const ReportHistoryPage = ({ user }) => {
                     <button
                       className="view-report-btn"
                       style={{ backgroundColor: '#28a745' }}
-                      onClick={() => navigate(`/reportes/${reporte.ecografia_id}`)}
+                      onClick={() => window.location.href = `/reportes/${reporte.ecografia_id}`}
                     >
                       Ver Reporte Actual
                     </button>

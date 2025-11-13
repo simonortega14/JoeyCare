@@ -758,7 +758,7 @@ function ImageViewer({ imageFile, onClose, user, isEmbedded = false, side = null
         setFirmaMedico(doctorName); // Always use current doctor's name
       } else {
         setIsEditing(false);
-        setTitulo('');
+        setTitulo('Título será generado automáticamente');
         setContenido('');
         setHallazgos('');
         setConclusion('');
@@ -768,7 +768,7 @@ function ImageViewer({ imageFile, onClose, user, isEmbedded = false, side = null
     } catch (error) {
       console.error("Error fetching report:", error);
       setIsEditing(false);
-      setTitulo('');
+      setTitulo('Título será generado automáticamente');
       setContenido('');
       setHallazgos('');
       setConclusion('');
@@ -971,24 +971,8 @@ function ImageViewer({ imageFile, onClose, user, isEmbedded = false, side = null
 
               <div style={{ marginBottom: "15px" }}>
                 <label style={{ display: "block", marginBottom: "5px", fontWeight: "bold", color: "#fff" }}>
-                  Título:
+                  Título: <span style={{ color: "#6c757d" }}>{titulo}</span>
                 </label>
-                <input
-                  type="text"
-                  value={titulo}
-                  onChange={(e) => setTitulo(e.target.value)}
-                  placeholder="Título del reporte..."
-                  style={{
-                    width: "100%",
-                    padding: "8px",
-                    border: "1px solid #ccc",
-                    borderRadius: "4px",
-                    fontFamily: "Arial, sans-serif",
-                    fontSize: "12px",
-                    backgroundColor: "#fff",
-                    color: "#333"
-                  }}
-                />
               </div>
 
               <div style={{ marginBottom: "15px" }}>
@@ -1085,55 +1069,68 @@ function ImageViewer({ imageFile, onClose, user, isEmbedded = false, side = null
 
               <div style={{ marginBottom: "15px" }}>
                  <label style={{ display: "block", marginBottom: "5px", fontWeight: "bold", color: "#fff" }}>
-                   Firma del Médico:
+                   Firma del Médico: <span style={{ color: "#6c757d" }}>{firmaMedico}</span>
                  </label>
-                 <div
-                   style={{
-                     width: "100%",
-                     minHeight: "50px",
-                     padding: "8px",
-                     border: "1px solid #ccc",
-                     borderRadius: "4px",
-                     fontFamily: "Arial, sans-serif",
-                     fontSize: "12px",
-                     backgroundColor: "#f5f5f5",
-                     color: "#333",
-                     whiteSpace: "pre-wrap"
-                   }}
-                 >
-                   {firmaMedico}
-                 </div>
                </div>
 
-              <button
-                onClick={async () => {
-                  // Validar que todos los campos estén llenos
-                  if (!titulo.trim() || !contenido.trim() || !hallazgos.trim() || !conclusion.trim() || !recomendaciones.trim() || !firmaMedico.trim()) {
-                    alert("Todos los campos son obligatorios");
-                    return;
-                  }
+              <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
+                <button
+                  onClick={async () => {
+                    // Validar que todos los campos estén llenos
+                    if (!contenido.trim() || !hallazgos.trim() || !conclusion.trim() || !recomendaciones.trim() || !firmaMedico.trim()) {
+                      alert("Todos los campos son obligatorios");
+                      return;
+                    }
 
-                  try {
-                    // Aquí enviar al backend
-                    const response = await fetch(`http://localhost:4000/api/reportes`, {
-                      method: 'POST',
-                      headers: {
-                        'Content-Type': 'application/json',
-                      },
-                      body: JSON.stringify({
-                        ecografia_id: imageFile.id,
-                        titulo,
-                        contenido,
-                        hallazgos,
-                        conclusion,
-                        recomendaciones,
-                        firma_medico: firmaMedico,
-                        medico_id: user?.id
-                      })
-                    });
+                    try {
+                      // Aquí enviar al backend
+                      const response = await fetch(`http://localhost:4000/api/reportes`, {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                          ecografia_id: imageFile.id,
+                          titulo: '', // Will be generated in backend
+                          contenido,
+                          hallazgos,
+                          conclusion,
+                          recomendaciones,
+                          firma_medico: firmaMedico,
+                          medico_id: user?.id
+                        })
+                      });
 
-                    if (response.ok) {
-                      alert(isEditing ? "Reporte actualizado exitosamente" : "Reporte firmado exitosamente");
+                      if (response.ok) {
+                        alert(isEditing ? "Reporte actualizado exitosamente" : "Reporte firmado exitosamente");
+                        setShowReportModal(false);
+                        setTitulo('');
+                        setContenido('');
+                        setHallazgos('');
+                        setConclusion('');
+                        setRecomendaciones('');
+                        setFirmaMedico('');
+                        setIsEditing(false);
+                      } else {
+                        alert("Error al guardar el reporte");
+                      }
+                    } catch (error) {
+                      console.error("Error:", error);
+                      alert("Error al guardar el reporte");
+                    }
+                  }}
+                  style={{
+                    ...buttonStyle,
+                    backgroundColor: "#4caf50",
+                    flex: 1
+                  }}
+                >
+                  💾 {isEditing ? "Actualizar Reporte" : "Guardar Reporte"}
+                </button>
+
+                {isEditing && (
+                  <button
+                    onClick={() => {
                       setShowReportModal(false);
                       setTitulo('');
                       setContenido('');
@@ -1142,23 +1139,17 @@ function ImageViewer({ imageFile, onClose, user, isEmbedded = false, side = null
                       setRecomendaciones('');
                       setFirmaMedico('');
                       setIsEditing(false);
-                    } else {
-                      alert("Error al guardar el reporte");
-                    }
-                  } catch (error) {
-                    console.error("Error:", error);
-                    alert("Error al guardar el reporte");
-                  }
-                }}
-                style={{
-                  ...buttonStyle,
-                  backgroundColor: "#4caf50",
-                  width: "100%",
-                  marginTop: "10px"
-                }}
-              >
-                💾 {isEditing ? "Actualizar Reporte" : "Guardar Reporte"}
-              </button>
+                    }}
+                    style={{
+                      ...buttonStyle,
+                      backgroundColor: "#6c757d",
+                      flex: 1
+                    }}
+                  >
+                    ❌ Cancelar Cambios
+                  </button>
+                )}
+              </div>
             </div>
           )}
 

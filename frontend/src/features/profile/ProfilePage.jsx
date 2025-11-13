@@ -167,7 +167,7 @@ const ProfilePage = ({ onOpenSettings, user }) => {
                    <div className="report-actions">
                      <button
                        className="view-report-btn"
-                       onClick={() => window.open(`/visualizar-ecografias?reporte=${reporte.id}`, '_blank')}
+                       onClick={() => window.location.href = `/reportes/${reporte.ecografia_id}`}
                      >
                        Ver Reporte
                      </button>

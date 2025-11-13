@@ -413,7 +413,7 @@ router.post("/reportes", async (req, res) => {
     const { ecografia_id, titulo, contenido, hallazgos, conclusion, recomendaciones, firma_medico, medico_id } = req.body;
 
     // Validar campos requeridos
-    if (!ecografia_id || !titulo || !contenido || !hallazgos || !conclusion || !recomendaciones || !firma_medico) {
+    if (!ecografia_id || !contenido || !hallazgos || !conclusion || !recomendaciones || !firma_medico) {
       return res.status(400).json({ message: "Todos los campos son requeridos" });
     }
 
@@ -441,6 +441,16 @@ router.post("/reportes", async (req, res) => {
       `, [existingReport[0].id, currentVersion + 1, JSON.stringify(existingReport[0]), currentMedicoId]);
     }
 
+    // Obtener información de la ecografía y paciente para el título estándar
+    const [ecografiaInfo] = await pool.query(`
+      SELECT e.filepath, n.nombre, n.apellido
+      FROM ecografias e
+      JOIN neonato n ON e.neonato_id = n.id
+      WHERE e.id = ?
+    `, [ecografia_id]);
+
+    const tituloEstandar = ecografiaInfo.length > 0 ? `${ecografiaInfo[0].nombre} ${ecografiaInfo[0].apellido} - ${ecografiaInfo[0].filepath}` : titulo;
+
     // Crear o actualizar reporte con estado 'firmado'
     const [result] = await pool.query(`
       INSERT INTO reportes (ecografia_id, created_by_medico_id, titulo, contenido, hallazgos, conclusion, recomendaciones, firma_medico, fecha_reporte, estado)
@@ -455,7 +465,7 @@ router.post("/reportes", async (req, res) => {
         estado = 'firmado',
         updated_by_medico_id = VALUES(created_by_medico_id),
         updated_at = NOW()
-    `, [ecografia_id, currentMedicoId, titulo, contenido, hallazgos, conclusion, recomendaciones, firma_medico]);
+    `, [ecografia_id, currentMedicoId, tituloEstandar, contenido, hallazgos, conclusion, recomendaciones, firma_medico]);
 
     res.status(200).json({
       message: "Reporte firmado correctamente",

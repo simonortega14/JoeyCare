@@ -426,6 +426,21 @@ router.post("/reportes", async (req, res) => {
     // Usar medico_id del request o default
     const currentMedicoId = medico_id || 1;
 
+    // Verificar si el reporte ya existe para manejar historial
+    const [existingReport] = await pool.query("SELECT * FROM reportes WHERE ecografia_id = ?", [ecografia_id]);
+
+    if (existingReport.length > 0) {
+      // Obtener la versión actual
+      const [versionResult] = await pool.query("SELECT MAX(version) as max_version FROM reportes_historial WHERE reporte_id = ?", [existingReport[0].id]);
+      const currentVersion = versionResult[0].max_version || 0;
+
+      // Insertar en historial antes de actualizar
+      await pool.query(`
+        INSERT INTO reportes_historial (reporte_id, version, datos_json, medico_id)
+        VALUES (?, ?, ?, ?)
+      `, [existingReport[0].id, currentVersion + 1, JSON.stringify(existingReport[0]), currentMedicoId]);
+    }
+
     // Crear o actualizar reporte con estado 'firmado'
     const [result] = await pool.query(`
       INSERT INTO reportes (ecografia_id, created_by_medico_id, titulo, contenido, hallazgos, conclusion, recomendaciones, firma_medico, fecha_reporte, estado)
@@ -449,6 +464,40 @@ router.post("/reportes", async (req, res) => {
 
   } catch (error) {
     res.status(500).json({ message: "Error al guardar reporte", error: error.message });
+  }
+});
+
+// Actualizar estado de un reporte
+router.put("/reportes/:id/estado", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { estado, medico_id } = req.body;
+
+    if (!['borrador', 'firmado', 'anulado'].includes(estado)) {
+      return res.status(400).json({ message: "Estado inválido" });
+    }
+
+    // Obtener reporte actual para historial
+    const [existingReport] = await pool.query("SELECT * FROM reportes WHERE id = ?", [id]);
+    if (existingReport.length === 0) {
+      return res.status(404).json({ message: "Reporte no encontrado" });
+    }
+
+    // Insertar en historial si es actualización
+    const [versionResult] = await pool.query("SELECT MAX(version) as max_version FROM reportes_historial WHERE reporte_id = ?", [id]);
+    const currentVersion = versionResult[0].max_version || 0;
+
+    await pool.query(`
+      INSERT INTO reportes_historial (reporte_id, version, datos_json, medico_id)
+      VALUES (?, ?, ?, ?)
+    `, [id, currentVersion + 1, JSON.stringify(existingReport[0]), medico_id || 1]);
+
+    // Actualizar estado
+    await pool.query("UPDATE reportes SET estado = ?, updated_by_medico_id = ?, updated_at = NOW() WHERE id = ?", [estado, medico_id || 1, id]);
+
+    res.json({ message: "Estado actualizado correctamente" });
+  } catch (error) {
+    res.status(500).json({ message: "Error al actualizar estado", error: error.message });
   }
 });
 

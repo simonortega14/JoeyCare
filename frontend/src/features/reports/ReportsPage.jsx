@@ -80,8 +80,6 @@ const ReportsPage = () => {
               <option value="todos">Todos los estados</option>
               <option value="borrador">Borrador</option>
               <option value="firmado">Firmado</option>
-              <option value="firmado">Firmado</option>
-              <option value="antiguo">Antiguo</option>
               <option value="anulado">Anulado</option>
             </select>
           </div>
@@ -120,7 +118,7 @@ const ReportsPage = () => {
                         className="action-btn view-btn"
                         onClick={(e) => {
                           e.stopPropagation();
-                          navigate(`/reportes/${reporte.id}`);
+                          navigate(`/reportes/${reporte.ecografia_id}`);
                         }}
                       >
                         Ver Detalles
@@ -159,8 +157,8 @@ const ReportsPage = () => {
                             <details>
                               <summary>Ver cambios detallados</summary>
                               <pre className="json-data">
-                                {JSON.stringify(JSON.parse(version.datos_json), null, 2)}
-                              </pre>
+                                  {JSON.stringify(typeof version.datos_json === 'string' ? JSON.parse(version.datos_json) : version.datos_json, null, 2)}
+                                </pre>
                             </details>
                           </div>
                         </div>
@@ -172,7 +170,7 @@ const ReportsPage = () => {
                 <p>Este reporte no tiene historial de versiones</p>
               )
             ) : (
-              <p>Selecciona un reporte para ver su historial</p>
+              <p>Haz clic en un reporte de la lista para ver su historial de versiones aquí.</p>
             )}
           </div>
         </div>

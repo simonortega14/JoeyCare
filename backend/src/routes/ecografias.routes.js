@@ -3,6 +3,7 @@ import pool from "../db.js";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import { encryptFile, decryptFile } from "../utils/encryption.js";
 
 const router = Router();
 
@@ -298,16 +299,30 @@ router.post("/ecografias/:neonatoId", upload.single("imagen"), async (req, res) 
       return res.status(404).json({ message: "Neonato no encontrado" });
     }
 
+    // Encriptar el archivo
+    const originalPath = path.join(uploadsDir, req.file.filename);
+    const encryptedFilename = req.file.filename + '.enc';
+    const encryptedPath = path.join(uploadsDir, encryptedFilename);
+
+    try {
+      await encryptFile(originalPath, encryptedPath);
+      // Eliminar el archivo original
+      fs.unlinkSync(originalPath);
+    } catch (error) {
+      console.error('Error al encriptar archivo:', error);
+      return res.status(500).json({ message: "Error al encriptar la imagen" });
+    }
+
     const [result] = await pool.query(
       "INSERT INTO ecografias (neonato_id, fecha_hora, uploader_medico_id, sede_id, filepath, mime_type, size_bytes) VALUES (?, ?, ?, ?, ?, ?, ?)",
-      [neonatoId, fecha_hora || new Date(), uploader_medico_id, sede_id || null, req.file.filename, req.file.mimetype, req.file.size]
+      [neonatoId, fecha_hora || new Date(), uploader_medico_id, sede_id || null, encryptedFilename, req.file.mimetype, req.file.size]
     );
 
     res.status(201).json({
       message: "Ecografía subida correctamente",
       id: result.insertId,
       neonato_id: neonatoId,
-      filepath: req.file.filename,
+      filepath: encryptedFilename,
     });
 
   } catch (error) {
@@ -627,9 +642,26 @@ router.get("/reportes/:reporteId/historial", async (req, res) => {
 });
 
 // Servir archivos
-router.get("/uploads/:filename", (req, res) => {
-  const filePath = path.join(uploadsDir, req.params.filename);
+router.get("/uploads/:filename", async (req, res) => {
+  let filePath = path.join(uploadsDir, req.params.filename);
   if (!fs.existsSync(filePath)) return res.status(404).send("Archivo no encontrado");
+
+  const isEncrypted = req.params.filename.endsWith('.enc');
+  if (isEncrypted) {
+    // Desencriptar a un archivo temporal
+    const tempPath = path.join(uploadsDir, 'temp_' + Date.now() + '_' + req.params.filename.replace('.enc', ''));
+    try {
+      await decryptFile(filePath, tempPath);
+      filePath = tempPath;
+      // Limpiar archivo temporal después de enviar
+      res.on('finish', () => {
+        if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
+      });
+    } catch (error) {
+      console.error('Error al desencriptar archivo:', error);
+      return res.status(500).send("Error al procesar archivo");
+    }
+  }
 
   const ext = path.extname(filePath).toLowerCase();
   if (ext === ".dcm") res.type("application/dicom");

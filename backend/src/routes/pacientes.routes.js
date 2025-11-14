@@ -1,5 +1,6 @@
 import { Router } from "express";
 import pool from "../db.js";
+import { encrypt, decrypt } from "../utils/encryption.js";
 
 const router = Router();
 
@@ -41,7 +42,12 @@ router.get("/neonatos", async (req, res) => {
     }
 
     const [rows] = await pool.query(query, params);
-    res.json(rows);
+    // Desencriptar documento en los resultados
+    const decryptedRows = rows.map(row => ({
+      ...row,
+      documento: decrypt(row.documento)
+    }));
+    res.json(decryptedRows);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Error al obtener los neonatos" });
@@ -61,16 +67,19 @@ router.post("/neonatos", async (req, res) => {
       return res.status(400).json({ message: "Nombre, apellido, documento del paciente, nombre, apellido, teléfono, correo del acudiente y médico son obligatorios" });
     }
 
+    const documentoEncriptado = encrypt(documento);
     const [result] = await connection.query(
       "INSERT INTO neonato (nombre, apellido, documento, sexo, fecha_nacimiento, edad_gestacional_sem, edad_corregida_sem, peso_nacimiento_g, peso_actual_g, perimetro_cefalico, created_by_medico_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-      [nombre, apellido, documento, sexo || null, fecha_nacimiento || null, edad_gestacional_sem || null, edad_corregida_sem || null, peso_nacimiento_g || null, peso_actual_g || null, perimetro_cefalico || null, medico_id]
+      [nombre, apellido, documentoEncriptado, sexo || null, fecha_nacimiento || null, edad_gestacional_sem || null, edad_corregida_sem || null, peso_nacimiento_g || null, peso_actual_g || null, perimetro_cefalico || null, medico_id]
     );
 
     const neonatoId = result.insertId;
 
+    const telefonoEncriptado = encrypt(telefono);
+    const correoEncriptado = encrypt(correo);
     await connection.query(
       "INSERT INTO acudiente (neonato_id, nombre, apellido, sexo, parentesco, telefono, correo) VALUES (?, ?, ?, ?, ?, ?, ?)",
-      [neonatoId, nombre_acudiente, apellido_acudiente, sexo_acudiente || null, parentesco || null, telefono, correo]
+      [neonatoId, nombre_acudiente, apellido_acudiente, sexo_acudiente || null, parentesco || null, telefonoEncriptado, correoEncriptado]
     );
 
     await connection.commit();
@@ -79,7 +88,7 @@ router.post("/neonatos", async (req, res) => {
       id: neonatoId,
       nombre,
       apellido,
-      documento,
+      documento: decrypt(documentoEncriptado),
       sexo,
       fecha_nacimiento,
       edad_gestacional_sem,
@@ -93,8 +102,8 @@ router.post("/neonatos", async (req, res) => {
         apellido: apellido_acudiente,
         sexo: sexo_acudiente,
         parentesco,
-        telefono,
-        correo
+        telefono: decrypt(telefonoEncriptado),
+        correo: decrypt(correoEncriptado)
       }
     });
   } catch (error) {
@@ -121,7 +130,13 @@ router.get("/neonatos/:id", async (req, res) => {
       return res.status(404).json({ message: "Neonato no encontrado" });
     }
 
-    res.json(rows[0]);
+    const row = rows[0];
+    res.json({
+      ...row,
+      documento: decrypt(row.documento),
+      telefono: decrypt(row.telefono),
+      correo: decrypt(row.correo)
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Error al obtener neonato" });
@@ -195,11 +210,11 @@ router.post("/acudientes/:neonatoId", async (req, res) => {
 
     if (telefono !== undefined) {
       updateFields.push("telefono = ?");
-      updateValues.push(telefono);
+      updateValues.push(encrypt(telefono));
     }
     if (correo !== undefined) {
       updateFields.push("correo = ?");
-      updateValues.push(correo);
+      updateValues.push(encrypt(correo));
     }
 
     if (updateFields.length === 0) {

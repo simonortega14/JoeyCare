@@ -20,6 +20,7 @@ function ImageViewer({ imageFile, onClose, user, isEmbedded = false, side = null
   const [error, setError] = useState(null);
   const [windowLevel, setWindowLevel] = useState({ width: 256, center: 128 });
   const [isMounted, setIsMounted] = useState(false);
+  const [patientData, setPatientData] = useState(null);
   
   // Estados para widgets
   const [pointMode, setPointMode] = useState(false);
@@ -58,6 +59,33 @@ function ImageViewer({ imageFile, onClose, user, isEmbedded = false, side = null
       setIsMounted(false);
     };
   }, []);
+
+  // Función para obtener datos del paciente
+  const fetchPatientData = useCallback(async () => {
+    if (!imageFile || !imageFile.id) {
+      setPatientData(null);
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:4000/api/ecografias/${imageFile.id}/details`);
+      if (response.ok) {
+        const data = await response.json();
+        setPatientData(data);
+      } else {
+        console.error("Error fetching patient data:", response.status);
+        setPatientData(null);
+      }
+    } catch (error) {
+      console.error("Error fetching patient data:", error);
+      setPatientData(null);
+    }
+  }, [imageFile]);
+
+  // Efecto para cargar datos del paciente cuando cambia la imagen
+  useEffect(() => {
+    fetchPatientData();
+  }, [fetchPatientData]);
 
   // Efecto para sincronizar con props externas en modo embedded
   useEffect(() => {
@@ -948,9 +976,21 @@ function ImageViewer({ imageFile, onClose, user, isEmbedded = false, side = null
             📄 Reporte
           </button>
 
-          <span style={{ marginLeft: "auto", color: "#fff", fontSize: "13px" }}>
-            {imageFile.filepath || imageFile.filename}
-          </span>
+          <div style={{ marginLeft: "auto", color: "#fff", fontSize: "12px", display: "flex", flexDirection: "column", alignItems: "flex-end", lineHeight: "1.2" }}>
+            {patientData ? (
+              <>
+                <div><strong>{patientData.nombre} {patientData.apellido}</strong></div>
+                <div>Fecha Nac: {patientData.fecha_nacimiento ? new Date(patientData.fecha_nacimiento).toLocaleDateString('es-ES') : 'N/A'}</div>
+                <div>Edad: {patientData.edad_gestacional_sem ? `${patientData.edad_gestacional_sem} sem` : 'N/A'}</div>
+                <div>Edad Corregida: {patientData.edad_corregida_sem ? `${patientData.edad_corregida_sem} sem` : 'N/A'}</div>
+                <div>Peso: {patientData.peso_actual_g ? `${patientData.peso_actual_g}g` : 'N/A'}</div>
+                <div>Centímetros de Encefalo: {patientData.perimetro_cefalico ? `${patientData.perimetro_cefalico}cm` : 'N/A'}</div>
+                <div>Fecha Ecografía: {patientData.fecha_hora ? new Date(patientData.fecha_hora).toLocaleDateString('es-ES') : 'N/A'}</div>
+              </>
+            ) : (
+              <div>Cargando datos del paciente...</div>
+            )}
+          </div>
         </div>
       )}
 

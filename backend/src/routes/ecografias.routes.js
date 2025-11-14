@@ -299,6 +299,49 @@ router.post("/ecografias/:neonatoId", upload.single("imagen"), async (req, res) 
   }
 });
 
+// Obtener detalles de una ecografía con información del paciente
+router.get("/ecografias/:id/details", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const [rows] = await pool.query(`
+      SELECT
+        e.id,
+        e.neonato_id,
+        e.fecha_hora,
+        e.filepath,
+        e.mime_type,
+        e.size_bytes,
+        e.thumbnail_path,
+        e.dicom_metadata,
+        e.creado_en,
+        n.nombre,
+        n.apellido,
+        n.documento,
+        n.sexo,
+        n.fecha_nacimiento,
+        n.edad_gestacional_sem,
+        n.edad_corregida_sem,
+        n.peso_nacimiento_g,
+        n.peso_actual_g,
+        n.perimetro_cefalico,
+        m.nombre as uploader_nombre,
+        m.apellido as uploader_apellido
+      FROM ecografias e
+      JOIN neonato n ON e.neonato_id = n.id
+      JOIN medicos m ON e.uploader_medico_id = m.id
+      WHERE e.id = ?
+    `, [id]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "Ecografía no encontrada" });
+    }
+
+    res.json(rows[0]);
+  } catch (error) {
+    res.status(500).json({ message: "Error al obtener detalles de la ecografía", error: error.message });
+  }
+});
+
 // Obtener ecografías de un neonato
 router.get("/neonatos/:id/ecografias", async (req, res) => {
   try {

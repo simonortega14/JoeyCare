@@ -774,7 +774,7 @@ function ImageViewer({ imageFile, onClose, user, isEmbedded = false, side = null
   const openReportModal = async () => {
     const doctorName = user ? `${user.nombre} ${user.apellido}` : '';
     try {
-      const response = await fetch(`http://localhost:4000/api/reportes/${imageFile.id}`);
+      const response = await fetch(`http://localhost:4000/api/reportes/ecografia/${imageFile.id}`);
       if (response.ok) {
         const report = await response.json();
         setIsEditing(true);

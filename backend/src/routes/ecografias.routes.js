@@ -406,6 +406,33 @@ router.get("/reportes/all", async (req, res) => {
   }
 });
 
+// Obtener reporte por ecografia_id
+router.get("/reportes/ecografia/:ecografiaId", async (req, res) => {
+  try {
+    const { ecografiaId } = req.params;
+    const [rows] = await pool.query(`
+      SELECT r.*, n.id as paciente_id, n.nombre as paciente_nombre, n.apellido as paciente_apellido, n.documento as paciente_documento,
+             n.sexo, n.fecha_nacimiento, n.edad_gestacional_sem, n.edad_corregida_sem, n.peso_nacimiento_g, n.peso_actual_g, n.perimetro_cefalico,
+             a.nombre as nombre_acudiente, a.apellido as apellido_acudiente, a.parentesco, a.telefono, a.correo,
+             m.nombre as medico_nombre, m.apellido as medico_apellido, e.filepath
+      FROM reportes r
+      LEFT JOIN ecografias e ON r.ecografia_id = e.id
+      LEFT JOIN neonato n ON e.neonato_id = n.id
+      LEFT JOIN acudiente a ON n.id = a.neonato_id
+      LEFT JOIN medicos m ON r.created_by_medico_id = m.id
+      WHERE r.ecografia_id = ?
+    `, [ecografiaId]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "Reporte no encontrado" });
+    }
+    console.log('Datos del reporte obtenidos:', rows[0]);
+    res.json(rows[0]);
+  } catch (error) {
+    res.status(500).json({ message: "Error al obtener reporte", error: error.message });
+  }
+});
+
 // Obtener reporte por id con información completa
 router.get("/reportes/:id", async (req, res) => {
   try {
@@ -501,10 +528,9 @@ router.post("/reportes", async (req, res) => {
 
     // Crear o actualizar reporte con estado 'firmado'
     const [result] = await pool.query(`
-      INSERT INTO reportes (ecografia_id, patient_id, created_by_medico_id, titulo, contenido, hallazgos, conclusion, recomendaciones, firma_medico, fecha_reporte, estado)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 'firmado')
+      INSERT INTO reportes (ecografia_id, created_by_medico_id, titulo, contenido, hallazgos, conclusion, recomendaciones, firma_medico, fecha_reporte, estado)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), 'firmado')
       ON DUPLICATE KEY UPDATE
-        patient_id = VALUES(patient_id),
         titulo = VALUES(titulo),
         contenido = VALUES(contenido),
         hallazgos = VALUES(hallazgos),
@@ -514,11 +540,14 @@ router.post("/reportes", async (req, res) => {
         estado = 'firmado',
         updated_by_medico_id = VALUES(created_by_medico_id),
         updated_at = NOW()
-    `, [ecografia_id, patient_id, currentMedicoId, tituloEstandar, contenido, hallazgos, conclusion, recomendaciones, firma_medico]);
+    `, [ecografia_id, currentMedicoId, tituloEstandar, contenido, hallazgos, conclusion, recomendaciones, firma_medico]);
+
+    // Obtener el ID del reporte creado/actualizado
+    const [reportRow] = await pool.query("SELECT id FROM reportes WHERE ecografia_id = ?", [ecografia_id]);
 
     res.status(200).json({
       message: "Reporte firmado correctamente",
-      id: result.insertId || ecografia_id
+      id: reportRow[0].id
     });
 
   } catch (error) {

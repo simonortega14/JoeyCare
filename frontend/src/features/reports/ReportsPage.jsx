@@ -118,7 +118,7 @@ const ReportsPage = () => {
                         className="action-btn view-btn"
                         onClick={(e) => {
                           e.stopPropagation();
-                          navigate(`/reportes/${reporte.ecografia_id}`);
+                          navigate(`/reportes/${reporte.id}`);
                         }}
                       >
                         Ver Detalles

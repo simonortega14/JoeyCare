@@ -71,7 +71,7 @@ const ReportHistoryPage = ({ user }) => {
                     <button
                       className="view-report-btn"
                       style={{ backgroundColor: '#28a745' }}
-                      onClick={() => window.location.href = `/reportes/${reporte.ecografia_id}`}
+                      onClick={() => window.location.href = `/reportes/${reporte.id}`}
                     >
                       Ver Reporte Actual
                     </button>

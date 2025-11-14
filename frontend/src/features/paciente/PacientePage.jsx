@@ -456,7 +456,7 @@ const PacientePage = ({ onOpenSettings }) => {
                     </div>
                     <button
                       className="reporte-action-btn"
-                      onClick={() => navigate(`/reportes/${reporte.ecografia_id}`)}
+                      onClick={() => navigate(`/reportes/${reporte.id}`)}
                     >
                       Ver Reporte
                     </button>

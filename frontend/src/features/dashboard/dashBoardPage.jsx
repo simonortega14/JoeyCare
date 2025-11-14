@@ -17,6 +17,7 @@ export default function DashboardPage() {
   const [recentActivity, setRecentActivity] = useState([]);
   const [weeklyStats, setWeeklyStats] = useState([]);
   const [patientsWithoutUltrasound, setPatientsWithoutUltrasound] = useState([]);
+  const [ultrasoundsWithoutReports, setUltrasoundsWithoutReports] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Cargar datos reales del backend
@@ -31,6 +32,7 @@ export default function DashboardPage() {
           setRecentActivity(data.recentActivity);
           setWeeklyStats(data.weeklyStats);
           setPatientsWithoutUltrasound(data.patientsWithoutUltrasound || []);
+          setUltrasoundsWithoutReports(data.ultrasoundsWithoutReports || []);
         }
       } catch (error) {
         console.error('Error loading dashboard data:', error);
@@ -180,6 +182,34 @@ export default function DashboardPage() {
                   onClick={() => window.location.href = `/cargar-ecografias?patient=${patient.id}`}
                 >
                   📤 Subir Ecografía
+                </button>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Ecografías sin reportes */}
+      {ultrasoundsWithoutReports.length > 0 && (
+        <section className="ultrasounds-without-reports">
+          <h2>⚠️ Pacientes Con Ecografías Sin Revisión</h2>
+          <div className="patients-alert-grid">
+            {ultrasoundsWithoutReports.map((ultrasound, index) => (
+              <div key={index} className="patient-alert-card">
+                <div className="patient-alert-header">
+                  <strong>{ultrasound.nombre} {ultrasound.apellido}</strong>
+                  <span className="patient-document">Doc: {ultrasound.documento}</span>
+                </div>
+                <div className="patient-alert-details">
+                  <span>Fecha ecografía: {new Date(ultrasound.fecha_hora).toLocaleDateString('es-ES')}</span>
+                  <span>Días de vida: {ultrasound.dias_vida}</span>
+                  <span>Archivo: {ultrasound.filepath}</span>
+                </div>
+                <button
+                  className="upload-btn"
+                  onClick={() => window.location.href = `/visualizar-ecografias?patient=${ultrasound.neonato_id}&file=${ultrasound.filepath}`}
+                >
+                  👁️ Ver Ecografía
                 </button>
               </div>
             ))}

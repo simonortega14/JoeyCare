@@ -104,6 +104,24 @@ router.get("/dashboard/stats", async (req, res) => {
       LIMIT 5
     `);
 
+    // Ecografías sin reportes
+    const [ultrasoundsWithoutReports] = await pool.query(`
+      SELECT
+        e.id,
+        e.neonato_id,
+        e.fecha_hora,
+        e.filepath,
+        n.nombre,
+        n.apellido,
+        n.documento,
+        DATEDIFF(CURDATE(), n.fecha_nacimiento) as dias_vida
+      FROM ecografias e
+      JOIN neonato n ON e.neonato_id = n.id
+      WHERE e.id NOT IN (SELECT DISTINCT ecografia_id FROM reportes)
+      ORDER BY e.fecha_hora DESC
+      LIMIT 5
+    `);
+
     // Actividad reciente (últimas 5 ecografías)
     const [recentActivityRows] = await pool.query(`
       SELECT
@@ -180,6 +198,7 @@ router.get("/dashboard/stats", async (req, res) => {
       weeklyStats: weeklyStats,
       recentActivity: recentActivityRows,
       patientsWithoutUltrasound: patientsWithoutUltrasound,
+      ultrasoundsWithoutReports: ultrasoundsWithoutReports,
       alerts: []
     });
   } catch (error) {

@@ -386,6 +386,24 @@
   text-align: center;
 }
 
+/* Ecografías sin reportes */
+.ultrasounds-without-reports {
+  background: white;
+  padding: 25px;
+  border-radius: 15px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  margin-bottom: 25px;
+  border-left: 5px solid #9c27b0;
+}
+
+.ultrasounds-without-reports h2 {
+  color: #9c27b0;
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin: 0 0 20px 0;
+  text-align: center;
+}
+
 .patients-alert-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));

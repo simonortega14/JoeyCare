@@ -13,10 +13,24 @@ const CargarEcografiaPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [user, setUser] = useState(null);
   const listRef = useRef(null);
 
   // Tipos permitidos
   const allowedTypes = [".png", ".jpg", ".jpeg", ".dcm"];
+
+  // Cargar user del localStorage
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      try {
+        const userData = JSON.parse(storedUser);
+        setUser(userData);
+      } catch (error) {
+        console.error("Error parsing user data:", error);
+      }
+    }
+  }, []);
 
   // Cargar neonatos y verificar parámetro de paciente
   useEffect(() => {
@@ -92,12 +106,13 @@ const CargarEcografiaPage = () => {
     e.preventDefault();
     if (!patient) return alert("Selecciona primero un neonato");
     if (!file) return alert("Por favor selecciona un archivo válido");
+    if (!user) return alert("Usuario no autenticado");
 
     try {
       setIsSubmitting(true);
       const formData = new FormData();
       formData.append("imagen", file);
-      formData.append("uploader_medico_id", "1"); // Default médico ID
+      formData.append("uploader_medico_id", user.id.toString());
 
       const response = await fetch(
         `http://localhost:4000/api/ecografias/${patient.id}`,

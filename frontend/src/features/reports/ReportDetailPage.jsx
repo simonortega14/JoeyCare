@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import jsPDF from 'jspdf';
 import './reports.css';
 
 const ReportDetailPage = () => {
@@ -10,6 +11,7 @@ const ReportDetailPage = () => {
   const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editedReport, setEditedReport] = useState({});
+  const [exporting, setExporting] = useState(false);
 
   const fetchReporteDetalle = useCallback(async () => {
     if (!id) return;
@@ -21,6 +23,7 @@ const ReportDetailPage = () => {
         throw new Error('Error al cargar el reporte');
       }
       const data = await response.json();
+      console.log('Datos del reporte desde API:', data);
       setReporte(data);
     } catch (err) {
       setError(err.message);
@@ -88,6 +91,109 @@ const ReportDetailPage = () => {
     } catch (error) {
       console.error('Error anulando report:', error);
       alert('Error al anular reporte');
+    }
+  };
+
+  const handleExport = async () => {
+    if (!reporte) {
+      alert('No hay reporte disponible para exportar');
+      return;
+    }
+    // Validaciones
+    if (!reporte.paciente_nombre || !reporte.titulo) {
+      alert('Faltan datos requeridos en el reporte (paciente o título)');
+      return;
+    }
+    // Alerta para DICOM
+    if (reporte.filepath && reporte.filepath.toLowerCase().endsWith('.dcm')) {
+      alert('La imagen es formato DICOM. Para ver detalles completos, use el visualizador de imágenes. Se incluirá un mensaje en el PDF.');
+    }
+    setExporting(true);
+    try {
+      console.log('Generando PDF con reporte:', reporte);
+      console.log('Campos del paciente:', {
+        nombre: reporte.paciente_nombre,
+        apellido: reporte.paciente_apellido,
+        documento: reporte.paciente_documento,
+        sexo: reporte.sexo,
+        fecha_nacimiento: reporte.fecha_nacimiento
+      });
+      const doc = new jsPDF();
+      doc.setProperties({
+        title: `Reporte - ${reporte.titulo || 'Sin título'}`,
+        subject: 'Reporte Médico',
+        author: reporte.medico_nombre || 'Médico',
+        creator: 'Sistema JoeyCare'
+      });
+
+      // Página 1: Información del Paciente
+      doc.setFontSize(16);
+      doc.text('Información del Paciente', 10, 20);
+      doc.setFontSize(12);
+      doc.text(`Nombre: ${reporte.paciente_nombre} ${reporte.paciente_apellido}`, 10, 40);
+      doc.text(`Documento: ${reporte.paciente_documento}`, 10, 50);
+      doc.text(`Sexo: ${reporte.sexo || 'No especificado'}`, 10, 60);
+      doc.text(`Fecha de Nacimiento: ${reporte.fecha_nacimiento ? new Date(reporte.fecha_nacimiento).toLocaleDateString('es-ES') : 'No especificado'}`, 10, 70);
+      doc.text(`Edad Gestacional: ${reporte.edad_gestacional_sem ? `${reporte.edad_gestacional_sem} semanas` : 'No especificado'}`, 10, 80);
+      doc.text(`Edad Corregida: ${reporte.edad_corregida_sem ? `${reporte.edad_corregida_sem} semanas` : 'No especificado'}`, 10, 90);
+      doc.text(`Peso al Nacimiento: ${reporte.peso_nacimiento_g ? `${reporte.peso_nacimiento_g}g` : 'No especificado'}`, 10, 100);
+      doc.text(`Peso Actual: ${reporte.peso_actual_g ? `${reporte.peso_actual_g}g` : 'No especificado'}`, 10, 110);
+      doc.text(`Perímetro Cefálico: ${reporte.perimetro_cefalico ? `${reporte.perimetro_cefalico}cm` : 'No especificado'}`, 10, 120);
+
+      // Información del Acudiente
+      let yPos = 140;
+      if (reporte.nombre_acudiente) {
+        doc.setFontSize(14);
+        doc.text('Información del Acudiente', 10, yPos);
+        doc.setFontSize(12);
+        yPos += 20;
+        doc.text(`Nombre: ${reporte.nombre_acudiente} ${reporte.apellido_acudiente || ''}`, 10, yPos);
+        yPos += 10;
+        doc.text(`Parentesco: ${reporte.parentesco ? (reporte.parentesco === 'P' ? 'Padre' : reporte.parentesco === 'M' ? 'Madre' : reporte.parentesco === 'H' ? 'Hermano/a' : reporte.parentesco === 'O' ? 'Otro' : reporte.parentesco) : 'No especificado'}`, 10, yPos);
+        yPos += 10;
+        doc.text(`Teléfono: ${reporte.telefono || 'No especificado'}`, 10, yPos);
+        yPos += 10;
+        doc.text(`Correo: ${reporte.correo || 'No especificado'}`, 10, yPos);
+      }
+
+      // Página 2: Información del Reporte
+      doc.addPage();
+      doc.setFontSize(16);
+      doc.text('Información del Reporte', 10, 20);
+      doc.setFontSize(12);
+      doc.text(`Título: ${reporte.titulo || 'No especificado'}`, 10, 40);
+      doc.text(`Contenido: ${reporte.contenido || 'No especificado'}`, 10, 50, { maxWidth: 180 });
+      doc.text(`Hallazgos: ${reporte.hallazgos || 'No especificado'}`, 10, 70, { maxWidth: 180 });
+      doc.text(`Conclusión: ${reporte.conclusion || 'No especificado'}`, 10, 90, { maxWidth: 180 });
+      doc.text(`Recomendaciones: ${reporte.recomendaciones || 'No especificado'}`, 10, 110, { maxWidth: 180 });
+      doc.text(`Firma del Médico: ${reporte.firma_medico || 'No especificado'}`, 10, 130, { maxWidth: 180 });
+
+      // Página 3: Imagen (solo si no es DICOM)
+      if (reporte.filepath && !reporte.filepath.toLowerCase().endsWith('.dcm')) {
+        doc.addPage();
+        doc.setFontSize(16);
+        doc.text('Imagen del Reporte', 10, 20);
+        try {
+          const imageUrl = `http://localhost:4000/api/uploads/${reporte.filepath}`;
+          const response = await fetch(imageUrl);
+          const blob = await response.blob();
+          const base64 = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.readAsDataURL(blob);
+          });
+          doc.addImage(base64, 'PNG', 10, 30, 180, 120);
+        } catch (imgError) {
+          console.error('Error cargando imagen:', imgError);
+          doc.text('Error al cargar la imagen', 10, 40);
+        }
+      }
+      doc.save('reporte.pdf');
+    } catch (error) {
+      console.error('Error generando PDF:', error);
+      alert('Error al generar el PDF');
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -333,6 +439,13 @@ const ReportDetailPage = () => {
             className="action-btn primary"
           >
             🖼️ Ver Imágenes del Estudio
+          </button>
+          <button
+            onClick={handleExport}
+            disabled={exporting}
+            className="action-btn primary"
+          >
+            {exporting ? 'Generando PDF...' : '📄 Exportar PDF'}
           </button>
           <button
             onClick={() => navigate('/reportes')}

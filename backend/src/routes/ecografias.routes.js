@@ -406,23 +406,27 @@ router.get("/reportes/all", async (req, res) => {
   }
 });
 
-// Obtener reporte por ecografia_id con información completa
-router.get("/reportes/:ecografiaId", async (req, res) => {
+// Obtener reporte por id con información completa
+router.get("/reportes/:id", async (req, res) => {
   try {
-    const { ecografiaId } = req.params;
+    const { id } = req.params;
     const [rows] = await pool.query(`
       SELECT r.*, n.id as paciente_id, n.nombre as paciente_nombre, n.apellido as paciente_apellido, n.documento as paciente_documento,
+             n.sexo, n.fecha_nacimiento, n.edad_gestacional_sem, n.edad_corregida_sem, n.peso_nacimiento_g, n.peso_actual_g, n.perimetro_cefalico,
+             a.nombre as nombre_acudiente, a.apellido as apellido_acudiente, a.parentesco, a.telefono, a.correo,
              m.nombre as medico_nombre, m.apellido as medico_apellido, e.filepath
       FROM reportes r
-      JOIN ecografias e ON r.ecografia_id = e.id
-      JOIN neonato n ON e.neonato_id = n.id
+      LEFT JOIN ecografias e ON r.ecografia_id = e.id
+      LEFT JOIN neonato n ON e.neonato_id = n.id
+      LEFT JOIN acudiente a ON n.id = a.neonato_id
       LEFT JOIN medicos m ON r.created_by_medico_id = m.id
-      WHERE r.ecografia_id = ?
-    `, [ecografiaId]);
+      WHERE r.id = ?
+    `, [id]);
 
     if (rows.length === 0) {
       return res.status(404).json({ message: "Reporte no encontrado" });
     }
+    console.log('Datos del reporte obtenidos:', rows[0]);
     res.json(rows[0]);
   } catch (error) {
     res.status(500).json({ message: "Error al obtener reporte", error: error.message });
@@ -460,11 +464,12 @@ router.post("/reportes", async (req, res) => {
       return res.status(400).json({ message: "Todos los campos son requeridos" });
     }
 
-    // Verificar que la ecografía existe
-    const [ecografiaRows] = await pool.query("SELECT id FROM ecografias WHERE id = ?", [ecografia_id]);
+    // Verificar que la ecografía existe y obtener patient_id
+    const [ecografiaRows] = await pool.query("SELECT neonato_id FROM ecografias WHERE id = ?", [ecografia_id]);
     if (ecografiaRows.length === 0) {
       return res.status(404).json({ message: "Ecografía no encontrada" });
     }
+    const patient_id = ecografiaRows[0].neonato_id;
 
     // Usar medico_id del request o default
     const currentMedicoId = medico_id || 1;
@@ -496,9 +501,10 @@ router.post("/reportes", async (req, res) => {
 
     // Crear o actualizar reporte con estado 'firmado'
     const [result] = await pool.query(`
-      INSERT INTO reportes (ecografia_id, created_by_medico_id, titulo, contenido, hallazgos, conclusion, recomendaciones, firma_medico, fecha_reporte, estado)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), 'firmado')
+      INSERT INTO reportes (ecografia_id, patient_id, created_by_medico_id, titulo, contenido, hallazgos, conclusion, recomendaciones, firma_medico, fecha_reporte, estado)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 'firmado')
       ON DUPLICATE KEY UPDATE
+        patient_id = VALUES(patient_id),
         titulo = VALUES(titulo),
         contenido = VALUES(contenido),
         hallazgos = VALUES(hallazgos),
@@ -508,7 +514,7 @@ router.post("/reportes", async (req, res) => {
         estado = 'firmado',
         updated_by_medico_id = VALUES(created_by_medico_id),
         updated_at = NOW()
-    `, [ecografia_id, currentMedicoId, tituloEstandar, contenido, hallazgos, conclusion, recomendaciones, firma_medico]);
+    `, [ecografia_id, patient_id, currentMedicoId, tituloEstandar, contenido, hallazgos, conclusion, recomendaciones, firma_medico]);
 
     res.status(200).json({
       message: "Reporte firmado correctamente",

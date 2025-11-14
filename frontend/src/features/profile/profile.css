@@ -261,6 +261,37 @@
   background-color: #0056b3;
 }
 
+.view-report-btn.success {
+  background-color: #28a745;
+}
+
+.view-report-btn.success:hover {
+  background-color: #218838;
+}
+
+.historial-detalle-spaced {
+  margin-top: 30px;
+}
+
+.file-input-hidden {
+  display: none;
+}
+
+.reports-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.view-report-btn.info {
+  background-color: #17a2b8;
+}
+
+.view-report-btn.info:hover {
+  background-color: #138f99;
+}
+
 /* Historial Detallado */
 .historial-detalle {
   margin-top: 30px;

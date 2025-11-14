@@ -35,6 +35,16 @@
   pointer-events: none;
 }
 
+.login-bg.dynamic {
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.08;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
 /* La tarjeta se mantiene centrada */
 .login-card {
   position: relative;
@@ -47,6 +57,11 @@
   box-shadow: 0 8px 32px #19366a2a;
   max-height: 85vh;
   overflow-y: auto;
+}
+
+.login-card.admin-card {
+  width: min(900px, 95vw);
+  max-width: 900px;
 }
 
 /* Layout general */
@@ -71,8 +86,15 @@
 .field-icon{ margin-right:8px; font-size:18px; opacity:.8; }
 .field input{ border:none; outline:none; width:100%; font-size:16px; color:var(--text); background:transparent; }
 
-.actions{ display:flex; align-items:center; justify-content:space-between; margin-top:10px; }
-.link{ background:none; border:none; color:var(--brand); text-decoration:underline; cursor:pointer; padding:6px 8px; }
+.actions{ display:flex; align-items:center; justify-content:flex-end; margin-top:10px; }
+.link{ background:none; border:none; color:var(--brand); text-decoration:underline; cursor:pointer; padding:6px 8px; font-size:14px; }
+
+.register-link {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 14px;
+  color: #64748b;
+}
 
 .error{ margin-top:12px; color:#b91c1c; background:#fee2e2; border:1px solid #fecaca; padding:8px 10px; border-radius:8px; }
 

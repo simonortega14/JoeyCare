@@ -228,13 +228,12 @@ export default function DashboardPage() {
                 key={index}
                 className={`activity-item status-${activity.status.toLowerCase().replace(' ', '-')} clickable`}
                 onClick={() => window.location.href = `/visualizar-ecografias?patient=${activity.patient_id}&file=${activity.filename}`}
-                style={{ cursor: 'pointer' }}
               >
                 <div className="activity-time">{activity.time}</div>
                 <div className="activity-details">
                   <strong>{activity.patient}</strong>
                   <span>{activity.study}</span>
-                  <small style={{ color: '#666', fontSize: '0.8rem' }}>
+                  <small>
                     {activity.gestational_age ? `${activity.gestational_age} sem gestacional` : ''}
                     {activity.birth_weight ? ` • ${activity.birth_weight}g nacimiento` : ''}
                   </small>

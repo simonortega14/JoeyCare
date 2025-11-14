@@ -831,41 +831,26 @@ function ImageViewer({ imageFile, onClose, user, isEmbedded = false, side = null
   }
 
   return (
-    <div className={isEmbedded ? "vtk-embedded" : "vtk-fullscreen"}
-          style={isEmbedded ? { height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' } :
-                { width: "100%", height: "100vh", position: "relative", background: "#000", overflow: "hidden" }}>
-      
+    <div className={isEmbedded ? "vtk-embedded" : "vtk-fullscreen"}>
+
       {/* Toolbar superior - SOLO si NO está embedded */}
       {!isEmbedded && (
-        <div style={{
-          position: "absolute", 
-          top: 0, 
-          left: 0, 
-          right: 0, 
-          height: "50px",
-          background: "rgba(0,0,0,0.8)", 
-          display: "flex", 
-          alignItems: "center",
-          padding: "0 10px", 
-          gap: "10px", 
-          zIndex: 100, 
-          flexWrap: "wrap"
-        }}>
-          <button onClick={onClose} style={buttonStyle}>← Volver</button>
-          <button onClick={handleResetView} style={buttonStyle}>Reset View</button>
+        <div className="viewer-toolbar">
+          <button onClick={onClose} className="viewer-button">← Volver</button>
+          <button onClick={handleResetView} className="viewer-button">Reset View</button>
 
           {context.current?.isGrayscale && (
             <>
-              <button onClick={handleAutoWindowLevel} style={buttonStyle}>Auto W/L</button>
-              <span style={{ color: "#fff", fontSize: "13px" }}>
+              <button onClick={handleAutoWindowLevel} className="viewer-button">Auto W/L</button>
+              <span className="viewer-window-level">
                 W: {Math.round(windowLevel.width)} | L: {Math.round(windowLevel.center)}
               </span>
             </>
           )}
-          
+
           {/* Solo mostrar widgets en toolbar si NO está en modo embedded */}
           <button
-            style={{ ...buttonStyle, backgroundColor: pointMode ? "#2196f3" : "#333" }}
+            className={`viewer-button ${pointMode ? 'active' : ''}`}
             onClick={() => {
               const newPointMode = !pointMode;
               setPointMode(newPointMode);
@@ -880,14 +865,14 @@ function ImageViewer({ imageFile, onClose, user, isEmbedded = false, side = null
           </button>
 
           {pointMode && (
-            <select 
-              value={pointColor.join(',')} 
+            <select
+              value={pointColor.join(',')}
               onChange={(e) => {
                 const newColor = e.target.value.split(',').map(Number);
                 setPointColor(newColor);
                 pointColorRef.current = newColor;
               }}
-              style={{ ...buttonStyle, cursor: "pointer" }}
+              className="viewer-select"
             >
               <option value="1,0,0">🔴 Rojo</option>
               <option value="0,1,0">🟢 Verde</option>
@@ -900,7 +885,7 @@ function ImageViewer({ imageFile, onClose, user, isEmbedded = false, side = null
           )}
 
           <button
-            style={{ ...buttonStyle, backgroundColor: drawMode ? "#4caf50" : "#333" }}
+            className={`viewer-button ${drawMode ? 'draw-active' : ''}`}
             onClick={() => {
               const newDrawMode = !drawMode;
               setDrawMode(newDrawMode);
@@ -916,14 +901,14 @@ function ImageViewer({ imageFile, onClose, user, isEmbedded = false, side = null
 
           {drawMode && (
             <>
-              <select 
+              <select
                 value={drawColor.join(',')}
                 onChange={(e) => {
                   const newColor = e.target.value.split(',').map(Number);
                   setDrawColor(newColor);
                   drawColorRef.current = newColor;
                 }}
-                style={{ ...buttonStyle, cursor: "pointer" }}
+                className="viewer-select"
               >
                 <option value="1,0,0">🔴 Rojo</option>
                 <option value="0,1,0">🟢 Verde</option>
@@ -933,14 +918,14 @@ function ImageViewer({ imageFile, onClose, user, isEmbedded = false, side = null
                 <option value="0,1,1">🔵 Cian</option>
                 <option value="1,1,1">⚪ Blanco</option>
               </select>
-              <select 
-                value={lineWidth} 
+              <select
+                value={lineWidth}
                 onChange={(e) => {
                   const newWidth = Number(e.target.value);
                   setLineWidth(newWidth);
                   lineWidthRef.current = newWidth;
                 }}
-                style={{ ...buttonStyle, cursor: "pointer" }}
+                className="viewer-select"
               >
                 <option value="1">Fino</option>
                 <option value="2">Normal</option>
@@ -952,10 +937,10 @@ function ImageViewer({ imageFile, onClose, user, isEmbedded = false, side = null
 
           {points.length > 0 && (
             <>
-              <button onClick={removeLastPoint} style={buttonStyle}>
+              <button onClick={removeLastPoint} className="viewer-button">
                 Eliminar Último Punto
               </button>
-              <button onClick={clearAllPoints} style={buttonStyle}>
+              <button onClick={clearAllPoints} className="viewer-button">
                 Limpiar Puntos
               </button>
             </>
@@ -963,20 +948,20 @@ function ImageViewer({ imageFile, onClose, user, isEmbedded = false, side = null
 
           {drawings.length > 0 && (
             <>
-              <button onClick={removeLastDrawing} style={buttonStyle}>
+              <button onClick={removeLastDrawing} className="viewer-button">
                 Eliminar Último Trazo
               </button>
-              <button onClick={clearAllDrawings} style={buttonStyle}>
+              <button onClick={clearAllDrawings} className="viewer-button">
                 Limpiar Trazos
               </button>
             </>
           )}
 
-          <button onClick={openReportModal} style={buttonStyle}>
+          <button onClick={openReportModal} className="viewer-button">
             📄 Reporte
           </button>
 
-          <div style={{ marginLeft: "auto", color: "#fff", fontSize: "12px", display: "flex", flexDirection: "column", alignItems: "flex-end", lineHeight: "1.2" }}>
+          <div className="viewer-patient-info">
             {patientData ? (
               <>
                 <div><strong>{patientData.nombre} {patientData.apellido}</strong></div>
@@ -996,124 +981,74 @@ function ImageViewer({ imageFile, onClose, user, isEmbedded = false, side = null
 
       {/* Panel lateral de información - solo si NO está embedded */}
       {!isEmbedded && (points.length > 0 || drawings.length > 0 || showReportModal) && (
-        <div style={{
-          position: "absolute", top: "60px", right: "10px",
-          background: "rgba(0,0,0,0.85)", padding: "10px",
-          borderRadius: "5px", color: "#fff", fontSize: "12px",
-          maxHeight: "calc(100vh - 150px)", overflowY: "auto",
-          minWidth: "300px", zIndex: 100
-        }}>
+        <div className="viewer-info-panel">
           {showReportModal && (
-            <div style={{ marginBottom: "20px" }}>
-               <div style={{ fontWeight: "bold", marginBottom: "15px", fontSize: "16px", color: "#fff" }}>
-                 📄 {isEditing ? "Editar Reporte Médico" : "Crear Reporte Médico"}
-               </div>
+            <div className="viewer-report-modal">
+                <div className="viewer-report-title">
+                  📄 {isEditing ? "Editar Reporte Médico" : "Crear Reporte Médico"}
+                </div>
 
-              <div style={{ marginBottom: "15px" }}>
-                <label style={{ display: "block", marginBottom: "5px", fontWeight: "bold", color: "#fff" }}>
-                  Título: <span style={{ color: "#6c757d" }}>{titulo}</span>
+              <div className="viewer-form-section">
+                <label className="viewer-form-label">
+                  Título: <span className="viewer-form-span">{titulo}</span>
                 </label>
               </div>
 
-              <div style={{ marginBottom: "15px" }}>
-                <label style={{ display: "block", marginBottom: "5px", fontWeight: "bold", color: "#fff" }}>
+              <div className="viewer-form-section">
+                <label className="viewer-form-label">
                   Contenido:
                 </label>
                 <textarea
                   value={contenido}
                   onChange={(e) => setContenido(e.target.value)}
                   placeholder="Contenido del reporte..."
-                  style={{
-                    width: "100%",
-                    height: "100px",
-                    padding: "8px",
-                    border: "1px solid #ccc",
-                    borderRadius: "4px",
-                    fontFamily: "Arial, sans-serif",
-                    fontSize: "12px",
-                    resize: "vertical",
-                    backgroundColor: "#fff",
-                    color: "#333"
-                  }}
+                  className="viewer-textarea"
                 />
               </div>
 
-              <div style={{ marginBottom: "15px" }}>
-                <label style={{ display: "block", marginBottom: "5px", fontWeight: "bold", color: "#fff" }}>
+              <div className="viewer-form-section">
+                <label className="viewer-form-label">
                   Hallazgos:
                 </label>
                 <textarea
                   value={hallazgos}
                   onChange={(e) => setHallazgos(e.target.value)}
                   placeholder="Describa los hallazgos..."
-                  style={{
-                    width: "100%",
-                    height: "80px",
-                    padding: "8px",
-                    border: "1px solid #ccc",
-                    borderRadius: "4px",
-                    fontFamily: "Arial, sans-serif",
-                    fontSize: "12px",
-                    resize: "vertical",
-                    backgroundColor: "#fff",
-                    color: "#333"
-                  }}
+                  className="viewer-textarea hallazgos"
                 />
               </div>
 
-              <div style={{ marginBottom: "15px" }}>
-                <label style={{ display: "block", marginBottom: "5px", fontWeight: "bold", color: "#fff" }}>
+              <div className="viewer-form-section">
+                <label className="viewer-form-label">
                   Conclusión:
                 </label>
                 <textarea
                   value={conclusion}
                   onChange={(e) => setConclusion(e.target.value)}
                   placeholder="Conclusión del reporte..."
-                  style={{
-                    width: "100%",
-                    height: "80px",
-                    padding: "8px",
-                    border: "1px solid #ccc",
-                    borderRadius: "4px",
-                    fontFamily: "Arial, sans-serif",
-                    fontSize: "12px",
-                    resize: "vertical",
-                    backgroundColor: "#fff",
-                    color: "#333"
-                  }}
+                  className="viewer-textarea conclusion"
                 />
               </div>
 
-              <div style={{ marginBottom: "15px" }}>
-                <label style={{ display: "block", marginBottom: "5px", fontWeight: "bold", color: "#fff" }}>
+              <div className="viewer-form-section">
+                <label className="viewer-form-label">
                   Recomendaciones:
                 </label>
                 <textarea
                   value={recomendaciones}
                   onChange={(e) => setRecomendaciones(e.target.value)}
                   placeholder="Recomendaciones médicas..."
-                  style={{
-                    width: "100%",
-                    height: "80px",
-                    padding: "8px",
-                    border: "1px solid #ccc",
-                    borderRadius: "4px",
-                    fontFamily: "Arial, sans-serif",
-                    fontSize: "12px",
-                    resize: "vertical",
-                    backgroundColor: "#fff",
-                    color: "#333"
-                  }}
+                  className="viewer-textarea recomendaciones"
                 />
               </div>
 
-              <div style={{ marginBottom: "15px" }}>
-                 <label style={{ display: "block", marginBottom: "5px", fontWeight: "bold", color: "#fff" }}>
-                   Firma del Médico: <span style={{ color: "#6c757d" }}>{firmaMedico}</span>
-                 </label>
-               </div>
+              <div className="viewer-form-section">
+                  <label className="viewer-form-label">
+                    Firma del Médico: <span className="viewer-form-span">{firmaMedico}</span>
+                  </label>
+                </div>
 
-              <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
+              <div className="viewer-buttons-row">
                 <button
                   onClick={async () => {
                     // Validar que todos los campos estén llenos
@@ -1159,11 +1094,7 @@ function ImageViewer({ imageFile, onClose, user, isEmbedded = false, side = null
                       alert("Error al guardar el reporte");
                     }
                   }}
-                  style={{
-                    ...buttonStyle,
-                    backgroundColor: "#4caf50",
-                    flex: 1
-                  }}
+                  className="viewer-button save"
                 >
                   💾 {isEditing ? "Actualizar Reporte" : "Guardar Reporte"}
                 </button>
@@ -1180,11 +1111,7 @@ function ImageViewer({ imageFile, onClose, user, isEmbedded = false, side = null
                       setFirmaMedico('');
                       setIsEditing(false);
                     }}
-                    style={{
-                      ...buttonStyle,
-                      backgroundColor: "#6c757d",
-                      flex: 1
-                    }}
+                    className="viewer-button cancel"
                   >
                     ❌ Cancelar Cambios
                   </button>
@@ -1195,16 +1122,12 @@ function ImageViewer({ imageFile, onClose, user, isEmbedded = false, side = null
 
           {points.length > 0 && (
             <>
-              <div style={{ fontWeight: "bold", marginBottom: "8px", fontSize: "14px" }}>
+              <div className="viewer-points-title">
                 Puntos ({points.length})
               </div>
               {points.map((point, index) => (
-                <div key={point.id} style={{
-                  padding: "6px", marginBottom: "5px",
-                  background: "rgba(255,255,255,0.1)",
-                  borderRadius: "3px", borderLeft: "3px solid #f44336"
-                }}>
-                  <div style={{ fontWeight: "bold", color: "#f44336" }}>
+                <div key={point.id} className="viewer-point-item">
+                  <div className="viewer-point-title">
                     Punto {index + 1}
                   </div>
                   <div>X: {point.pixel.x} px</div>
@@ -1219,16 +1142,12 @@ function ImageViewer({ imageFile, onClose, user, isEmbedded = false, side = null
 
           {drawings.length > 0 && (
             <>
-              <div style={{ fontWeight: "bold", marginTop: "12px", marginBottom: "8px", fontSize: "14px" }}>
+              <div className="viewer-drawings-title">
                 Trazos ({drawings.length})
               </div>
               {drawings.map((drawing, index) => (
-                <div key={drawing.id} style={{
-                  padding: "6px", marginBottom: "5px",
-                  background: "rgba(255,255,255,0.1)",
-                  borderRadius: "3px", borderLeft: "3px solid #4caf50"
-                }}>
-                  <div style={{ fontWeight: "bold", color: "#4caf50" }}>
+                <div key={drawing.id} className="viewer-drawing-item">
+                  <div className="viewer-drawing-title">
                     Trazo {index + 1}
                   </div>
                   <div>Puntos: {drawing.numPoints}</div>
@@ -1241,18 +1160,13 @@ function ImageViewer({ imageFile, onClose, user, isEmbedded = false, side = null
 
       {/* Ayuda en la esquina inferior - solo si NO está embedded */}
       {!isEmbedded && (
-        <div style={{
-          position: "absolute", bottom: "10px", left: "10px",
-          background: "rgba(0,0,0,0.7)", padding: "8px 12px",
-          borderRadius: "5px", color: "#aaa", fontSize: "11px",
-          zIndex: 100
-        }}>
+        <div className="viewer-help-text">
           {drawMode ? (
-            <span style={{ color: "#4caf50", fontWeight: "bold" }}>
+            <span className="viewer-help-highlight">
               🖱️ Click izq + arrastrar: Dibujar
             </span>
           ) : pointMode ? (
-            <span style={{ color: "#2196f3", fontWeight: "bold" }}>
+            <span className="viewer-help-highlight point">
               🖱️ Click izq: Colocar punto
             </span>
           ) : (
@@ -1262,55 +1176,24 @@ function ImageViewer({ imageFile, onClose, user, isEmbedded = false, side = null
       )}
 
       {loading && (
-        <div style={{
-          position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)",
-          color: "white", fontSize: "20px", backgroundColor: "rgba(0,0,0,0.7)",
-          padding: "20px", borderRadius: "8px", zIndex: 1000
-        }}>
+        <div className="viewer-loading">
           Cargando imagen...
         </div>
       )}
 
       {error && (
-        <div style={{
-          position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)",
-          color: "red", fontSize: "16px", textAlign: "center", padding: "20px",
-          backgroundColor: "rgba(0,0,0,0.8)", borderRadius: "8px", zIndex: 1000, maxWidth: "80%"
-        }}>
+        <div className="viewer-error">
           {error}
         </div>
       )}
 
       <div
         ref={vtkContainerRef}
-        style={isEmbedded ? {
-          flex: 1,
-          width: '100%',
-          height: '100%',
-          position: 'relative',
-          minHeight: '400px'
-        } : {
-          width: "100%",
-          height: "100%",
-          position: "absolute",
-          top: 0,
-          left: 0
-        }}
+        className={`viewer-vtk-container ${isEmbedded ? 'embedded' : ''}`}
       />
 
     </div>
   );
 }
-
-const buttonStyle = {
-  background: "#333",
-  color: "#fff",
-  border: "none",
-  padding: "6px 12px",
-  borderRadius: "4px",
-  cursor: "pointer",
-  fontSize: "13px",
-  fontWeight: "500"
-};
 
 export default ImageViewer;

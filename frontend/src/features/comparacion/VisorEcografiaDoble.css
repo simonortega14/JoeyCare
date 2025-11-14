@@ -77,6 +77,301 @@
   margin-bottom: 0.5rem;
 }
 
+/* Toolbar unificada */
+.visor-toolbar-unified {
+  height: 60px;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  padding: 0 15px;
+  gap: 10px;
+  border-bottom: 2px solid #333;
+  z-index: 200;
+  flex-wrap: wrap;
+  overflow-x: auto;
+}
+
+/* Botón base */
+.visor-button {
+  background: #333;
+  color: #fff;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+
+/* Variaciones de botones */
+.visor-button.point-active {
+  background-color: #2196f3;
+}
+
+.visor-button.draw-active {
+  background-color: #4caf50;
+}
+
+/* Select para colores */
+.visor-select {
+  background: #333;
+  color: #fff;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* Título de comparación */
+.visor-title {
+  margin-left: auto;
+  color: #fff;
+  font-size: 14px;
+}
+
+/* Placeholder de imagen */
+.visor-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #888;
+  font-size: 18px;
+}
+
+/* Ayuda en esquina inferior */
+.visor-help {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  padding: 8px 16px;
+  border-radius: 5px;
+  color: #aaa;
+  font-size: 12px;
+  z-index: 100;
+  text-align: center;
+}
+
+.visor-help-highlight {
+  font-weight: bold;
+}
+
+.visor-help-highlight.draw {
+  color: #4caf50;
+}
+
+.visor-help-highlight.point {
+  color: #2196f3;
+}
+
+/* Patient Comparison Selector */
+.comparison-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.comparison-modal {
+  background-color: #F5FFFF;
+  padding: 20px;
+  border-radius: 15px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  border-left: 5px solid #2196f3;
+}
+
+.comparison-title {
+  color: #1565c0;
+  font-size: 2rem;
+  font-weight: 800;
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.comparison-subtitle {
+  color: #666;
+  margin-bottom: 20px;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.comparison-patients-row {
+  display: flex;
+  gap: 20px;
+}
+
+.comparison-patient-section {
+  flex: 1;
+}
+
+.comparison-patient-name {
+  color: #1565c0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.comparison-select {
+  width: 100%;
+  padding: 8px;
+  background-color: #f8f9fa;
+  color: #000000;
+  border: 2px solid #2196f3;
+  border-radius: 8px;
+  font-size: 14px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  outline: none;
+}
+
+.comparison-no-data {
+  color: #666;
+  font-size: 14px;
+  margin-top: 5px;
+  font-weight: 500;
+}
+
+.comparison-buttons-row {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.comparison-button {
+  padding: 12px 24px;
+  background-color: #2196f3;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.comparison-button:hover {
+  background-color: #1976d2;
+  transform: translateY(-1px);
+}
+
+.comparison-button.primary {
+  background-color: #4caf50;
+}
+
+.comparison-button.primary:hover {
+  background-color: #388e3c;
+}
+
+.comparison-button.disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.comparison-button.disabled:hover {
+  background-color: #cccccc;
+}
+
+/* Image Comparison Selector */
+.image-comparison-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.image-comparison-modal {
+  background-color: #333;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.image-comparison-title {
+  color: #fff;
+  margin-top: 0;
+}
+
+.image-comparison-text {
+  color: #ccc;
+  margin-bottom: 20px;
+}
+
+.image-comparison-section {
+  margin-bottom: 15px;
+}
+
+.image-comparison-label {
+  color: #fff;
+  display: block;
+  margin-bottom: 5px;
+}
+
+.image-comparison-select {
+  width: 100%;
+  padding: 8px;
+  background-color: #555;
+  color: #fff;
+  border: 1px solid #777;
+  border-radius: 4px;
+}
+
+.image-comparison-no-data {
+  color: #ccc;
+  font-size: 14px;
+  margin-top: 5px;
+}
+
+.image-comparison-buttons-row {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.image-comparison-button {
+  padding: 8px 16px;
+  background-color: #666;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.image-comparison-button.primary {
+  background-color: #4caf50;
+}
+
+.image-comparison-button.disabled {
+  background-color: #444;
+  cursor: not-allowed;
+}
+
 /* Adaptabilidad */
 @media (max-width: 900px) {
   .visor-doble-container {

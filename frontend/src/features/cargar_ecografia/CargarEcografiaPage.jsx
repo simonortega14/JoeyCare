@@ -178,7 +178,7 @@ const CargarEcografiaPage = () => {
       <div className="cargar-card">
 
         {error && (
-          <div className="error-message" style={{color: 'orange', marginBottom: '1rem'}}>
+          <div className="error-message">
             {error}
           </div>
         )}

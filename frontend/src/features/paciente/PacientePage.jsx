@@ -338,7 +338,7 @@ const PacientePage = ({ onOpenSettings }) => {
                   ✏️ Actualizar
                 </button>
               ) : (
-                <div style={{ display: 'flex', gap: '8px' }}>
+                <div className="edit-buttons-row">
                   <button className="guardar-btn" onClick={handleSavePaciente}>
                     💾 Guardar
                   </button>
@@ -354,14 +354,14 @@ const PacientePage = ({ onOpenSettings }) => {
         {/* Información del acudiente */}
         {paciente.nombre_acudiente && (
           <div className="acudiente-info-card">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="acudiente-header-row">
               <h2>Información del Acudiente</h2>
               {!isEditingAcudiente ? (
                 <button className="actualizar-btn" onClick={handleEditAcudiente}>
                   ✏️ Actualizar
                 </button>
               ) : (
-                <div style={{ display: 'flex', gap: '8px' }}>
+                <div className="edit-buttons-row">
                   <button className="guardar-btn" onClick={handleSaveAcudiente}>
                     💾 Guardar
                   </button>

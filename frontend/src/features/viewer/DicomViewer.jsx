@@ -6,6 +6,7 @@ import vtkImageSlice from "@kitware/vtk.js/Rendering/Core/ImageSlice";
 import vtkImageMapper from "@kitware/vtk.js/Rendering/Core/ImageMapper";
 import vtkDataArray from "@kitware/vtk.js/Common/Core/DataArray";
 import dicomParser from "dicom-parser";
+import "./DicomViewer.css";
 
 function DicomViewer() {
   const vtkContainerRef = useRef(null);
@@ -93,7 +94,7 @@ function DicomViewer() {
   return (
     <div
       ref={vtkContainerRef}
-      style={{ width: "100%", height: "100vh", background: "black" }}
+      className="dicom-container"
     />
   );
 }

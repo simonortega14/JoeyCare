@@ -184,6 +184,18 @@
   background-color: rgba(220, 53, 69, 1);
 }
 
+/* Contenedores flex para botones de edición */
+.edit-buttons-row {
+  display: flex;
+  gap: 8px;
+}
+
+.acudiente-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 /* Estilos para inputs editables */
 .stat-item input[type="number"],
 .detail-item input[type="tel"],

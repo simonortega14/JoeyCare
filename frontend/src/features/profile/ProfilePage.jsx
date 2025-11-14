@@ -103,7 +103,7 @@ const ProfilePage = ({ onOpenSettings, user }) => {
             <div className="doctor-info">
               <div className="profile-image-container">
                 <img src={preview || (user && user.foto_perfil ? `http://localhost:4000/uploads/${user.foto_perfil}` : logoPerfil)} alt="Perfil" className="profile-logo" />
-                <input type="file" id="foto-input" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
+                <input type="file" id="foto-input" accept="image/*" onChange={handleFileChange} className="file-input-hidden" />
                 <button onClick={() => document.getElementById('foto-input').click()} className="change-photo-btn">Cambiar Foto</button>
                 {selectedFile && <button onClick={handleUpload} className="upload-btn">Subir Foto</button>}
               </div>
@@ -147,11 +147,10 @@ const ProfilePage = ({ onOpenSettings, user }) => {
 
          {/* Historial de Reportes */}
          <div className="reports-history-card">
-           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+           <div className="reports-header-row">
              <h2>Historial de Reportes Recientes</h2>
              <button
-               className="view-report-btn"
-               style={{ backgroundColor: '#17a2b8' }}
+               className="view-report-btn info"
                onClick={() => window.location.href = '/historial-reportes'}
              >
                Ver Historial Completo

@@ -176,8 +176,7 @@ function ImageSelector({ onImageSelected }) {
               )}
               {ecografias.length > 1 && (
                 <button
-                  className="vtk-visualize-button"
-                  style={{ backgroundColor: "#2196f3", marginLeft: selectedEcografia ? "10px" : "0" }}
+                  className={`vtk-visualize-button longitudinal ${selectedEcografia ? 'with-margin' : ''}`}
                   onClick={handleLongitudinalAnalysis}
                 >
                   Análisis Longitudinal
@@ -191,13 +190,12 @@ function ImageSelector({ onImageSelected }) {
           <>
             <div className="vtk-form-section">
               <button
-                className="vtk-visualize-button"
-                style={{ backgroundColor: "#666", marginBottom: "15px" }}
+                className="vtk-visualize-button back"
                 onClick={handleBackToNormal}
               >
                 ← Volver a modo normal
               </button>
-              <h3 style={{ color: "#fff", marginBottom: "15px" }}>Selecciona dos ecografías para comparar</h3>
+              <h3 className="longitudinal-title">Selecciona dos ecografías para comparar</h3>
             </div>
 
             <div className="vtk-form-section">
@@ -241,8 +239,7 @@ function ImageSelector({ onImageSelected }) {
             {selectedEcografiaA && selectedEcografiaB && (
               <div className="vtk-form-section">
                 <button
-                  className="vtk-visualize-button"
-                  style={{ backgroundColor: "#4caf50" }}
+                  className="vtk-visualize-button compare"
                   onClick={handleVisualizeComparison}
                 >
                   Visualizar Comparación

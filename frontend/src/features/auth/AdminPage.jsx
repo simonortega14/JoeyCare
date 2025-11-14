@@ -79,24 +79,17 @@ export default function AdminPage() {
   return (
     <div className="login-page">
       <div
-        className="login-bg"
+        className="login-bg dynamic"
         style={{
           backgroundImage: `url(${marcaAgua})`,
-          backgroundSize: "contain",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
-          opacity: 0.08,
-          position: "absolute",
-          inset: 0,
-          pointerEvents: "none",
         }}
       />
-      <div className="login-card" style={{ width: "min(900px, 95vw)", maxWidth: "900px" }}>
+      <div className="login-card admin-card">
         <div className="login-avatar">
           <img src={logoJoey} alt="Logo Joey Care" />
         </div>
 
-        <div className="admin-header" style={{ marginTop: "60px" }}>
+        <div className="admin-header">
           <h2>Panel de Administración</h2>
           <button className="admin-logout-btn" onClick={handleCerrarSesion}>
             Cerrar Sesión

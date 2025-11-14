@@ -64,16 +64,9 @@ export default function RegisterPage() {
   return (
     <div className="login-page">
       <div
-        className="login-bg"
+        className="login-bg dynamic"
         style={{
           backgroundImage: `url(${marcaAgua})`,
-          backgroundSize: "contain",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
-          opacity: 0.08,
-          position: "absolute",
-          inset: 0,
-          pointerEvents: "none",
         }}
       />
       <div className="login-card">

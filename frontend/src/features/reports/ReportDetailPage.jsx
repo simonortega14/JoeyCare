@@ -276,10 +276,7 @@ const ReportDetailPage = () => {
         </button>
         <div className="report-title-section">
           <h1>{reporte.titulo || 'Sin título'}</h1>
-          <span
-            className="estado-badge"
-            style={{ backgroundColor: getEstadoColor(reporte.estado) }}
-          >
+          <span className={`estado-badge ${reporte.estado}`}>
             {getEstadoText(reporte.estado)}
           </span>
         </div>
@@ -332,7 +329,7 @@ const ReportDetailPage = () => {
                   type="text"
                   value={editedReport.titulo || ''}
                   onChange={(e) => setEditedReport({ ...editedReport, titulo: e.target.value })}
-                  style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+                  className="edit-input"
                 />
               ) : (
                 reporte.titulo || 'No especificado'
@@ -348,7 +345,7 @@ const ReportDetailPage = () => {
                   value={editedReport.contenido || ''}
                   onChange={(e) => setEditedReport({ ...editedReport, contenido: e.target.value })}
                   rows={4}
-                  style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+                  className="edit-textarea"
                 />
               ) : (
                 reporte.contenido ? reporte.contenido.split('\n').map((line, index) => (
@@ -366,7 +363,7 @@ const ReportDetailPage = () => {
                   value={editedReport.hallazgos || ''}
                   onChange={(e) => setEditedReport({ ...editedReport, hallazgos: e.target.value })}
                   rows={4}
-                  style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+                  className="edit-textarea"
                 />
               ) : (
                 reporte.hallazgos ? reporte.hallazgos.split('\n').map((line, index) => (
@@ -384,7 +381,7 @@ const ReportDetailPage = () => {
                   value={editedReport.conclusion || ''}
                   onChange={(e) => setEditedReport({ ...editedReport, conclusion: e.target.value })}
                   rows={4}
-                  style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+                  className="edit-textarea"
                 />
               ) : (
                 reporte.conclusion ? reporte.conclusion.split('\n').map((line, index) => (
@@ -402,7 +399,7 @@ const ReportDetailPage = () => {
                   value={editedReport.recomendaciones || ''}
                   onChange={(e) => setEditedReport({ ...editedReport, recomendaciones: e.target.value })}
                   rows={4}
-                  style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+                  className="edit-textarea"
                 />
               ) : (
                 reporte.recomendaciones ? reporte.recomendaciones.split('\n').map((line, index) => (
@@ -427,7 +424,7 @@ const ReportDetailPage = () => {
               <button onClick={handleEdit} className="action-btn primary">
                 ✏️ Editar Reporte
               </button>
-              <button onClick={handleAnular} className="action-btn secondary" style={{ backgroundColor: '#dc3545' }}>
+              <button onClick={handleAnular} className="action-btn secondary anular">
                 ❌ Anular Reporte
               </button>
             </>

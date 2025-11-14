@@ -607,4 +607,30 @@
   .action-btn {
     width: 100%;
   }
-}
+  }
+  
+  /* Estilos para edición en ReportDetailPage */
+  .edit-input, .edit-textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 14px;
+  }
+  
+  .edit-textarea {
+    resize: vertical;
+    min-height: 80px;
+  }
+  
+  .action-btn.anular {
+    background-color: #dc3545;
+    color: white;
+  }
+  
+  .action-btn.anular:hover {
+    background-color: #c82333;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+  }

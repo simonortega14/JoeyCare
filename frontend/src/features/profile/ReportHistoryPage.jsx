@@ -69,8 +69,7 @@ const ReportHistoryPage = ({ user }) => {
                       Ver Historial
                     </button>
                     <button
-                      className="view-report-btn"
-                      style={{ backgroundColor: '#28a745' }}
+                      className="view-report-btn success"
                       onClick={() => window.location.href = `/reportes/${reporte.id}`}
                     >
                       Ver Reporte Actual
@@ -84,7 +83,7 @@ const ReportHistoryPage = ({ user }) => {
           )}
 
           {selectedReporte && historial.length > 0 && (
-            <div className="historial-detalle" style={{ marginTop: '30px' }}>
+            <div className="historial-detalle historial-detalle-spaced">
               <h3>Historial de Versiones</h3>
               <div className="historial-list">
                 {historial.map((version) => (

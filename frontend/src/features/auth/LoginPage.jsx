@@ -31,22 +31,14 @@ export default function LoginPage({ onSubmit }) {
   };
 
   return (
-    <div className="login-page" style={{ position: "relative" }}>
+    <div className="login-page">
       <div
-        className="login-bg"
+        className="login-bg dynamic"
         style={{
           backgroundImage: `url(${marcaAgua})`,
-          backgroundSize: "contain",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
-          opacity: 0.08,
-          position: "absolute",
-          inset: 0,
-          pointerEvents: "none",
-          zIndex: 0,
         }}
       />
-      <div className="login-card" style={{ position: "relative", zIndex: 10 }}>
+      <div className="login-card">
         <div className="login-avatar">
           <img src={logoJoey} alt="Logo Joey Care" />
         </div>
@@ -83,19 +75,18 @@ export default function LoginPage({ onSubmit }) {
             />
           </div>
 
-          <div className="actions" style={{ justifyContent: "flex-end" }}>
+          <div className="actions">
             <button className="jc-btn" type="submit" disabled={!canSubmit}>
               {loading ? "Ingresando…" : "Ingresar"}
             </button>
           </div>
 
           {/* Texto para ir a registro */}
-          <div style={{ marginTop: "20px", textAlign: "center", fontSize: "14px", color: "#64748b" }}>
+          <div className="register-link">
             ¿No tienes una cuenta?{" "}
             <button
               type="button"
               className="link"
-              style={{ textDecoration: "underline", padding: 0, fontSize: "14px" }}
               onClick={() => navigate("/register")}
             >
               Regístrate

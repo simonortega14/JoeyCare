@@ -61,48 +61,22 @@ function ImageComparisonSelector({ currentImage, onClose }) {
   };
 
   return (
-    <div style={{
-      position: "fixed",
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: "rgba(0,0,0,0.8)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      zIndex: 10000
-    }}>
-      <div style={{
-        backgroundColor: "#333",
-        padding: "20px",
-        borderRadius: "8px",
-        maxWidth: "500px",
-        width: "90%",
-        maxHeight: "80vh",
-        overflowY: "auto"
-      }}>
-        <h3 style={{ color: "#fff", marginTop: 0 }}>Seleccionar imagen para comparar</h3>
-        <p style={{ color: "#ccc", marginBottom: "20px" }}>
+    <div className="image-comparison-overlay">
+      <div className="image-comparison-modal">
+        <h3 className="image-comparison-title">Seleccionar imagen para comparar</h3>
+        <p className="image-comparison-text">
           Imagen actual: <strong>{currentImage?.filename || currentImage?.filepath || 'Sin nombre'}</strong>
         </p>
-        <p style={{ color: "#ccc", marginBottom: "20px" }}>
+        <p className="image-comparison-text">
           Elige una ecografía de otro paciente para comparar con la imagen actual.
         </p>
 
-        <div style={{ marginBottom: "15px" }}>
-          <label style={{ color: "#fff", display: "block", marginBottom: "5px" }}>
+        <div className="image-comparison-section">
+          <label className="image-comparison-label">
             Paciente:
           </label>
           <select
-            style={{
-              width: "100%",
-              padding: "8px",
-              backgroundColor: "#555",
-              color: "#fff",
-              border: "1px solid #777",
-              borderRadius: "4px"
-            }}
+            className="image-comparison-select"
             value={selectedPaciente?.id || ""}
             onChange={e => {
               const p = pacientes.find(p => p.id === parseInt(e.target.value));
@@ -121,19 +95,12 @@ function ImageComparisonSelector({ currentImage, onClose }) {
         </div>
 
         {selectedPaciente && (
-          <div style={{ marginBottom: "15px" }}>
-            <label style={{ color: "#fff", display: "block", marginBottom: "5px" }}>
+          <div className="image-comparison-section">
+            <label className="image-comparison-label">
               Ecografía:
             </label>
             <select
-              style={{
-                width: "100%",
-                padding: "8px",
-                backgroundColor: "#555",
-                color: "#fff",
-                border: "1px solid #777",
-                borderRadius: "4px"
-              }}
+              className="image-comparison-select"
               value={selectedEcografia?.id || ""}
               onChange={e => {
                 const ec = ecografias.find(ec => ec.id === parseInt(e.target.value));
@@ -149,38 +116,24 @@ function ImageComparisonSelector({ currentImage, onClose }) {
               ))}
             </select>
             {ecografias.length === 0 && (
-              <p style={{ color: "#ccc", fontSize: "14px", marginTop: "5px" }}>
+              <p className="image-comparison-no-data">
                 No hay ecografías disponibles para este paciente
               </p>
             )}
           </div>
         )}
 
-        <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+        <div className="image-comparison-buttons-row">
           <button
             onClick={onClose}
-            style={{
-              padding: "8px 16px",
-              backgroundColor: "#666",
-              color: "#fff",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer"
-            }}
+            className="image-comparison-button"
           >
             Cancelar
           </button>
           <button
             onClick={handleCompare}
             disabled={!selectedEcografia}
-            style={{
-              padding: "8px 16px",
-              backgroundColor: selectedEcografia ? "#4caf50" : "#444",
-              color: "#fff",
-              border: "none",
-              borderRadius: "4px",
-              cursor: selectedEcografia ? "pointer" : "not-allowed"
-            }}
+            className={`image-comparison-button primary ${!selectedEcografia ? 'disabled' : ''}`}
           >
             Comparar
           </button>

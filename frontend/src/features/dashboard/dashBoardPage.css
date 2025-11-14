@@ -199,6 +199,15 @@
   background: #e3f2fd;
 }
 
+.activity-item.clickable {
+  cursor: pointer;
+}
+
+.activity-details small {
+  color: #666;
+  font-size: 0.8rem;
+}
+
 .activity-time {
   font-weight: 700;
   color: #666;

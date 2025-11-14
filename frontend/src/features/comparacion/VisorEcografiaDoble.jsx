@@ -120,25 +120,14 @@ function VisorEcografiaDoble({ user, datosIzquierda = null, datosDerecha = null 
   return (
     <div className="visor-doble-container">
       {/* Barra de herramientas unificada */}
-      <div style={{
-        height: "60px",
-        background: "rgba(0,0,0,0.9)",
-        display: "flex",
-        alignItems: "center",
-        padding: "0 15px",
-        gap: "10px",
-        borderBottom: "2px solid #333",
-        zIndex: 200,
-        flexWrap: "wrap",
-        overflowX: "auto"
-      }}>
-        <button onClick={handleVolver} style={buttonStyle}>← Volver</button>
-        <button onClick={handleResetViewBoth} style={buttonStyle}>Reset View (Ambos)</button>
-        <button onClick={handleAutoWLBoth} style={buttonStyle}>Auto W/L (Ambos)</button>
+      <div className="visor-toolbar-unified">
+        <button onClick={handleVolver} className="visor-button">← Volver</button>
+        <button onClick={handleResetViewBoth} className="visor-button">Reset View (Ambos)</button>
+        <button onClick={handleAutoWLBoth} className="visor-button">Auto W/L (Ambos)</button>
 
         {/* Controles de Punto */}
         <button
-          style={{ ...buttonStyle, backgroundColor: pointMode ? "#2196f3" : "#333" }}
+          className={`visor-button ${pointMode ? 'point-active' : ''}`}
           onClick={togglePointMode}
         >
           📍 Punto {pointMode ? "ON" : "OFF"}
@@ -146,10 +135,10 @@ function VisorEcografiaDoble({ user, datosIzquierda = null, datosDerecha = null 
 
         {pointMode && (
           <>
-            <select 
-              value={pointColor.join(',')} 
+            <select
+              value={pointColor.join(',')}
               onChange={(e) => handlePointColorChange(e.target.value.split(',').map(Number))}
-              style={{ ...buttonStyle, cursor: "pointer" }}
+              className="visor-select"
             >
               <option value="1,0,0">🔴 Rojo</option>
               <option value="0,1,0">🟢 Verde</option>
@@ -159,15 +148,15 @@ function VisorEcografiaDoble({ user, datosIzquierda = null, datosDerecha = null 
               <option value="0,1,1">🔵 Cian</option>
               <option value="1,1,1">⚪ Blanco</option>
             </select>
-            <button onClick={handleClearPointsLeft} style={buttonStyle}>Limpiar Puntos (Izq)</button>
-            <button onClick={handleClearPointsRight} style={buttonStyle}>Limpiar Puntos (Der)</button>
-            <button onClick={handleClearPointsBoth} style={buttonStyle}>Limpiar Puntos (Ambos)</button>
+            <button onClick={handleClearPointsLeft} className="visor-button">Limpiar Puntos (Izq)</button>
+            <button onClick={handleClearPointsRight} className="visor-button">Limpiar Puntos (Der)</button>
+            <button onClick={handleClearPointsBoth} className="visor-button">Limpiar Puntos (Ambos)</button>
           </>
         )}
 
         {/* Controles de Lápiz */}
         <button
-          style={{ ...buttonStyle, backgroundColor: drawMode ? "#4caf50" : "#333" }}
+          className={`visor-button ${drawMode ? 'draw-active' : ''}`}
           onClick={toggleDrawMode}
         >
           ✏️ Lápiz {drawMode ? "ON" : "OFF"}
@@ -175,10 +164,10 @@ function VisorEcografiaDoble({ user, datosIzquierda = null, datosDerecha = null 
 
         {drawMode && (
           <>
-            <select 
+            <select
               value={drawColor.join(',')}
               onChange={(e) => handleDrawColorChange(e.target.value.split(',').map(Number))}
-              style={{ ...buttonStyle, cursor: "pointer" }}
+              className="visor-select"
             >
               <option value="1,0,0">🔴 Rojo</option>
               <option value="0,1,0">🟢 Verde</option>
@@ -188,23 +177,23 @@ function VisorEcografiaDoble({ user, datosIzquierda = null, datosDerecha = null 
               <option value="0,1,1">🔵 Cian</option>
               <option value="1,1,1">⚪ Blanco</option>
             </select>
-            <select 
-              value={lineWidth} 
+            <select
+              value={lineWidth}
               onChange={(e) => handleLineWidthChange(Number(e.target.value))}
-              style={{ ...buttonStyle, cursor: "pointer" }}
+              className="visor-select"
             >
               <option value="1">Fino</option>
               <option value="2">Normal</option>
               <option value="3">Grueso</option>
               <option value="5">Muy Grueso</option>
             </select>
-            <button onClick={handleClearDrawingsLeft} style={buttonStyle}>Limpiar Trazos (Izq)</button>
-            <button onClick={handleClearDrawingsRight} style={buttonStyle}>Limpiar Trazos (Der)</button>
-            <button onClick={handleClearDrawingsBoth} style={buttonStyle}>Limpiar Trazos (Ambos)</button>
+            <button onClick={handleClearDrawingsLeft} className="visor-button">Limpiar Trazos (Izq)</button>
+            <button onClick={handleClearDrawingsRight} className="visor-button">Limpiar Trazos (Der)</button>
+            <button onClick={handleClearDrawingsBoth} className="visor-button">Limpiar Trazos (Ambos)</button>
           </>
         )}
 
-        <span style={{ marginLeft: "auto", color: "#fff", fontSize: "14px" }}>
+        <span className="visor-title">
           Comparación de Ecografías
         </span>
       </div>
@@ -228,14 +217,7 @@ function VisorEcografiaDoble({ user, datosIzquierda = null, datosDerecha = null 
               externalLineWidth={lineWidth}
             />
           ) : (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              height: '100%',
-              color: '#888',
-              fontSize: '18px'
-            }}>
+            <div className="visor-placeholder">
               {!isReady ? 'Cargando...' : 'No hay imagen seleccionada'}
             </div>
           )}
@@ -258,14 +240,7 @@ function VisorEcografiaDoble({ user, datosIzquierda = null, datosDerecha = null 
               externalLineWidth={lineWidth}
             />
           ) : (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              height: '100%',
-              color: '#888',
-              fontSize: '18px'
-            }}>
+            <div className="visor-placeholder">
               {!isReady ? 'Cargando...' : 'No hay imagen seleccionada'}
             </div>
           )}
@@ -273,25 +248,13 @@ function VisorEcografiaDoble({ user, datosIzquierda = null, datosDerecha = null 
       </div>
 
       {/* Ayuda en la esquina inferior */}
-      <div style={{
-        position: "absolute",
-        bottom: "10px",
-        left: "50%",
-        transform: "translateX(-50%)",
-        background: "rgba(0,0,0,0.8)",
-        padding: "8px 16px",
-        borderRadius: "5px",
-        color: "#aaa",
-        fontSize: "12px",
-        zIndex: 100,
-        textAlign: "center"
-      }}>
+      <div className="visor-help">
         {drawMode ? (
-          <span style={{ color: "#4caf50", fontWeight: "bold" }}>
+          <span className="visor-help-highlight draw">
             🖱️ Click izq + arrastrar: Dibujar | Rueda: Zoom
           </span>
         ) : pointMode ? (
-          <span style={{ color: "#2196f3", fontWeight: "bold" }}>
+          <span className="visor-help-highlight point">
             🖱️ Click izq: Colocar punto | Rueda: Zoom
           </span>
         ) : (
@@ -301,18 +264,5 @@ function VisorEcografiaDoble({ user, datosIzquierda = null, datosDerecha = null 
     </div>
   );
 }
-
-const buttonStyle = {
-  background: "#333",
-  color: "#fff",
-  border: "none",
-  padding: "8px 12px",
-  borderRadius: "4px",
-  cursor: "pointer",
-  fontSize: "13px",
-  fontWeight: "500",
-  whiteSpace: "nowrap",
-  transition: "background 0.2s"
-};
 
 export default VisorEcografiaDoble;

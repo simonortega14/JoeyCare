@@ -1,6 +1,7 @@
 import { useState } from "react";
 import ImageSelector from "./ImageSelector";
 import ImageViewer from "./ImageViewer";
+import "./viewer.css";
 
 function VtkViewer({ user }) {
   const [selectedImage, setSelectedImage] = useState(null);
@@ -26,7 +27,7 @@ function VtkViewer({ user }) {
       {!selectedImage ? (
         <ImageSelector onImageSelected={handleImageSelected} />
       ) : (
-        <div style={{ width: "100%", height: "100vh", position: "fixed", top: 0, left: 0, background: "#000", overflow: "hidden", zIndex: 9999 }}>
+        <div className="vtk-fullscreen">
           <ImageViewer imageFile={selectedImage} onClose={handleClose} user={user} />
         </div>
       )}

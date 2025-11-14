@@ -13,6 +13,16 @@ const PacientePage = ({ onOpenSettings }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Estados para edición del paciente
+  const [isEditingPaciente, setIsEditingPaciente] = useState(false);
+  const [editedPesoActual, setEditedPesoActual] = useState('');
+  const [editedPerimetroCefalico, setEditedPerimetroCefalico] = useState('');
+
+  // Estados para edición del acudiente
+  const [isEditingAcudiente, setIsEditingAcudiente] = useState(false);
+  const [editedTelefono, setEditedTelefono] = useState('');
+  const [editedCorreo, setEditedCorreo] = useState('');
+
   useEffect(() => {
     const fetchPaciente = async () => {
       try {
@@ -88,6 +98,117 @@ const PacientePage = ({ onOpenSettings }) => {
   // Función para manejar el clic en "Cargar Ecografía" - ACTUALIZADA
   const handleCargarEcografia = () => {
     window.location.href = `/cargar-ecografias?patient=${id}`;
+  };
+
+  // Funciones para edición del paciente
+  const handleEditPaciente = () => {
+    setEditedPesoActual(paciente.peso_actual_g || '');
+    setEditedPerimetroCefalico(paciente.perimetro_cefalico || '');
+    setIsEditingPaciente(true);
+  };
+
+  const handleSavePaciente = async () => {
+    try {
+      const pesoActualNum = parseFloat(editedPesoActual);
+      const perimetroNum = parseFloat(editedPerimetroCefalico);
+
+      if (isNaN(pesoActualNum) || pesoActualNum < 0 || pesoActualNum > 10000) {
+        alert('Peso actual debe ser un número válido entre 0 y 10000g');
+        return;
+      }
+      if (isNaN(perimetroNum) || perimetroNum < 0 || perimetroNum > 100) {
+        alert('Perímetro cefálico debe ser un número válido entre 0 y 100cm');
+        return;
+      }
+
+      const response = await fetch(`http://localhost:4000/api/neonatos/${id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          peso_actual_g: pesoActualNum,
+          perimetro_cefalico: perimetroNum,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al actualizar paciente');
+      }
+
+      // Actualizar el estado local
+      setPaciente(prev => ({
+        ...prev,
+        peso_actual_g: pesoActualNum,
+        perimetro_cefalico: perimetroNum,
+      }));
+
+      setIsEditingPaciente(false);
+      alert('Paciente actualizado correctamente');
+    } catch (error) {
+      console.error('Error updating paciente:', error);
+      alert('Error al actualizar paciente');
+    }
+  };
+
+  const handleCancelPaciente = () => {
+    setIsEditingPaciente(false);
+    setEditedPesoActual('');
+    setEditedPerimetroCefalico('');
+  };
+
+  // Funciones para edición del acudiente
+  const handleEditAcudiente = () => {
+    setEditedTelefono(paciente.telefono || '');
+    setEditedCorreo(paciente.correo || '');
+    setIsEditingAcudiente(true);
+  };
+
+  const handleSaveAcudiente = async () => {
+    try {
+      if (!/^\+?[0-9\s\-\(\)]+$/.test(editedTelefono)) {
+        alert('Teléfono debe tener un formato válido');
+        return;
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editedCorreo)) {
+        alert('Correo electrónico debe tener un formato válido');
+        return;
+      }
+
+      const response = await fetch(`http://localhost:4000/api/acudientes/${id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          telefono: editedTelefono,
+          correo: editedCorreo,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al actualizar acudiente');
+      }
+
+      // Actualizar el estado local
+      setPaciente(prev => ({
+        ...prev,
+        telefono: editedTelefono,
+        correo: editedCorreo,
+      }));
+
+      setIsEditingAcudiente(false);
+      alert('Acudiente actualizado correctamente');
+    } catch (error) {
+      console.error('Error updating acudiente:', error);
+      alert('Error al actualizar acudiente');
+    }
+  };
+
+  const handleCancelAcudiente = () => {
+    setIsEditingAcudiente(false);
+    setEditedTelefono('');
+    setEditedCorreo('');
   };
 
   if (loading) {
@@ -176,11 +297,35 @@ const PacientePage = ({ onOpenSettings }) => {
                 </div>
                 <div className="stat-item">
                   <span className="stat-label">Peso actual</span>
-                  <span className="stat-value">{paciente.peso_actual_g ? `${paciente.peso_actual_g} g` : 'N/A'}</span>
+                  {isEditingPaciente ? (
+                    <input
+                      type="number"
+                      value={editedPesoActual}
+                      onChange={(e) => setEditedPesoActual(e.target.value)}
+                      placeholder="g"
+                      min="0"
+                      max="10000"
+                      step="1"
+                    />
+                  ) : (
+                    <span className="stat-value">{paciente.peso_actual_g ? `${paciente.peso_actual_g} g` : 'N/A'}</span>
+                  )}
                 </div>
                 <div className="stat-item">
                   <span className="stat-label">Perímetro cefálico</span>
-                  <span className="stat-value">{paciente.perimetro_cefalico ? `${paciente.perimetro_cefalico} cm` : 'N/A'}</span>
+                  {isEditingPaciente ? (
+                    <input
+                      type="number"
+                      value={editedPerimetroCefalico}
+                      onChange={(e) => setEditedPerimetroCefalico(e.target.value)}
+                      placeholder="cm"
+                      min="0"
+                      max="100"
+                      step="0.1"
+                    />
+                  ) : (
+                    <span className="stat-value">{paciente.perimetro_cefalico ? `${paciente.perimetro_cefalico} cm` : 'N/A'}</span>
+                  )}
                 </div>
               </div>
             </div>
@@ -188,6 +333,20 @@ const PacientePage = ({ onOpenSettings }) => {
               <button className="cargar-ecografia-btn" onClick={handleCargarEcografia}>
                 📁 Cargar Ecografía
               </button>
+              {!isEditingPaciente ? (
+                <button className="actualizar-btn" onClick={handleEditPaciente}>
+                  ✏️ Actualizar
+                </button>
+              ) : (
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button className="guardar-btn" onClick={handleSavePaciente}>
+                    💾 Guardar
+                  </button>
+                  <button className="cancelar-btn" onClick={handleCancelPaciente}>
+                    ❌ Cancelar
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -195,7 +354,23 @@ const PacientePage = ({ onOpenSettings }) => {
         {/* Información del acudiente */}
         {paciente.nombre_acudiente && (
           <div className="acudiente-info-card">
-            <h2>Información del Acudiente</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2>Información del Acudiente</h2>
+              {!isEditingAcudiente ? (
+                <button className="actualizar-btn" onClick={handleEditAcudiente}>
+                  ✏️ Actualizar
+                </button>
+              ) : (
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button className="guardar-btn" onClick={handleSaveAcudiente}>
+                    💾 Guardar
+                  </button>
+                  <button className="cancelar-btn" onClick={handleCancelAcudiente}>
+                    ❌ Cancelar
+                  </button>
+                </div>
+              )}
+            </div>
             <div className="acudiente-details">
               <div className="detail-item">
                 <span className="detail-label">Nombre completo</span>
@@ -207,11 +382,29 @@ const PacientePage = ({ onOpenSettings }) => {
               </div>
               <div className="detail-item">
                 <span className="detail-label">Teléfono</span>
-                <span className="detail-value">{paciente.telefono}</span>
+                {isEditingAcudiente ? (
+                  <input
+                    type="tel"
+                    value={editedTelefono}
+                    onChange={(e) => setEditedTelefono(e.target.value)}
+                    placeholder="Teléfono"
+                  />
+                ) : (
+                  <span className="detail-value">{paciente.telefono}</span>
+                )}
               </div>
               <div className="detail-item">
                 <span className="detail-label">Correo electrónico</span>
-                <span className="detail-value">{paciente.correo}</span>
+                {isEditingAcudiente ? (
+                  <input
+                    type="email"
+                    value={editedCorreo}
+                    onChange={(e) => setEditedCorreo(e.target.value)}
+                    placeholder="Correo electrónico"
+                  />
+                ) : (
+                  <span className="detail-value">{paciente.correo}</span>
+                )}
               </div>
             </div>
           </div>

@@ -128,4 +128,100 @@ router.get("/neonatos/:id", async (req, res) => {
   }
 });
 
+// Actualizar datos del neonato (peso actual y perímetro cefálico)
+router.post("/neonatos/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { peso_actual_g, perimetro_cefalico } = req.body;
+
+    // Validaciones básicas
+    if (peso_actual_g !== undefined && (isNaN(peso_actual_g) || peso_actual_g < 0 || peso_actual_g > 10000)) {
+      return res.status(400).json({ message: "Peso actual inválido" });
+    }
+    if (perimetro_cefalico !== undefined && (isNaN(perimetro_cefalico) || perimetro_cefalico < 0 || perimetro_cefalico > 100)) {
+      return res.status(400).json({ message: "Perímetro cefálico inválido" });
+    }
+
+    const updateFields = [];
+    const updateValues = [];
+
+    if (peso_actual_g !== undefined) {
+      updateFields.push("peso_actual_g = ?");
+      updateValues.push(peso_actual_g);
+    }
+    if (perimetro_cefalico !== undefined) {
+      updateFields.push("perimetro_cefalico = ?");
+      updateValues.push(perimetro_cefalico);
+    }
+
+    if (updateFields.length === 0) {
+      return res.status(400).json({ message: "No hay campos para actualizar" });
+    }
+
+    updateValues.push(id);
+
+    const [result] = await pool.query(
+      `UPDATE neonato SET ${updateFields.join(", ")}, actualizado_en = NOW() WHERE id = ?`,
+      updateValues
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Neonato no encontrado" });
+    }
+
+    res.json({ message: "Neonato actualizado correctamente" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error al actualizar neonato" });
+  }
+});
+
+// Actualizar datos del acudiente (teléfono y correo)
+router.post("/acudientes/:neonatoId", async (req, res) => {
+  try {
+    const { neonatoId } = req.params;
+    const { telefono, correo } = req.body;
+
+    // Validaciones básicas
+    if (telefono && !/^\+?[0-9\s\-\(\)]+$/.test(telefono)) {
+      return res.status(400).json({ message: "Teléfono inválido" });
+    }
+    if (correo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
+      return res.status(400).json({ message: "Correo electrónico inválido" });
+    }
+
+    const updateFields = [];
+    const updateValues = [];
+
+    if (telefono !== undefined) {
+      updateFields.push("telefono = ?");
+      updateValues.push(telefono);
+    }
+    if (correo !== undefined) {
+      updateFields.push("correo = ?");
+      updateValues.push(correo);
+    }
+
+    if (updateFields.length === 0) {
+      return res.status(400).json({ message: "No hay campos para actualizar" });
+    }
+
+    updateValues.push(neonatoId);
+
+    const [result] = await pool.query(
+      `UPDATE acudiente SET ${updateFields.join(", ")}, actualizado_en = NOW() WHERE neonato_id = ?`,
+      updateValues
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Acudiente no encontrado" });
+    }
+
+    res.json({ message: "Acudiente actualizado correctamente" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error al actualizar acudiente" });
+  }
+});
+
 export default router;

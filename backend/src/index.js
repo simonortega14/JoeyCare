@@ -15,9 +15,9 @@ app.use(cors());
 app.use(express.json());
 
 // Rutas
-app.use("/api", testRoutes);
-app.use("/api", doctoresRoutes); 
 app.use("/api", pacientesRoutes);
+app.use("/api", testRoutes);
+app.use("/api", doctoresRoutes);
 app.use("/api", ecografiasRoutes);
 app.use("/uploads", express.static("uploads"));
 

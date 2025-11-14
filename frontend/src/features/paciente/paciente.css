@@ -124,6 +124,88 @@
   background-color: rgba(77, 194, 255, 0.6);
 }
 
+.actualizar-btn {
+  background-color: rgba(255, 193, 7, 0.8);
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: #000000;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background-color 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.actualizar-btn:hover {
+  background-color: rgba(255, 193, 7, 1);
+}
+
+.guardar-btn {
+  background-color: rgba(40, 167, 69, 0.8);
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background-color 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.guardar-btn:hover {
+  background-color: rgba(40, 167, 69, 1);
+}
+
+.cancelar-btn {
+  background-color: rgba(220, 53, 69, 0.8);
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background-color 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.cancelar-btn:hover {
+  background-color: rgba(220, 53, 69, 1);
+}
+
+/* Estilos para inputs editables */
+.stat-item input[type="number"],
+.detail-item input[type="tel"],
+.detail-item input[type="email"] {
+  background-color: #F5FFFF;
+  border: 2px solid #4DC2FF;
+  border-radius: 4px;
+  color: #666666;
+  font-weight: 600;
+  font-size: 15px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.stat-item input[type="number"]:focus,
+.detail-item input[type="tel"]:focus,
+.detail-item input[type="email"]:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
 /* Sección de Ecografías */
 .ecografias-section {
   background-color: rgba(77, 194, 255, 0.46);

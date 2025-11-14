@@ -50,7 +50,8 @@ export default function App() {
 
   async function handleLogin(form) {
     try {
-      const response = await fetch("http://localhost:4000/api/medicos/login", {
+      // Fase 1: Usar API Gateway para autenticación
+      const response = await fetch("http://localhost:3000/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: form.username, password: form.password }),
@@ -58,7 +59,13 @@ export default function App() {
 
       if (!response.ok) throw new Error("Credenciales inválidas");
 
-      const userData = await response.json();
+      const data = await response.json();
+      // El Auth Service devuelve { token, user }
+      const { token, user: userData } = data;
+
+      // Guardar token para futuras requests
+      localStorage.setItem("authToken", token);
+
       setUser(userData);
       setIsLoggedIn(true);
       localStorage.setItem("user", JSON.stringify(userData));

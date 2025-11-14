@@ -74,6 +74,14 @@ const ReportDetailPage = () => {
     setIsEditing(false);
   };
 
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate('/reportes');
+    }
+  };
+
   const handleAnular = async () => {
     if (!confirm('¿Está seguro de anular este reporte?')) return;
     try {
@@ -263,8 +271,8 @@ const ReportDetailPage = () => {
   return (
     <div className="report-detail-container">
       <div className="report-detail-header">
-        <button onClick={() => navigate('/reportes')} className="back-btn">
-          ← Volver a Reportes
+        <button onClick={handleBack} className="back-btn">
+          ← Volver
         </button>
         <div className="report-title-section">
           <h1>{reporte.titulo || 'Sin título'}</h1>
@@ -448,10 +456,10 @@ const ReportDetailPage = () => {
             {exporting ? 'Generando PDF...' : '📄 Exportar PDF'}
           </button>
           <button
-            onClick={() => navigate('/reportes')}
+            onClick={handleBack}
             className="action-btn secondary"
           >
-            📄 Volver a Reportes
+            📄 Volver
           </button>
         </div>
       </div>

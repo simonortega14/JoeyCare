@@ -60,29 +60,33 @@ const ReportsPage = () => {
   });
 
   return (
-    <div className="reports-container">
+    <div className="page-container">
+      {/* Header del Reportes */}
+      <header className="reports-header">
+        <div className="reports-title">
+          <h1>📄 Reportes</h1>
+        </div>
+      </header>
+
       <div className="reports-content">
-        <div className="reports-header">
-          <h1>Gestión de Reportes</h1>
-          <div className="reports-filters">
-            <input
-              type="text"
-              placeholder="Buscar por título, paciente o médico..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input"
-            />
-            <select
-              value={filterEstado}
-              onChange={(e) => setFilterEstado(e.target.value)}
-              className="filter-select"
-            >
-              <option value="todos">Todos los estados</option>
-              <option value="borrador">Borrador</option>
-              <option value="firmado">Firmado</option>
-              <option value="anulado">Anulado</option>
-            </select>
-          </div>
+        <div className="reports-filters">
+          <input
+            type="text"
+            placeholder="Buscar por título, paciente o médico..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="search-input"
+          />
+          <select
+            value={filterEstado}
+            onChange={(e) => setFilterEstado(e.target.value)}
+            className="filter-select"
+          >
+            <option value="todos">Todos los estados</option>
+            <option value="borrador">Borrador</option>
+            <option value="firmado">Firmado</option>
+            <option value="anulado">Anulado</option>
+          </select>
         </div>
 
         <div className="reports-grid">

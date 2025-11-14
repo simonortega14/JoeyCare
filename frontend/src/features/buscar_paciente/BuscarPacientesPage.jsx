@@ -109,13 +109,14 @@ const BuscarPacientesPage = ({ onOpenSettings }) => {
       <AppHeader onOpenSettings={onOpenSettings} />
       <AppSidebar activeItem="Buscar Pacientes" />
 
-      <div className="buscar-pacientes-content">
-        <div className="buscar-pacientes-header">
-          <div className="dashboard-title">
-            <h1>🔍 Buscar Neonatos</h1>
-            <p>Sistema PACS - Fundación Canguro</p>
-          </div>
+      {/* Header del Buscar Pacientes */}
+      <header className="buscar-pacientes-header">
+        <div className="buscar-pacientes-title">
+          <h1>🔍 Buscar Pacientes</h1>
         </div>
+      </header>
+
+      <div className="buscar-pacientes-content">
 
         <div className="main-search-container">
           <div className="main-search-group">

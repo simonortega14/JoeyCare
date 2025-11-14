@@ -111,9 +111,15 @@ function ImageSelector({ onImageSelected }) {
   };
 
   return (
-    <div className="vtk-page-container">
+    <div className="page-container">
+      {/* Header del Visualizar Ecografías */}
+      <header className="vtk-header">
+        <div className="vtk-title">
+          <h1>🖼️ Visualizar Ecografías</h1>
+        </div>
+      </header>
+
       <div className="vtk-selection-wrapper">
-        <h2 className="vtk-main-title">Visualizar Ecografías</h2>
 
         <div className="vtk-form-section">
           <label className="vtk-form-label">Seleccionar Paciente:</label>

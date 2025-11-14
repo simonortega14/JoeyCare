@@ -88,10 +88,14 @@ const ProfilePage = ({ onOpenSettings, user }) => {
 
 
   return (
-    <div className="profile-container">
-      <AppHeader onOpenSettings={onOpenSettings} />
-      <AppSidebar activeItem="Mi perfil" />
-      
+    <div className="page-container">
+      {/* Header del Perfil */}
+      <header className="profile-header">
+        <div className="profile-title">
+          <h1>👤 Mi perfil</h1>
+        </div>
+      </header>
+
       <div className="profile-content">
         {/* Contenedor de información del perfil */}
         <div className="profile-info-card">

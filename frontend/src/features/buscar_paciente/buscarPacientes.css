@@ -1,19 +1,11 @@
 /* Estilos generales de la página de buscar pacientes */
-.buscar-pacientes-container {
-  width: 100%;
-  min-height: calc(100vh - 70px);
-  background-color: #F5FFFF;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+.page-container {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  min-height: 100vh;
+  padding: 20px;
+  font-family: 'Segoe UI', 'Roboto', 'Inter', Arial, sans-serif;
 }
 
-.buscar-pacientes-content {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 25px;
-}
-
-/* Encabezado de búsqueda */
 .buscar-pacientes-header {
   background: white;
   padding: 25px 30px;
@@ -26,18 +18,20 @@
   border-left: 5px solid #2196f3;
 }
 
-.dashboard-title h1 {
+.buscar-pacientes-title h1 {
   color: #1565c0;
   font-size: 2rem;
   font-weight: 800;
   margin: 0 0 5px 0;
 }
 
-.dashboard-title p {
-  color: #666;
-  font-size: 1rem;
-  margin: 0;
-  font-weight: 500;
+.buscar-pacientes-content {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
 }
 
 .main-search-container {
@@ -374,6 +368,10 @@
     gap: 15px;
   }
 
+  .buscar-pacientes-title h1 {
+    font-size: 1.5rem;
+  }
+
   .search-input {
     width: 300px;
   }
@@ -393,10 +391,18 @@
 }
 
 @media (max-width: 768px) {
+  .page-container {
+    padding: 15px;
+  }
+
+  .buscar-pacientes-content {
+    padding: 0;
+  }
+
   .pacientes-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .paciente-card {
     padding: 15px;
   }
@@ -408,18 +414,18 @@
     height: 40px;
     font-size: 13px;
   }
-  
+
   .paciente-image-container {
     width: 70px;
     height: 70px;
   }
-  
+
   .paciente-logo {
     width: 45px;
     height: 45px;
     font-size: 14px;
   }
-  
+
   .paciente-name-id {
     font-size: 15px;
   }

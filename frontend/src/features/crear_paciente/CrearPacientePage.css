@@ -1,25 +1,35 @@
+.page-container {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  min-height: 100vh;
+  padding: 20px;
+  font-family: 'Segoe UI', 'Roboto', 'Inter', Arial, sans-serif;
+}
+
+.crear-paciente-header {
+  background: white;
+  padding: 25px 30px;
+  border-radius: 15px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  margin-bottom: 25px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-left: 5px solid #2196f3;
+}
+
+.crear-paciente-title h1 {
+  color: #1565c0;
+  font-size: 2rem;
+  font-weight: 800;
+  margin: 0 0 5px 0;
+}
+
 .crear-paciente-container {
   max-width: 1200px;
-  margin: 20px auto;
-  padding: 20px;
+  margin: 0 auto;
   background-color: #fff;
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-.page-background {
-  background-image: url('../../assets/Marca De Agua.png');
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-  min-height: 100vh;
-  padding: 20px;
-}
-
-.crear-paciente-container h1 {
-  text-align: center;
-  color: #333;
-  margin-bottom: 20px;
 }
 
 .crear-paciente-container h2 {

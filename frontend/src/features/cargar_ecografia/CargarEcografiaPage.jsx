@@ -167,9 +167,15 @@ const CargarEcografiaPage = () => {
   }
 
   return (
-    <div className="cargar-page">
+    <div className="page-container">
+      {/* Header del Cargar Ecografías */}
+      <header className="cargar-header">
+        <div className="cargar-title">
+          <h1>📁 Cargar Ecografías</h1>
+        </div>
+      </header>
+
       <div className="cargar-card">
-        <h2 className="cargar-title">Cargar Ecografía</h2>
 
         {error && (
           <div className="error-message" style={{color: 'orange', marginBottom: '1rem'}}>

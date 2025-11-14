@@ -115,9 +115,15 @@ const CrearPacientePage = () => {
   };
 
   return (
-    <div className="page-background">
+    <div className="page-container">
+      {/* Header del Crear Paciente */}
+      <header className="crear-paciente-header">
+        <div className="crear-paciente-title">
+          <h1>➕ Crear Paciente</h1>
+        </div>
+      </header>
+
       <div className="crear-paciente-container">
-        <h1>Crear Paciente</h1>
         <form onSubmit={handleSubmit} className="crear-paciente-form">
         <div className="form-columns">
           <div className="patient-section">

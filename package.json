@@ -1,0 +1,11 @@
+{
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "cross-env": "^10.1.0",
+    "jest": "^30.2.0",
+    "supertest": "^7.1.4"
+  },
+  "dependencies": {
+    "puppeteer": "^24.30.0"
+  }
+}

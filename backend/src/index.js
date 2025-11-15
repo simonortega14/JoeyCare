@@ -21,4 +21,4 @@ app.use("/api", doctoresRoutes);
 app.use("/api", ecografiasRoutes);
 app.use("/uploads", express.static("uploads"));
 
-export default app; // <-- exportamos la app
+export default app; 

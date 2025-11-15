@@ -56,16 +56,48 @@ router.get("/neonatos", async (req, res) => {
 
 // Crear un nuevo neonato y su acudiente
 router.post("/neonatos", async (req, res) => {
+  const {
+    nombre,
+    apellido,
+    documento,
+    sexo,
+    fecha_nacimiento,
+    edad_gestacional_sem,
+    edad_corregida_sem,
+    peso_nacimiento_g,
+    peso_actual_g,
+    perimetro_cefalico,
+    nombre_acudiente,
+    apellido_acudiente,
+    sexo_acudiente,
+    parentesco,
+    telefono,
+    correo,
+    medico_id
+  } = req.body;
+
+  // ⛔ VALIDAR ANTES DE ABRIR LA TRANSACCIÓN
+  if (
+    !nombre ||
+    !apellido ||
+    !documento ||
+    !nombre_acudiente ||
+    !apellido_acudiente ||
+    !telefono ||
+    !correo ||
+    !medico_id
+  ) {
+    return res.status(400).json({
+      message:
+        "Nombre, apellido, documento del paciente, nombre, apellido, teléfono, correo del acudiente y médico son obligatorios",
+    });
+  }
+
   const connection = await pool.getConnection();
+
   try {
     await connection.beginTransaction();
 
-    const { nombre, apellido, documento, sexo, fecha_nacimiento, edad_gestacional_sem, edad_corregida_sem, peso_nacimiento_g, peso_actual_g, perimetro_cefalico,
-            nombre_acudiente, apellido_acudiente, sexo_acudiente, parentesco, telefono, correo, medico_id } = req.body;
-
-    if (!nombre || !apellido || !documento || !nombre_acudiente || !apellido_acudiente || !telefono || !correo || !medico_id) {
-      return res.status(400).json({ message: "Nombre, apellido, documento del paciente, nombre, apellido, teléfono, correo del acudiente y médico son obligatorios" });
-    }
 
     const documentoEncriptado = encrypt(documento);
     const [result] = await connection.query(

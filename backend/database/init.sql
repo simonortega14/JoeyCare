@@ -51,7 +51,7 @@ CREATE TABLE medicos (
   apellido VARCHAR(100) NOT NULL,
   email VARCHAR(150) NOT NULL UNIQUE,
   hash_password VARCHAR(255) NOT NULL,
-  activo BOOLEAN DEFAULT TRUE,
+  activo BOOLEAN DEFAULT FALSE,
   foto_perfil VARCHAR(255) NULL,
   creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   actualizado_en TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
@@ -241,26 +241,29 @@ INSERT INTO sedes (nombre, institucion, ciudad, direccion) VALUES
 -- Nota: rol_id = 1 (admin), rol_id = 2 (medico)
 --       especialidad_id según orden insertado arriba
 -- -------------------------
-INSERT INTO medicos (rol_id, especialidad_id, sede_id, nombre, apellido, email, hash_password)
-VALUES
 -- Admin (usa especialidad de Gestión Clínica)
-(1, 12, 1, 'Carlos', 'López', 'carlos.lopez@joeycare.com', '123456'),
+INSERT INTO medicos (rol_id, especialidad_id, sede_id, nombre, apellido, email, hash_password, activo)
+VALUES
+(1, 12, 1, 'Carlos', 'López', 'carlos.lopez@joeycare.com', '123456', TRUE);
 
--- Médicos clínicos
-(2, 1,  1, 'Juan',  'Pérez',  'juan.perez@joeycare.com',  '123456'),
-(2, 4,  1, 'Miguel', 'Torres',   'miguel.torres@joeycare.com',  '123456'),
-(2, 3,  3, 'Ana',    'Gómez',    'ana.gomez@joeycare.com',     '123456'),
-(2, 2,  6, 'Javier', 'Hernández','javier.hernandez@joeycare.com','123456'),
-(2, 5,  3, 'Sofía',  'Martínez', 'sofia.martinez@joeycare.com', '123456'),
-(2, 6,  2, 'Diego',  'Suárez',   'diego.suarez@joeycare.com',   '123456'),
-(2, 7,  7, 'María',  'Paredes',  'maria.paredes@joeycare.com',  '123456'),
-(2, 8,  8, 'Hugo',   'Beltrán',  'hugo.beltran@joeycare.com',   '123456'),
-(2, 9,  9, 'Paula',  'Rojas',    'paula.rojas@joeycare.com',    '123456'),
-(2, 10, 10,'Andrés', 'Cano',     'andres.cano@joeycare.com',    '123456'),
-(2, 1,  11,'Claudia','Vega',     'claudia.vega@joeycare.com',   '123456'),
-(2, 4,  12,'Ricardo','Molina',   'ricardo.molina@joeycare.com', '123456'),
-(2, 3,  4, 'Natalia','Quintero', 'natalia.quintero@joeycare.com','123456'),
-(2, 2,  5, 'Felipe', 'Arango',   'felipe.arango@joeycare.com',  '123456');
+-- Médicos clínicos (pendientes de aprobación)
+INSERT INTO medicos (rol_id, especialidad_id, sede_id, nombre, apellido, email, hash_password, activo)
+VALUES
+(2, 1,  1, 'Juan',  'Pérez',  'juan.perez@joeycare.com',  '123456', FALSE),
+(2, 4,  1, 'Miguel', 'Torres',   'miguel.torres@joeycare.com',  '123456', FALSE),
+(2, 3,  3, 'Ana',    'Gómez',    'ana.gomez@joeycare.com',     '123456', FALSE),
+(2, 2,  6, 'Javier', 'Hernández','javier.hernandez@joeycare.com','123456', FALSE),
+(2, 5,  3, 'Sofía',  'Martínez', 'sofia.martinez@joeycare.com', '123456', FALSE),
+(2, 6,  2, 'Diego',  'Suárez',   'diego.suarez@joeycare.com',   '123456', FALSE),
+(2, 7,  7, 'María',  'Paredes',  'maria.paredes@joeycare.com',  '123456', FALSE),
+(2, 8,  8, 'Hugo',   'Beltrán',  'hugo.beltran@joeycare.com',   '123456', FALSE),
+(2, 9,  9, 'Paula',  'Rojas',    'paula.rojas@joeycare.com',    '123456', FALSE),
+(2, 10, 10,'Andrés', 'Cano',     'andres.cano@joeycare.com',    '123456', FALSE),
+(2, 1,  11,'Claudia','Vega',     'claudia.vega@joeycare.com',   '123456', FALSE),
+(2, 4,  12,'Ricardo','Molina',   'ricardo.molina@joeycare.com', '123456', FALSE),
+(2, 3,  4, 'Natalia','Quintero', 'natalia.quintero@joeycare.com','123456', FALSE),
+(2, 2,  5, 'Felipe', 'Arango',   'felipe.arango@joeycare.com',  '123456', FALSE);
+
 
 -- -------------------------
 -- SEED DE NEONATOS (PACIENTES) - 24+ filas
@@ -378,3 +381,5 @@ SELECT id, nombre, apellido, documento, sexo, fecha_nacimiento FROM neonato;
 
 SELECT '--- ACUDIENTES ---' AS 'ESTADO DE DATOS';
 SELECT id, nombre, apellido, sexo, parentesco, telefono , correo FROM acudiente;
+
+select * from medicos;

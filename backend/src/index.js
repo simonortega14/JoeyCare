@@ -21,7 +21,4 @@ app.use("/api", doctoresRoutes);
 app.use("/api", ecografiasRoutes);
 app.use("/uploads", express.static("uploads"));
 
-const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => {
-  console.log(`Servidor corriendo en http://localhost:${PORT}`);
-});
+export default app; // <-- exportamos la app

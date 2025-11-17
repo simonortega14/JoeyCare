@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import logoPerfil from '../../assets/logo perfil.png';
+import logoPerfil from '../../assets/Logo perfil.png';
 import AppHeader from '../../components/AppHeader.jsx';
 import AppSidebar from '../../components/AppSidebar.jsx';
 import './profile.css';

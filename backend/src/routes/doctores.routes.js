@@ -88,6 +88,7 @@ router.post("/medicos/login", async (req, res) => {
       nombre: medico.nombre,
       apellido: medico.apellido,
       email: medico.email,
+      rol_id: medico.rol_id,
       rol: medico.rol,
       especialidad: medico.especialidad,
       especialidad_descripcion: medico.especialidad_descripcion,
@@ -126,5 +127,69 @@ router.put("/medicos/:id/foto", upload.single('foto'), async (req, res) => {
   }
 });
 
+// Obtener todas las sedes
+router.get("/sedes", async (req, res) => {
+  try {
+    const [rows] = await pool.query("SELECT id, nombre, ciudad FROM sedes");
+    res.json(rows);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error al obtener sedes" });
+  }
+});
+
+// Obtener todas las especialidades
+router.get("/especialidades", async (req, res) => {
+  try {
+    const [rows] = await pool.query("SELECT id, nombre FROM especialidades");
+    res.json(rows);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error al obtener especialidades" });
+  }
+});
+
+// Obtener médicos pendientes (no activos)
+router.get("/medicos/pendientes", async (req, res) => {
+  try {
+    const [rows] = await pool.query(`
+      SELECT m.id, m.nombre, m.apellido, m.email,
+             r.nombre as rol, e.nombre as especialidad, s.nombre as sede
+      FROM medicos m
+      JOIN roles r ON m.rol_id = r.id
+      JOIN especialidades e ON m.especialidad_id = e.id
+      JOIN sedes s ON m.sede_id = s.id
+      WHERE m.activo = FALSE
+    `);
+    res.json(rows);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error al obtener médicos pendientes" });
+  }
+});
+
+// Aprobar médico
+router.put("/medicos/:id/aprobar", async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.query("UPDATE medicos SET activo = TRUE WHERE id = ?", [id]);
+    res.json({ message: "Médico aprobado correctamente" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error al aprobar médico" });
+  }
+});
+
+// Rechazar médico
+router.delete("/medicos/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.query("DELETE FROM medicos WHERE id = ?", [id]);
+    res.json({ message: "Solicitud rechazada correctamente" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error al rechazar médico" });
+  }
+});
 
 export default router;

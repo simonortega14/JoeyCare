@@ -8,11 +8,12 @@ if (process.env.NODE_ENV === "test") {
 }
 
 // Temporal: para verificar que se carguen las variables
-console.log("🔍 Variables de entorno en test:", {
+console.log("🔍 Variables de entorno:", {
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
   database: process.env.DB_NAME,
-  hasPassword: !!process.env.DB_PASSWORD
+  hasPassword: !!process.env.DB_PASSWORD,
+  env: process.env.NODE_ENV || 'development'
 });
 
 const pool = mysql.createPool({

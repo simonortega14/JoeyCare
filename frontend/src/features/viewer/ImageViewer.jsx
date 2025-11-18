@@ -219,8 +219,11 @@ function ImageViewer({ imageFile, onClose, user, isEmbedded = false, side = null
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       const arrayBuffer = await response.arrayBuffer();
 
-      const file = new File([arrayBuffer], filename, {
-        type: getMimeType(filename)
+      // Strip .enc extension since the content is decrypted
+      const originalFilename = filename.replace(/\.enc$/, '');
+
+      const file = new File([arrayBuffer], originalFilename, {
+        type: getMimeType(originalFilename)
       });
 
       const result = await readImage(file);

@@ -186,7 +186,7 @@ const BuscarPacientesPage = ({ onOpenSettings }) => {
             />
           </div>
           <div className="action-buttons">
-            <button onClick={handleClearFilters} className="clear-filters-btn">Limpiar Filtros</button>
+            <button onClick={handleClearFilters} className="clear-filters-btn">Restaurar Filtros</button>
             <button onClick={handleCompareSelected} className="compare-patients-btn">
               {showCheckboxes ? (selectedNeonatos.length === 2 ? 'Comparar Pacientes' : `Seleccionar Pacientes (${selectedNeonatos.length}/2)`) : 'Comparar Pacientes'}
             </button>

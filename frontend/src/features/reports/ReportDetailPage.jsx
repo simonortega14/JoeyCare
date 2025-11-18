@@ -176,11 +176,11 @@ const ReportDetailPage = () => {
       doc.text(`Recomendaciones: ${reporte.recomendaciones || 'No especificado'}`, 10, 110, { maxWidth: 180 });
       doc.text(`Firma del Médico: ${reporte.firma_medico || 'No especificado'}`, 10, 130, { maxWidth: 180 });
 
-      // Página 3: Imagen (solo para PNG/JPG)
+      // Página 3: Imagen o mensaje para DICOM
+      doc.addPage();
+      doc.setFontSize(16);
+      doc.text('Imagen del Reporte', 10, 20);
       if (reporte.mime_type === 'image/png' || reporte.mime_type === 'image/jpeg') {
-        doc.addPage();
-        doc.setFontSize(16);
-        doc.text('Imagen del Reporte', 10, 20);
         try {
           const imageUrl = `http://localhost:4000/api/uploads/${reporte.filepath}`;
           const response = await fetch(imageUrl);
@@ -196,6 +196,14 @@ const ReportDetailPage = () => {
           console.error('Error cargando imagen:', imgError);
           doc.text('Error al cargar la imagen', 10, 40);
         }
+      } else if (reporte.mime_type === 'application/dicom' || (reporte.filepath && reporte.filepath.toLowerCase().includes('.dcm'))) {
+        doc.setFontSize(12);
+        doc.text('Esta imagen es formato DICOM y no puede ser visualizada en el PDF.', 10, 40);
+        doc.text('Para ver los detalles completos de la imagen, use el visualizador de imágenes.', 10, 50);
+        doc.text('Acceda al visualizador desde el botón "Ver Imágenes del Estudio".', 10, 60);
+      } else {
+        doc.setFontSize(12);
+        doc.text('Tipo de archivo no soportado para visualización en PDF.', 10, 40);
       }
       doc.save('reporte.pdf');
     } catch (error) {

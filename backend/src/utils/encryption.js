@@ -55,25 +55,17 @@ export function encryptFile(inputPath, outputPath) {
 
 export function decryptFile(inputPath, outputPath) {
   return new Promise((resolve, reject) => {
-    const input = fs.createReadStream(inputPath);
-    const output = fs.createWriteStream(outputPath);
-    let iv;
-    let decipher;
-    input.on('data', (chunk) => {
-      if (!iv) {
-        iv = chunk.slice(0, 16);
-        decipher = crypto.createDecipheriv(ALGORITHM, ENCRYPTION_KEY, iv);
-        output.write(decipher.update(chunk.slice(16)));
-      } else {
-        output.write(decipher.update(chunk));
-      }
-    });
-    input.on('end', () => {
-      output.write(decipher.final());
-      output.end();
+    try {
+      const encryptedBuffer = fs.readFileSync(inputPath);
+      const iv = encryptedBuffer.slice(0, 16);
+      const encryptedData = encryptedBuffer.slice(16);
+      const decipher = crypto.createDecipheriv(ALGORITHM, ENCRYPTION_KEY, iv);
+      let decrypted = decipher.update(encryptedData);
+      decrypted = Buffer.concat([decrypted, decipher.final()]);
+      fs.writeFileSync(outputPath, decrypted);
       resolve();
-    });
-    input.on('error', reject);
-    output.on('error', reject);
+    } catch (error) {
+      reject(error);
+    }
   });
 }

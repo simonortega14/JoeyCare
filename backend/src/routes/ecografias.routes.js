@@ -8,7 +8,7 @@ import { encryptFile, decryptFile } from "../utils/encryption.js";
 const router = Router();
 
 // Carpeta uploads
-const uploadsDir = "uploads/";
+const uploadsDir = path.resolve("uploads/");
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
 // Multer: PNG, JPG y DCM

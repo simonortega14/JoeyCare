@@ -113,7 +113,7 @@ const ReportDetailPage = () => {
       return;
     }
     // Alerta para DICOM
-    if (reporte.filepath && reporte.filepath.toLowerCase().endsWith('.dcm')) {
+    if (reporte.mime_type === 'application/dicom' || (reporte.filepath && reporte.filepath.toLowerCase().includes('.dcm'))) {
       alert('La imagen es formato DICOM. Para ver detalles completos, use el visualizador de imágenes. Se incluirá un mensaje en el PDF.');
     }
     setExporting(true);
@@ -176,8 +176,8 @@ const ReportDetailPage = () => {
       doc.text(`Recomendaciones: ${reporte.recomendaciones || 'No especificado'}`, 10, 110, { maxWidth: 180 });
       doc.text(`Firma del Médico: ${reporte.firma_medico || 'No especificado'}`, 10, 130, { maxWidth: 180 });
 
-      // Página 3: Imagen (solo si no es DICOM)
-      if (reporte.filepath && !reporte.filepath.toLowerCase().endsWith('.dcm')) {
+      // Página 3: Imagen (solo para PNG/JPG)
+      if (reporte.mime_type === 'image/png' || reporte.mime_type === 'image/jpeg') {
         doc.addPage();
         doc.setFontSize(16);
         doc.text('Imagen del Reporte', 10, 20);
@@ -190,7 +190,8 @@ const ReportDetailPage = () => {
             reader.onload = () => resolve(reader.result);
             reader.readAsDataURL(blob);
           });
-          doc.addImage(base64, 'PNG', 10, 30, 180, 120);
+          const format = reporte.mime_type === 'image/png' ? 'PNG' : 'JPEG';
+          doc.addImage(base64, format, 10, 30, 180, 120);
         } catch (imgError) {
           console.error('Error cargando imagen:', imgError);
           doc.text('Error al cargar la imagen', 10, 40);

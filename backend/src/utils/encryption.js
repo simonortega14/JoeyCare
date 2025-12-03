@@ -65,7 +65,10 @@ export function decryptFile(inputPath, outputPath) {
       fs.writeFileSync(outputPath, decrypted);
       resolve();
     } catch (error) {
-      reject(error);
+      // Si falla la desencriptación, copiar el archivo original (asumir que no está encriptado)
+      console.warn('Error al desencriptar archivo, copiando original:', error.message);
+      fs.copyFileSync(inputPath, outputPath);
+      resolve();
     }
   });
 }

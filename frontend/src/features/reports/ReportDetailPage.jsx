@@ -180,7 +180,7 @@ const ReportDetailPage = () => {
       doc.addPage();
       doc.setFontSize(16);
       doc.text('Imagen del Reporte', 10, 20);
-      if (reporte.mime_type === 'image/png' || reporte.mime_type === 'image/jpeg') {
+      if (reporte.mime_type === 'image/png' || reporte.mime_type === 'image/jpeg' || (reporte.filepath && (reporte.filepath.toLowerCase().includes('.png') || reporte.filepath.toLowerCase().includes('.jpg') || reporte.filepath.toLowerCase().includes('.jpeg')))) {
         try {
           const imageUrl = `http://localhost:4000/api/uploads/${reporte.filepath}`;
           const response = await fetch(imageUrl);

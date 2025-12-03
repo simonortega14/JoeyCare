@@ -89,8 +89,8 @@ const CrearPacientePage = () => {
     e.preventDefault();
     if (!validate()) return;
 
-    // Get current user from localStorage
-    const user = JSON.parse(localStorage.getItem('user'));
+    // Get current user from sessionStorage
+    const user = JSON.parse(sessionStorage.getItem('user'));
     if (!user) {
       alert('Usuario no autenticado');
       return;

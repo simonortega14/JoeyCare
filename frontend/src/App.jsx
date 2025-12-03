@@ -27,7 +27,7 @@ export default function App() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
+    const storedUser = sessionStorage.getItem("user");
     if (storedUser) {
       try {
         const userData = JSON.parse(storedUser);
@@ -39,11 +39,11 @@ export default function App() {
           setUser(userData);
           setIsLoggedIn(true);
         } else {
-          localStorage.removeItem("user");
+          sessionStorage.removeItem("user");
         }
       } catch (error) {
-        console.error("Error parsing user data from localStorage:", error);
-        localStorage.removeItem("user");
+        console.error("Error parsing user data from sessionStorage:", error);
+        sessionStorage.removeItem("user");
       }
     }
   }, []);
@@ -61,7 +61,7 @@ export default function App() {
       const userData = await response.json();
       setUser(userData);
       setIsLoggedIn(true);
-      localStorage.setItem("user", JSON.stringify(userData));
+      sessionStorage.setItem("user", JSON.stringify(userData));
     } catch (error) {
       alert(error.message || "Error en el inicio de sesión");
     }
@@ -70,7 +70,7 @@ export default function App() {
   function handleLogout() {
     setUser(null);
     setIsLoggedIn(false);
-    localStorage.removeItem("user");
+    sessionStorage.removeItem("user");
     navigate("/");
   }
 

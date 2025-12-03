@@ -71,7 +71,7 @@ export default function AdminPage() {
   };
 
   const handleCerrarSesion = () => {
-    localStorage.removeItem("user");
+    sessionStorage.removeItem("user");
     navigate("/");
     window.location.reload();
   };

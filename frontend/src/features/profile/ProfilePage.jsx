@@ -78,7 +78,7 @@ const ProfilePage = ({ onOpenSettings, user }) => {
       alert('Foto actualizada');
       // Update user data
       user.foto_perfil = data.foto_perfil;
-      localStorage.setItem('user', JSON.stringify(user));
+      sessionStorage.setItem('user', JSON.stringify(user));
       setSelectedFile(null);
       setPreview(null);
     } catch (error) {

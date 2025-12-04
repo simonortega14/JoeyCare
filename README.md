@@ -2,6 +2,8 @@ Joey Care – Sistema de Seguimiento y Visualización de Ecografías Neonatales
 
 Joey Care es un sistema web diseñado para apoyar al personal médico en el seguimiento del desarrollo neonatal mediante la organización, visualización y comparación de ecografías. Su objetivo es facilitar el análisis clínico y el acceso centralizado a la información, mejorando la trazabilidad de cada paciente.
 
+Video Demo: https://youtu.be/Qt6cLD1FrXY?si=BPyGQl46MpXzN7B4
+
 ⸻
 
 🚀 Funcionalidades Principales
